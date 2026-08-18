@@ -1,7 +1,6 @@
-from django.shortcuts import render
+from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework import status
 
 from .patientSerializers import PatientSerializer
 from .patientServices import PatientService
@@ -11,18 +10,13 @@ from .patientServices import PatientService
 patient_service = PatientService()
 
 
-#Enregistrement d'un patient
+# Enregistrement d'un patient
 @api_view(["POST"])
 def create_patient(request):
-
     serializer = PatientSerializer(data=request.data)
 
     if serializer.is_valid():
-
-        patient = patient_service.createPatient(
-            **serializer.validated_data
-        )
-
+        patient = patient_service.createPatient(**serializer.validated_data)
         serializer = PatientSerializer(patient)
 
         return Response(
@@ -36,16 +30,11 @@ def create_patient(request):
     )
 
 
-# recuperer tous les patients 
+# Recuperer tous les patients
 @api_view(["GET"])
 def get_all_patient(request):
-
     patients = patient_service.get_all_patient()
-
-    serializer = PatientSerializer(
-        patients,
-        many=True
-    )
+    serializer = PatientSerializer(patients, many=True)
 
     return Response(
         serializer.data,
@@ -53,10 +42,9 @@ def get_all_patient(request):
     )
 
 
-# recuperer et afficher un patient grace à son id
+# Recuperer et afficher un patient grace a son id
 @api_view(["GET"])
 def get_patient(request, patient_id):
-
     patient = patient_service.get_Patient(patient_id)
 
     if patient is None:
@@ -66,17 +54,15 @@ def get_patient(request, patient_id):
         )
 
     serializer = PatientSerializer(patient)
-
     return Response(
         serializer.data,
         status=status.HTTP_200_OK
     )
 
 
-# Modifier les informations d'un patient 
-@api_view(["PUT"])
+# Modifier les informations d'un patient
+@api_view(["PUT", "PATCH"])
 def update_patient(request, patient_id):
-
     patient = patient_service.get_Patient(patient_id)
 
     if patient is None:
@@ -85,18 +71,11 @@ def update_patient(request, patient_id):
             status=status.HTTP_404_NOT_FOUND
         )
 
-    serializer = PatientSerializer(
-        patient,
-        data=request.data
-    )
+    partial = request.method == "PATCH" or request.data.get("partial", False)
+    serializer = PatientSerializer(patient, data=request.data, partial=partial)
 
     if serializer.is_valid():
-
-        patient = patient_service.update_patient(
-            patient,
-            **serializer.validated_data
-        )
-
+        patient = patient_service.update_patient(patient, **serializer.validated_data)
         serializer = PatientSerializer(patient)
 
         return Response(
@@ -110,12 +89,9 @@ def update_patient(request, patient_id):
     )
 
 
-# =========================
-# SUPPRIMER UN PATIENT
-# =========================
+# Supprimer un patient
 @api_view(["DELETE"])
 def delete_patient(request, patient_id):
-
     patient = patient_service.get_Patient(patient_id)
 
     if patient is None:

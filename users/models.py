@@ -1,3 +1,4 @@
+# pyrefly: ignore [missing-import]
 from django.db import models
 
 class User(models.Model):
@@ -9,8 +10,12 @@ class User(models.Model):
         INFIRMIER = "INFIRMIER", "Infirmier"
 
     idUser = models.AutoField(primary_key=True)
-    login = models.CharField(max_length=150, unique=True)
-    motDePasseHash = models.CharField(max_length=120)
+    nom = models.CharField(max_length=150, blank=False)
+    prenom = models.CharField(max_length=150, blank= False)
+    email = models.EmailField(max_length=150, unique=True, blank=False)
+    telephone = models.CharField(max_length=15, unique=True, blank=False)
+    login = models.CharField(max_length=150, unique=True, blank=False)
+    motDePasseHash = models.CharField(max_length=255, blank=False)
 
     role = models.CharField(
         max_length=20,
@@ -18,6 +23,10 @@ class User(models.Model):
     )
 
     derniereConnexion = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+    dateNaissance = models.DateField(
         null=True,
         blank=True
     )

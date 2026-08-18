@@ -1,8 +1,8 @@
 from rest_framework import serializers
-from .models import Patient
+from .models import Medecin
 
 
-class PatientSerializer(serializers.ModelSerializer):
+class MedecinSerializer(serializers.ModelSerializer):
     nom = serializers.CharField(source="idUtilisateur.nom", required=False)
     prenom = serializers.CharField(source="idUtilisateur.prenom", required=False)
     email = serializers.EmailField(source="idUtilisateur.email", required=False)
@@ -12,9 +12,9 @@ class PatientSerializer(serializers.ModelSerializer):
     motDePasse = serializers.CharField(write_only=True, required=False)
 
     class Meta:
-        model = Patient
+        model = Medecin
         fields = [
-            "idPatient",
+            "idMedecin",
             "idUtilisateur",
             "nom",
             "prenom",
@@ -22,16 +22,14 @@ class PatientSerializer(serializers.ModelSerializer):
             "telephone",
             "login",
             "motDePasse",
-            "dateNaissance",
-            "sexe",
-            "adresse",
-            "groupeSanguin",
-            "numeroSecuriteSociale",
-            "personneAContacter",
-            "dateInscription",
+            "specialite",
+            "matricule",
+            "numeroOrdre",
+            "telephonePro",
+            "emailPro",
+            "bureau",
+            "dateEmbauche",
         ]
         extra_kwargs = {
-            "idUtilisateur": {"required": False, "allow_null": True},
-            "dateInscription": {"required": False},
+            "idUtilisateur": {"required": False, "allow_null": True}
         }
-

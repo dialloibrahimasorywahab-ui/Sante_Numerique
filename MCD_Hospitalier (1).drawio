@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram id="mcd2" name="MCD Hospitalier">
-        <mxGraphModel dx="1364" dy="764" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="2000" pageHeight="1700" math="0" shadow="0">
+        <mxGraphModel dx="1498" dy="924" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="2000" pageHeight="1700" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -80,43 +80,55 @@
                     <mxGeometry width="240" height="26" as="geometry"/>
                 </mxCell>
                 <mxCell id="table_DOSSIER" value="DOSSIER" style="shape=table;startSize=30;container=1;collapsible=0;childLayout=tableLayout;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=13;" parent="1" vertex="1">
-                    <mxGeometry x="340" y="40" width="240" height="186" as="geometry"/>
+                    <mxGeometry x="353" y="-47" width="240" height="186" as="geometry"/>
                 </mxCell>
                 <mxCell id="table_DOSSIER_row0" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;fillColor=none;collapsible=0;dropTarget=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;top=0;left=0;right=0;bottom=0;" parent="table_DOSSIER" vertex="1">
                     <mxGeometry y="30" width="240" height="26" as="geometry"/>
                 </mxCell>
                 <mxCell id="table_DOSSIER_row0_cell" value="idDossier (PK)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;align=left;spacingLeft=6;fontSize=12;fontStyle=0;" parent="table_DOSSIER_row0" vertex="1">
-                    <mxGeometry width="240" height="26" as="geometry"/>
+                    <mxGeometry width="240" height="26" as="geometry">
+                        <mxRectangle width="240" height="26" as="alternateBounds"/>
+                    </mxGeometry>
                 </mxCell>
                 <mxCell id="table_DOSSIER_row1" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;fillColor=none;collapsible=0;dropTarget=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;top=0;left=0;right=0;bottom=0;" parent="table_DOSSIER" vertex="1">
                     <mxGeometry y="56" width="240" height="26" as="geometry"/>
                 </mxCell>
                 <mxCell id="table_DOSSIER_row1_cell" value="idPatient (FK)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;align=left;spacingLeft=6;fontSize=12;fontStyle=0;" parent="table_DOSSIER_row1" vertex="1">
-                    <mxGeometry width="240" height="26" as="geometry"/>
+                    <mxGeometry width="240" height="26" as="geometry">
+                        <mxRectangle width="240" height="26" as="alternateBounds"/>
+                    </mxGeometry>
                 </mxCell>
                 <mxCell id="table_DOSSIER_row2" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;fillColor=none;collapsible=0;dropTarget=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;top=0;left=0;right=0;bottom=0;" parent="table_DOSSIER" vertex="1">
                     <mxGeometry y="82" width="240" height="26" as="geometry"/>
                 </mxCell>
                 <mxCell id="table_DOSSIER_row2_cell" value="dateCreation" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;align=left;spacingLeft=6;fontSize=12;fontStyle=0;" parent="table_DOSSIER_row2" vertex="1">
-                    <mxGeometry width="240" height="26" as="geometry"/>
+                    <mxGeometry width="240" height="26" as="geometry">
+                        <mxRectangle width="240" height="26" as="alternateBounds"/>
+                    </mxGeometry>
                 </mxCell>
                 <mxCell id="table_DOSSIER_row3" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;fillColor=none;collapsible=0;dropTarget=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;top=0;left=0;right=0;bottom=0;" parent="table_DOSSIER" vertex="1">
                     <mxGeometry y="108" width="240" height="26" as="geometry"/>
                 </mxCell>
                 <mxCell id="table_DOSSIER_row3_cell" value="antecedents" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;align=left;spacingLeft=6;fontSize=12;fontStyle=0;" parent="table_DOSSIER_row3" vertex="1">
-                    <mxGeometry width="240" height="26" as="geometry"/>
+                    <mxGeometry width="240" height="26" as="geometry">
+                        <mxRectangle width="240" height="26" as="alternateBounds"/>
+                    </mxGeometry>
                 </mxCell>
                 <mxCell id="table_DOSSIER_row4" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;fillColor=none;collapsible=0;dropTarget=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;top=0;left=0;right=0;bottom=0;" parent="table_DOSSIER" vertex="1">
                     <mxGeometry y="134" width="240" height="26" as="geometry"/>
                 </mxCell>
                 <mxCell id="table_DOSSIER_row4_cell" value="allergies" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;align=left;spacingLeft=6;fontSize=12;fontStyle=0;" parent="table_DOSSIER_row4" vertex="1">
-                    <mxGeometry width="240" height="26" as="geometry"/>
+                    <mxGeometry width="240" height="26" as="geometry">
+                        <mxRectangle width="240" height="26" as="alternateBounds"/>
+                    </mxGeometry>
                 </mxCell>
                 <mxCell id="table_DOSSIER_row5" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;fillColor=none;collapsible=0;dropTarget=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;top=0;left=0;right=0;bottom=0;" parent="table_DOSSIER" vertex="1">
                     <mxGeometry y="160" width="240" height="26" as="geometry"/>
                 </mxCell>
                 <mxCell id="table_DOSSIER_row5_cell" value="observationsGenerales" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;align=left;spacingLeft=6;fontSize=12;fontStyle=0;" parent="table_DOSSIER_row5" vertex="1">
-                    <mxGeometry width="240" height="26" as="geometry"/>
+                    <mxGeometry width="240" height="26" as="geometry">
+                        <mxRectangle width="240" height="26" as="alternateBounds"/>
+                    </mxGeometry>
                 </mxCell>
                 <mxCell id="table_ACCUEIL" value="ACCUEIL" style="shape=table;startSize=30;container=1;collapsible=0;childLayout=tableLayout;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=13;" parent="1" vertex="1">
                     <mxGeometry x="640" y="40" width="240" height="212" as="geometry"/>

@@ -26,11 +26,10 @@ class Patient(models.Model):
         related_name="patient"
     )
 
-    nom = models.CharField(max_length=100)
-
-    prenom = models.CharField(max_length=100)
-
-    dateNaissance = models.DateField()
+    dateNaissance = models.DateField(
+        null=True,
+        blank=True
+    )
 
     sexe = models.CharField(
         max_length=1,
@@ -38,10 +37,6 @@ class Patient(models.Model):
     )
 
     adresse = models.CharField(max_length=255)
-
-    telephone = models.CharField(max_length=20)
-
-    email = models.EmailField()
 
     groupeSanguin = models.CharField(
         max_length=3,
@@ -59,4 +54,4 @@ class Patient(models.Model):
     dateInscription = models.DateField()
 
     def __str__(self):
-        return f"{self.prenom} {self.nom}"
+        return f"Patient: {self.idUtilisateur.prenom} {self.idUtilisateur.nom}"
