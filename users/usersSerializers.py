@@ -27,3 +27,15 @@ class UserSerializers(serializers.ModelSerializer):
                 "required": False,
             }
         }
+
+    def validate(self, attrs):
+        if not self.instance:
+            errors = {}
+            for field in ["nom", "prenom", "email", "telephone", "login"]:
+                if not self.initial_data.get(field):
+                    errors[field] = ["Ce champ est obligatoire."]
+            if not self.initial_data.get("motDePasseHash") and not self.initial_data.get("motDePasse"):
+                errors["motDePasse"] = ["Ce champ est obligatoire."]
+            if errors:
+                raise serializers.ValidationError(errors)
+        return attrs

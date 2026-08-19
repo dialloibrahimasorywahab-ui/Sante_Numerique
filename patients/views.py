@@ -1,3 +1,4 @@
+from django.db import IntegrityError
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -16,13 +17,19 @@ def create_patient(request):
     serializer = PatientSerializer(data=request.data)
 
     if serializer.is_valid():
-        patient = patient_service.createPatient(**serializer.validated_data)
-        serializer = PatientSerializer(patient)
+        try:
+            patient = patient_service.createPatient(**serializer.validated_data)
+            serializer = PatientSerializer(patient)
 
-        return Response(
-            serializer.data,
-            status=status.HTTP_201_CREATED
-        )
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED
+            )
+        except IntegrityError as e:
+            return Response(
+                {"error": "Un patient ou utilisateur avec cet identifiant, email, téléphone existe déjà.", "detail": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
     return Response(
         serializer.errors,
@@ -75,13 +82,19 @@ def update_patient(request, patient_id):
     serializer = PatientSerializer(patient, data=request.data, partial=partial)
 
     if serializer.is_valid():
-        patient = patient_service.update_patient(patient, **serializer.validated_data)
-        serializer = PatientSerializer(patient)
+        try:
+            patient = patient_service.update_patient(patient, **serializer.validated_data)
+            serializer = PatientSerializer(patient)
 
-        return Response(
-            serializer.data,
-            status=status.HTTP_200_OK
-        )
+            return Response(
+                serializer.data,
+                status=status.HTTP_200_OK
+            )
+        except IntegrityError as e:
+            return Response(
+                {"error": "Un patient ou utilisateur avec cet identifiant, email, téléphone existe déjà.", "detail": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
     return Response(
         serializer.errors,

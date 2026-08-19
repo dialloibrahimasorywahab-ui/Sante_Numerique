@@ -33,5 +33,20 @@ class PatientSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             "idUtilisateur": {"required": False, "allow_null": True},
             "dateInscription": {"required": False},
+            "sexe": {"required": False},
+            "adresse": {"required": False},
+            "groupeSanguin": {"required": False},
+            "numeroSecuriteSociale": {"required": False},
+            "personneAContacter": {"required": False},
         }
+
+    def validate(self, attrs):
+        if not self.instance and not attrs.get("idUtilisateur"):
+            errors = {}
+            for field in ["nom", "prenom", "email", "telephone", "login", "motDePasse"]:
+                if not self.initial_data.get(field):
+                    errors[field] = ["Ce champ est obligatoire."]
+            if errors:
+                raise serializers.ValidationError(errors)
+        return attrs
 

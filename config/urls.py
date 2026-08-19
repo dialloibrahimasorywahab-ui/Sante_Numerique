@@ -14,7 +14,9 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+# pyrefly: ignore [missing-import]
 from django.contrib import admin
+# pyrefly: ignore [missing-import]
 from django.urls import include, path
 
 urlpatterns = [
@@ -25,4 +27,8 @@ urlpatterns = [
     path('patient/', include('patients.patientUrls')),
     path('medecins/', include('medecin.medecinUrls')),
     path('medecin/', include('medecin.medecinUrls')),
+    path('personnels/', include('personnel.personnelUrls')),
+    path('personnel/', include('personnel.personnelUrls')),
+    path('services/', include('services.serviceUrls')),
+    path('service/', include('services.serviceUrls')),
 ]

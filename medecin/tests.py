@@ -101,3 +101,25 @@ class MedecinRepositoryTests(TestCase):
         self.assertEqual(response_param.status_code, 200)
         self.assertEqual(len(response_param.data), 1)
         self.assertEqual(response_param.data[0]["specialite"], "PEDIATRIE")
+
+    def test_update_medecin_nested_user_fields(self):
+        client = APIClient()
+        user = User.objects.create(
+            nom="Diallo", prenom="Mamadou", email="m.diallo@hosp.com",
+            telephone="+224622001122", login="doc_diallo", role=User.Role.MEDECIN
+        )
+        medecin = Medecin.objects.create(
+            idUtilisateur=user, specialite=Medecin.Specialite.NEUROLOGIE,
+            numeroOrdre="CNOM-33333", dateEmbauche="2025-01-01", bureau="Cabinet 1"
+        )
+        update_payload = {
+            "nom": "Diallo-Bah",
+            "bureau": "Cabinet 5",
+        }
+        response = client.patch(f"/medecins/{medecin.idMedecin}/update/", update_payload, format="json")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["nom"], "Diallo-Bah")
+        self.assertEqual(response.data["bureau"], "Cabinet 5")
+        user.refresh_from_db()
+        self.assertEqual(user.nom, "Diallo-Bah")
+

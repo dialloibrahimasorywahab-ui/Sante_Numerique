@@ -1,3 +1,4 @@
+from django.db import IntegrityError
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -15,13 +16,19 @@ def create_user(request):
     serializer = UserSerializers(data=request.data)
 
     if serializer.is_valid():
-        user = user_service.createUser(**serializer.validated_data)
-        serializer = UserSerializers(user)
+        try:
+            user = user_service.createUser(**serializer.validated_data)
+            serializer = UserSerializers(user)
 
-        return Response(
-            serializer.data,
-            status=status.HTTP_201_CREATED
-        )
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED
+            )
+        except IntegrityError as e:
+            return Response(
+                {"error": "Un utilisateur avec cet email, téléphone ou login existe déjà.", "detail": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
     return Response(
         serializer.errors,
@@ -102,13 +109,19 @@ def update_user(request, user_id):
     serializer = UserSerializers(user, data=request.data, partial=partial)
 
     if serializer.is_valid():
-        user = user_service.updateUser(user, **serializer.validated_data)
-        serializer = UserSerializers(user)
+        try:
+            user = user_service.updateUser(user, **serializer.validated_data)
+            serializer = UserSerializers(user)
 
-        return Response(
-            serializer.data,
-            status=status.HTTP_200_OK
-        )
+            return Response(
+                serializer.data,
+                status=status.HTTP_200_OK
+            )
+        except IntegrityError as e:
+            return Response(
+                {"error": "Un utilisateur avec cet email, téléphone ou login existe déjà.", "detail": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
     return Response(
         serializer.errors,

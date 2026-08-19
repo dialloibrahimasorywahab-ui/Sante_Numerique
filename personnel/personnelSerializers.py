@@ -1,39 +1,45 @@
 from rest_framework import serializers
-from .models import Medecin
+from .models import Personnel
 
 
-class MedecinSerializer(serializers.ModelSerializer):
+class PersonnelSerializer(serializers.ModelSerializer):
     nom = serializers.CharField(source="idUtilisateur.nom", required=False)
     prenom = serializers.CharField(source="idUtilisateur.prenom", required=False)
     email = serializers.EmailField(source="idUtilisateur.email", required=False)
     telephone = serializers.CharField(source="idUtilisateur.telephone", required=False)
+    dateNaissance = serializers.DateField(source="idUtilisateur.dateNaissance", required=False, allow_null=True)
 
     login = serializers.CharField(write_only=True, required=False)
     motDePasse = serializers.CharField(write_only=True, required=False)
 
+    nomService = serializers.CharField(source="idService.get_nomService_display", read_only=True, required=False)
+
     class Meta:
-        model = Medecin
+        model = Personnel
         fields = [
-            "idMedecin",
+            "idPersonnel",
             "idUtilisateur",
+            "idService",
+            "nomService",
             "nom",
             "prenom",
             "email",
             "telephone",
+            "dateNaissance",
             "login",
             "motDePasse",
-            "specialite",
             "matricule",
-            "numeroOrdre",
+            "typePersonnel",
+            "poste",
+            "serviceHopital",
             "telephonePro",
             "emailPro",
-            "bureau",
             "dateEmbauche",
         ]
         extra_kwargs = {
             "idUtilisateur": {"required": False, "allow_null": True},
+            "idService": {"required": False, "allow_null": True},
             "dateEmbauche": {"required": False},
-            "numeroOrdre": {"required": False},
         }
 
     def validate(self, attrs):

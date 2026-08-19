@@ -72,7 +72,25 @@ class PatientService:
 
     # mettre à jour les données d'un patient
     def update_patient(self, patient, **data):
-        return self.repository.update_Patient(patient, **data)
+        id_user_data = data.pop("idUtilisateur", None)
+        user_updates = {}
+
+        if isinstance(id_user_data, dict):
+            user_updates.update(id_user_data)
+        elif isinstance(id_user_data, User):
+            patient.idUtilisateur = id_user_data
+
+        for key in ["nom", "prenom", "email", "telephone", "dateNaissance", "login", "motDePasse", "motDePasseHash"]:
+            if key in data:
+                user_updates[key] = data.pop(key)
+
+        data.pop("login", None)
+        data.pop("motDePasse", None)
+
+        with transaction.atomic():
+            if user_updates and patient.idUtilisateur:
+                self.user_service.updateUser(patient.idUtilisateur, **user_updates)
+            return self.repository.update_Patient(patient, **data)
 
     # desactiver ou archiver un patient
     def delete_patient(self, patient):

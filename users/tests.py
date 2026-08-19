@@ -53,3 +53,13 @@ class UserServiceTests(TestCase):
         client = APIClient()
         response = client.post("/users/login/", {"login": "inconnu", "motDePasse": "wrong"}, format="json")
         self.assertEqual(response.status_code, 401)
+
+    def test_create_user_partial_data_returns_400(self):
+        client = APIClient()
+        response = client.post("/users/", {"nom": "Chirurgie Chorale"}, format="json")
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("prenom", response.data)
+        self.assertIn("email", response.data)
+        self.assertIn("telephone", response.data)
+        self.assertIn("login", response.data)
+

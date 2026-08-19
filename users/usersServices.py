@@ -10,8 +10,9 @@ class UserService:
 
     # creation d'un utilisateur dans service
     def createUser(self, **data):
-        if "motDePasseHash" in data and data["motDePasseHash"]:
-            data["motDePasseHash"] = make_password(data["motDePasseHash"])
+        raw_password = data.pop("motDePasse", None) or data.get("motDePasseHash")
+        if raw_password:
+            data["motDePasseHash"] = make_password(raw_password)
         return self.repository.createUser(**data)
 
     # recuperation d'un utilisateur dans service grace a son id
@@ -35,9 +36,14 @@ class UserService:
 
     # mettre a jour les informations d'un utilisateur
     def updateUser(self, user, **data):
+        raw_password = data.pop("motDePasse", None)
+        if raw_password:
+            data["motDePasseHash"] = raw_password
+
         if "motDePasseHash" in data and data["motDePasseHash"]:
-            if not data["motDePasseHash"].startswith(("pbkdf2_", "bcrypt", "argon2")):
+            if not data["motDePasseHash"].startswith(("pbkdf2_", "bcrypt", "argon2", "scrypt")):
                 data["motDePasseHash"] = make_password(data["motDePasseHash"])
+
         return self.repository.update_User(user, **data)
 
     # archiver un utilisateur

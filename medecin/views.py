@@ -1,3 +1,4 @@
+from django.db import IntegrityError
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -15,13 +16,19 @@ def create_medecin(request):
     serializer = MedecinSerializer(data=request.data)
 
     if serializer.is_valid():
-        medecin = medecin_service.createMedecin(**serializer.validated_data)
-        serializer = MedecinSerializer(medecin)
+        try:
+            medecin = medecin_service.createMedecin(**serializer.validated_data)
+            serializer = MedecinSerializer(medecin)
 
-        return Response(
-            serializer.data,
-            status=status.HTTP_201_CREATED
-        )
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED
+            )
+        except IntegrityError as e:
+            return Response(
+                {"error": "Un médecin ou utilisateur avec cet identifiant, email, téléphone ou numéro d'ordre existe déjà.", "detail": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
     return Response(
         serializer.errors,
@@ -89,13 +96,19 @@ def update_medecin(request, medecin_id):
     serializer = MedecinSerializer(medecin, data=request.data, partial=partial)
 
     if serializer.is_valid():
-        medecin = medecin_service.update_medecin(medecin, **serializer.validated_data)
-        serializer = MedecinSerializer(medecin)
+        try:
+            medecin = medecin_service.update_medecin(medecin, **serializer.validated_data)
+            serializer = MedecinSerializer(medecin)
 
-        return Response(
-            serializer.data,
-            status=status.HTTP_200_OK
-        )
+            return Response(
+                serializer.data,
+                status=status.HTTP_200_OK
+            )
+        except IntegrityError as e:
+            return Response(
+                {"error": "Un médecin ou utilisateur avec cet identifiant, email, téléphone ou numéro d'ordre existe déjà.", "detail": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
     return Response(
         serializer.errors,
