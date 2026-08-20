@@ -31,4 +31,14 @@ urlpatterns = [
     path('personnel/', include('personnel.personnelUrls')),
     path('services/', include('services.serviceUrls')),
     path('service/', include('services.serviceUrls')),
+    path('batiments/', include('batiment.batimentUrls')),
+    path('batiment/', include('batiment.batimentUrls')),
+    path('chambres/', include('chambre.chambreUrls')),
+    path('chambre/', include('chambre.chambreUrls')),
+    path('lits/', include('lit.litUrls')),
+    path('lit/', include('lit.litUrls')),
+    path('rendezvous/', include('rendezvous.rendezvousUrls')),
+    path('rdv/', include('rendezvous.rendezvousUrls')),
 ]
+
+
