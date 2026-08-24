@@ -87,6 +87,12 @@ def delete_batiment(request, batiment_id):
     batiment = batiment_service.get_batiment(batiment_id)
     if batiment is None:
         return Response({"message": "Bâtiment introuvable"}, status=status.HTTP_404_NOT_FOUND)
-    batiment_service.delete_batiment(batiment)
-    return Response({"message": "Bâtiment supprimé avec succès"}, status=status.HTTP_200_OK)
+
+    hard = str(request.query_params.get("hard", "")).lower() in ["true", "1"]
+    batiment_service.delete_batiment(batiment, hard=hard)
+
+    if hard:
+        return Response({"message": "Bâtiment supprimé définitivement avec succès."}, status=status.HTTP_200_OK)
+    return Response({"message": "Bâtiment désactivé (archivé) avec succès."}, status=status.HTTP_200_OK)
+
 

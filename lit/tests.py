@@ -71,8 +71,9 @@ class LitAPITests(TestCase):
         self.chambre = Chambre.objects.create(
             batiment=self.batiment,
             numero_chambre=301,
-            type_chambre="INDIVIDUELLE",
-            capacite=1
+            type_chambre="DOUBLE",
+            capacite=2
+
         )
         self.lit = Lit.objects.create(
             chambre=self.chambre,

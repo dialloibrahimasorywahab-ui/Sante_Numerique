@@ -39,6 +39,11 @@ class BatimentRepository:
         batiment.save()
         return batiment
 
-    def delete_batiment(self, batiment):
-        batiment.delete()
+    def delete_batiment(self, batiment, hard=False):
+        if hard:
+            batiment.delete()
+        else:
+            batiment.actif = False
+            batiment.save()
+
 

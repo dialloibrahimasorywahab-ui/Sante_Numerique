@@ -79,5 +79,11 @@ def delete_lit(request, lit_id):
     lit = lit_service.get_lit(lit_id)
     if lit is None:
         return Response({"message": "Lit introuvable"}, status=status.HTTP_404_NOT_FOUND)
-    lit_service.delete_lit(lit)
-    return Response({"message": "Lit supprimé avec succès"}, status=status.HTTP_200_OK)
+
+    hard = str(request.query_params.get("hard", "")).lower() in ["true", "1"]
+    lit_service.delete_lit(lit, hard=hard)
+
+    if hard:
+        return Response({"message": "Lit supprimé définitivement avec succès."}, status=status.HTTP_200_OK)
+    return Response({"message": "Lit marqué comme hors service (archivé) avec succès."}, status=status.HTTP_200_OK)
+

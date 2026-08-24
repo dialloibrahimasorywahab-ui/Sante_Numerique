@@ -140,6 +140,7 @@ class PersonnelService:
                 self.user_service.updateUser(personnel.idUtilisateur, **user_updates)
             return self.repository.update_Personnel(personnel, **data)
 
-    # Supprimer un membre du personnel
-    def delete_personnel(self, personnel):
-        return self.repository.delete_personnel(personnel)
+    # Désactiver ou supprimer un membre du personnel
+    def delete_personnel(self, personnel, hard=False):
+        return self.repository.delete_personnel(personnel, hard=hard)
+

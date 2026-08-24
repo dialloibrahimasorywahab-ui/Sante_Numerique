@@ -37,8 +37,9 @@ class BatimentService:
     def update_batiment(self, batiment, **data):
         return self.repository.update_batiment(batiment, **data)
 
-    def delete_batiment(self, batiment):
-        return self.repository.delete_batiment(batiment)
+    def delete_batiment(self, batiment, hard=False):
+        return self.repository.delete_batiment(batiment, hard=hard)
+
 
     def sync_nombre_chambres(self, batiment_id):
         batiment = self.get_batiment(batiment_id)

@@ -4,9 +4,11 @@ from .models import RendezVous
 
 
 class RendezVousRepository:
-
+    # creer un rendez vous
     def create_rendezvous(self, **data):
         return RendezVous.objects.create(**data)
+
+    #  afficher un rendez-vous grace a son id
 
     def get_rendezvous(self, rdv_id):
         try:
@@ -17,11 +19,15 @@ class RendezVousRepository:
         except RendezVous.DoesNotExist:
             return None
 
+    # afficher tous les rendez-vous 
+
     def get_all_rendezvous(self):
         return RendezVous.objects.select_related(
             'patient', 'patient__idUtilisateur',
             'medecin', 'medecin__idUtilisateur'
         ).all()
+
+    # afficher les rendez-vous d'un patient
 
     def get_rendezvous_by_patient(self, patient_id):
         if not patient_id:
@@ -41,6 +47,8 @@ class RendezVousRepository:
                 'patient', 'patient__idUtilisateur',
                 'medecin', 'medecin__idUtilisateur'
             )
+
+    # afficher les rendez-vous d'un medecin 
 
     def get_rendezvous_by_medecin(self, medecin_id):
         if not medecin_id:
@@ -62,6 +70,8 @@ class RendezVousRepository:
                 'medecin', 'medecin__idUtilisateur'
             )
 
+    # afficher les rendez-vous par leurs statut
+
     def get_rendezvous_by_statut(self, statut):
         if not statut:
             return self.get_all_rendezvous()
@@ -73,12 +83,15 @@ class RendezVousRepository:
             'medecin', 'medecin__idUtilisateur'
         )
 
+    # afficher les rendez-vous d'une date
 
     def get_rendezvous_by_date(self, date_rdv):
         return RendezVous.objects.filter(date_rdv=date_rdv).select_related(
             'patient', 'patient__idUtilisateur',
             'medecin', 'medecin__idUtilisateur'
         )
+
+    # rechercher un rendez-vous par les query
 
     def search_rendezvous(self, query):
         if not query:
@@ -94,6 +107,8 @@ class RendezVousRepository:
             'patient', 'patient__idUtilisateur',
             'medecin', 'medecin__idUtilisateur'
         )
+
+    # mettre à jour les informations d'un rendez-vous
 
     def update_rendezvous(self, rdv, **data):
         for field, value in data.items():

@@ -93,5 +93,5 @@ class PatientService:
             return self.repository.update_Patient(patient, **data)
 
     # desactiver ou archiver un patient
-    def delete_patient(self, patient):
-        return self.repository.delete_patient(patient)
+    def delete_patient(self, patient, hard=False):
+        return self.repository.delete_patient(patient, hard=hard)

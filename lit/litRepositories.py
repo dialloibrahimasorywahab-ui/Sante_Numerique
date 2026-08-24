@@ -39,5 +39,10 @@ class LitRepository:
         lit.save()
         return lit
 
-    def delete_lit(self, lit):
-        lit.delete()
+    def delete_lit(self, lit, hard=False):
+        if hard:
+            lit.delete()
+        else:
+            lit.etat = Lit.EtatLit.HORS_SERVICE
+            lit.save()
+

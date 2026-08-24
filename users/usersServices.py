@@ -23,6 +23,13 @@ class UserService:
     def getAllUser(self):
         return self.repository.get_All_User()
 
+    def getUsersByRole(self, role):
+        return self.repository.getUsersByRole(role)
+
+    def searchUsers(self, query):
+        return self.repository.searchUsers(query)
+
+
     # authentification d'un utilisateur par son login et mot de passe (sans JWT)
     def loginUser(self, login, password):
         from django.contrib.auth.hashers import check_password
@@ -46,6 +53,6 @@ class UserService:
 
         return self.repository.update_User(user, **data)
 
-    # archiver un utilisateur
-    def deleteUser(self, user):
-        return self.repository.delete_user(user)
+    # désactiver (archiver) ou supprimer un utilisateur
+    def deleteUser(self, user, hard=False):
+        return self.repository.delete_user(user, hard=hard)

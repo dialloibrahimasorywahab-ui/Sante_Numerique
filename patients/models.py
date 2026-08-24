@@ -44,8 +44,11 @@ class Patient(models.Model):
     )
 
     numeroSecuriteSociale = models.CharField(
-        max_length=50
+        max_length=50,
+        blank=True,
+        null=True
     )
+
 
     personneAContacter = models.CharField(
         max_length=100

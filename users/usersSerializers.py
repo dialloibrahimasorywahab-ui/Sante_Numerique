@@ -28,6 +28,15 @@ class UserSerializers(serializers.ModelSerializer):
             }
         }
 
+    def to_internal_value(self, data):
+        if isinstance(data, dict):
+            data = data.copy()
+            pwd = data.get("password") or data.get("motDePasse")
+            if pwd and "motDePasseHash" not in data:
+                data["motDePasseHash"] = pwd
+        return super().to_internal_value(data)
+
+
     def validate(self, attrs):
         if not self.instance:
             errors = {}

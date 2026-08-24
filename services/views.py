@@ -100,7 +100,7 @@ def update_service(request, service_id):
     )
 
 
-# Supprimer un service
+# Désactiver (soft delete) ou supprimer un service
 @api_view(["DELETE"])
 def delete_service(request, service_id):
     service = service_service.get_service(service_id)
@@ -111,9 +111,16 @@ def delete_service(request, service_id):
             status=status.HTTP_404_NOT_FOUND
         )
 
-    service_service.delete_service(service)
+    hard = str(request.query_params.get("hard", "")).lower() in ["true", "1"]
+    service_service.delete_service(service, hard=hard)
 
+    if hard:
+        return Response(
+            {"message": "Service supprimé définitivement avec succès."},
+            status=status.HTTP_200_OK
+        )
     return Response(
-        {"message": "Service supprimé avec succès"},
-        status=status.HTTP_204_NO_CONTENT
+        {"message": "Service désactivé (archivé) avec succès."},
+        status=status.HTTP_200_OK
     )
+

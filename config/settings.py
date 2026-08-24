@@ -48,6 +48,8 @@ INSTALLED_APPS = [
     'chambre',
     'lit',
     'rendezvous',
+    'mortalite',
+    'natalite',
 ]
 
 

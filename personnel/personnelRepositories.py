@@ -29,6 +29,15 @@ class PersonnelRepository:
         personnel.save()
         return personnel
 
-    # Supprimer un membre du personnel
-    def delete_personnel(self, personnel):
-        personnel.delete()
+    # Désactiver ou supprimer un membre du personnel
+    def delete_personnel(self, personnel, hard=False):
+        if hard:
+            if personnel.idUtilisateur:
+                personnel.idUtilisateur.delete()
+            else:
+                personnel.delete()
+        else:
+            if personnel.idUtilisateur:
+                personnel.idUtilisateur.actif = False
+                personnel.idUtilisateur.save()
+

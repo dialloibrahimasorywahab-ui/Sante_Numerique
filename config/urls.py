@@ -39,6 +39,11 @@ urlpatterns = [
     path('lit/', include('lit.litUrls')),
     path('rendezvous/', include('rendezvous.rendezvousUrls')),
     path('rdv/', include('rendezvous.rendezvousUrls')),
+    path('natalite/', include('natalite.nataliteUrls')),
+    path('natalites/', include('natalite.nataliteUrls')),
+    path('mortalite/', include('mortalite.mortaliteUrls')),
+    path('mortalites/', include('mortalite.mortaliteUrls')),
 ]
+
 
 

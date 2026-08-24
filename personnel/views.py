@@ -116,7 +116,7 @@ def update_personnel(request, personnel_id):
     )
 
 
-# Supprimer un membre du personnel
+# Désactiver (soft delete) ou supprimer un membre du personnel
 @api_view(["DELETE"])
 def delete_personnel(request, personnel_id):
     personnel = personnel_service.get_Personnel(personnel_id)
@@ -127,9 +127,16 @@ def delete_personnel(request, personnel_id):
             status=status.HTTP_404_NOT_FOUND
         )
 
-    personnel_service.delete_personnel(personnel)
+    hard = str(request.query_params.get("hard", "")).lower() in ["true", "1"]
+    personnel_service.delete_personnel(personnel, hard=hard)
 
+    if hard:
+        return Response(
+            {"message": "Fiche du personnel supprimée définitivement avec succès."},
+            status=status.HTTP_200_OK
+        )
     return Response(
-        {"message": "Membre du personnel supprimé avec succès"},
-        status=status.HTTP_204_NO_CONTENT
+        {"message": "Compte personnel désactivé (archivé) avec succès."},
+        status=status.HTTP_200_OK
     )
+

@@ -54,36 +54,49 @@ def get_user(request, user_id):
     )
 
 
-# recuperer et afficher tous les utilisateurs
+# recuperer et afficher tous les utilisateurs (avec filtres ?role=... ou ?search=...)
 @api_view(["GET"])
 def get_all_user(request):
-    users = user_service.getAllUser()
+    role = request.query_params.get("role")
+    search_q = request.query_params.get("search") or request.query_params.get("q")
+
+    if role:
+        users = user_service.getUsersByRole(role)
+    elif search_q:
+        users = user_service.searchUsers(search_q)
+    else:
+        users = user_service.getAllUser()
 
     serializer = UserSerializers(users, many=True)
-
     return Response(
         serializer.data,
         status=status.HTTP_200_OK
     )
 
 
-# Connexion / Authentification d'un utilisateur (sans JWT)
+# Connexion / Authentification d'un utilisateur (par login ou email)
 @api_view(["POST"])
 def login_user(request):
-    login = request.data.get("login")
-    password = request.data.get("motDePasse") or request.data.get("password")
+    login = request.data.get("login") or request.data.get("email") or request.data.get("username")
+    password = request.data.get("motDePasse") or request.data.get("password") or request.data.get("motDePasseHash")
 
     if not login or not password:
         return Response(
-            {"message": "Le login et le mot de passe sont requis"},
+            {"message": "Le login (ou email) et le mot de passe sont requis"},
             status=status.HTTP_400_BAD_REQUEST
         )
 
     user = user_service.loginUser(login, password)
 
     if user is None:
+        existing_user = user_service.repository.getUserByLogin(login)
+        if existing_user and not existing_user.actif:
+            return Response(
+                {"message": "Compte désactivé. Veuillez contacter l'administrateur."},
+                status=status.HTTP_403_FORBIDDEN
+            )
         return Response(
-            {"message": "Identifiants invalides ou compte inactif"},
+            {"message": "Identifiants invalides"},
             status=status.HTTP_401_UNAUTHORIZED
         )
 
@@ -92,6 +105,7 @@ def login_user(request):
         serializer.data,
         status=status.HTTP_200_OK
     )
+
 
 
 # Mettre à jour les informations d'un utilisateur
@@ -129,7 +143,7 @@ def update_user(request, user_id):
     )
 
 
-# supprimer ou archiver un utilisateur
+# désactiver (soft delete) ou supprimer définitivement un utilisateur
 @api_view(["DELETE"])
 def delete_user(request, user_id):
     user = user_service.getUser(user_id)
@@ -140,9 +154,15 @@ def delete_user(request, user_id):
             status=status.HTTP_404_NOT_FOUND
         )
 
-    user_service.deleteUser(user)
+    hard = str(request.query_params.get("hard", "")).lower() in ["true", "1"]
+    user_service.deleteUser(user, hard=hard)
 
+    if hard:
+        return Response(
+            {"message": "Utilisateur supprimé définitivement de la base de données avec succès."},
+            status=status.HTTP_200_OK
+        )
     return Response(
-        {"message": "Utilisateur supprimé avec succès"},
-        status=status.HTTP_204_NO_CONTENT
-    )
+        {"message": "Compte utilisateur désactivé (archivé) avec succès.", "actif": False},
+        status=status.HTTP_200_OK
+    )

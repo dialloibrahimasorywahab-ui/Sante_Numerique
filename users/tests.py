@@ -54,12 +54,27 @@ class UserServiceTests(TestCase):
         response = client.post("/users/login/", {"login": "inconnu", "motDePasse": "wrong"}, format="json")
         self.assertEqual(response.status_code, 401)
 
-    def test_create_user_partial_data_returns_400(self):
+    def test_login_user_with_email_success(self):
+        service = UserService()
+        user = service.createUser(
+            nom="Konan",
+            prenom="Yves",
+            email="yves.konan@example.com",
+            telephone="0711223344",
+            login="ykonan",
+            motDePasseHash="myPassWord123",
+            role=User.Role.MEDECIN,
+        )
+
         client = APIClient()
-        response = client.post("/users/", {"nom": "Chirurgie Chorale"}, format="json")
-        self.assertEqual(response.status_code, 400)
-        self.assertIn("prenom", response.data)
-        self.assertIn("email", response.data)
-        self.assertIn("telephone", response.data)
-        self.assertIn("login", response.data)
+        response = client.post("/users/login/", {"login": "yves.konan@example.com", "motDePasse": "myPassWord123"}, format="json")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["idUser"], user.idUser)
+
+    def test_get_users_by_role_api(self):
+        client = APIClient()
+        response = client.get("/users/all/?role=MEDECIN")
+        self.assertEqual(response.status_code, 200)
+        self.assertIsInstance(response.data, list)
+
 

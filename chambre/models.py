@@ -76,20 +76,19 @@ class Chambre(models.Model):
         nb_hors_service = sum(1 for l in lits if l.etat == "HORS_SERVICE")
         total = len(lits)
 
-        if nb_occupe == total:
-            nouveau_statut = self.StatutChambre.OCCUPEE
-        elif nb_occupe > 0 and nb_dispo > 0:
-            nouveau_statut = self.StatutChambre.PARTIELLEMENT_OCCUPEE
-        elif nb_dispo == total:
+        if nb_dispo == total:
             nouveau_statut = self.StatutChambre.DISPONIBLE
+        elif nb_occupe == total or (nb_dispo == 0 and nb_occupe > 0):
+            nouveau_statut = self.StatutChambre.OCCUPEE
+        elif 0 < nb_dispo < total:
+            nouveau_statut = self.StatutChambre.PARTIELLEMENT_OCCUPEE
         elif nb_nettoyage == total:
             nouveau_statut = self.StatutChambre.EN_NETTOYAGE
         elif nb_hors_service == total:
             nouveau_statut = self.StatutChambre.HORS_SERVICE
-        elif nb_dispo > 0:
-            nouveau_statut = self.StatutChambre.DISPONIBLE
         else:
-            nouveau_statut = self.StatutChambre.OCCUPEE
+            nouveau_statut = self.StatutChambre.DISPONIBLE
+
 
         if self.statut != nouveau_statut:
             self.statut = nouveau_statut

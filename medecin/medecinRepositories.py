@@ -29,6 +29,15 @@ class MedecinRepository:
         medecin.save()
         return medecin
 
-    # Supprimer un médecin
-    def delete_medecin(self, medecin):
-        medecin.delete()
+    # Désactiver ou supprimer un médecin
+    def delete_medecin(self, medecin, hard=False):
+        if hard:
+            if medecin.idUtilisateur:
+                medecin.idUtilisateur.delete()
+            else:
+                medecin.delete()
+        else:
+            if medecin.idUtilisateur:
+                medecin.idUtilisateur.actif = False
+                medecin.idUtilisateur.save()
+

@@ -116,7 +116,7 @@ def update_medecin(request, medecin_id):
     )
 
 
-# Supprimer un médecin
+# Désactiver (soft delete) ou supprimer un médecin
 @api_view(["DELETE"])
 def delete_medecin(request, medecin_id):
     medecin = medecin_service.get_Medecin(medecin_id)
@@ -127,9 +127,16 @@ def delete_medecin(request, medecin_id):
             status=status.HTTP_404_NOT_FOUND
         )
 
-    medecin_service.delete_medecin(medecin)
+    hard = str(request.query_params.get("hard", "")).lower() in ["true", "1"]
+    medecin_service.delete_medecin(medecin, hard=hard)
 
+    if hard:
+        return Response(
+            {"message": "Fiche médecin supprimée définitivement avec succès."},
+            status=status.HTTP_200_OK
+        )
     return Response(
-        {"message": "Médecin supprimé avec succès"},
-        status=status.HTTP_204_NO_CONTENT
+        {"message": "Compte médecin désactivé (archivé) avec succès."},
+        status=status.HTTP_200_OK
     )
+

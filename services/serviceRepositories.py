@@ -32,6 +32,11 @@ class ServiceRepository:
         service.save()
         return service
 
-    # Supprimer un service
-    def delete_service(self, service):
-        service.delete()
+    # Désactiver ou supprimer un service
+    def delete_service(self, service, hard=False):
+        if hard:
+            service.delete()
+        else:
+            service.actif = False
+            service.save()
+

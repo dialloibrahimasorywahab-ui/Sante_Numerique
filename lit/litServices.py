@@ -34,28 +34,32 @@ class LitService:
             updated_lit.chambre.sync_statut()
         return updated_lit
 
-    def delete_lit(self, lit):
+    def delete_lit(self, lit, hard=False):
         chambre = lit.chambre
-        res = self.repository.delete_lit(lit)
+        res = self.repository.delete_lit(lit, hard=hard)
         if chambre:
             chambre.sync_statut()
         return res
 
 
+
     def generate_lits_pour_chambre(self, chambre):
         """Génère automatiquement les lits d'une chambre selon sa capacité (nombre de lits)."""
+        from django.db import transaction
         lits_crees = []
-        lits_existants = list(chambre.lits.all())
-        nb_actuel = len(lits_existants)
-        capacite = chambre.capacite
+        with transaction.atomic():
+            lits_existants = list(chambre.lits.all())
+            nb_actuel = len(lits_existants)
+            capacite = chambre.capacite
 
-        if nb_actuel < capacite:
-            for i in range(nb_actuel + 1, capacite + 1):
-                numero_lit = f"Lit {i}"
-                lit = self.create_lit(
-                    chambre=chambre,
-                    numero_lit=numero_lit,
-                    etat=Lit.EtatLit.DISPONIBLE
-                )
-                lits_crees.append(lit)
+            if nb_actuel < capacite:
+                for i in range(nb_actuel + 1, capacite + 1):
+                    numero_lit = f"Lit {i}"
+                    lit = self.create_lit(
+                        chambre=chambre,
+                        numero_lit=numero_lit,
+                        etat=Lit.EtatLit.DISPONIBLE
+                    )
+                    lits_crees.append(lit)
         return lits_crees
+

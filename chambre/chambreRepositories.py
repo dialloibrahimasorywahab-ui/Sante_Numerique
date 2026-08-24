@@ -46,6 +46,11 @@ class ChambreRepository:
         chambre.save()
         return chambre
 
-    def delete_chambre(self, chambre):
-        chambre.delete()
+    def delete_chambre(self, chambre, hard=False):
+        if hard:
+            chambre.delete()
+        else:
+            chambre.statut = Chambre.StatutChambre.HORS_SERVICE
+            chambre.save()
+
 

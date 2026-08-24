@@ -24,6 +24,16 @@ class PatientRepository:
         patient.save()
         return patient
 
-    # archiver ou desactiver un compte d'un patient sans pour autant supprimer les données
-    def delete_patient(self, patient):
-        patient.delete()
+    # desactiver (soft delete) ou supprimer un patient
+    def delete_patient(self, patient, hard=False):
+        if hard:
+            user = patient.idUtilisateur
+            patient.delete()
+            if user:
+                user.delete()
+            return True
+
+        if patient.idUtilisateur:
+            patient.idUtilisateur.actif = False
+            patient.idUtilisateur.save(update_fields=["actif"])
+        return True

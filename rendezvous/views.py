@@ -20,7 +20,7 @@ def create_rendezvous(request):
             return Response({"error": "Erreur lors de la création du rendez-vous.", "detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
+# recuperation de tous les rendez-vous 
 @api_view(["GET"])
 def get_all_rendezvous(request):
     patient_id = request.query_params.get('patient_id') or request.query_params.get('id_patient')
@@ -45,13 +45,14 @@ def get_all_rendezvous(request):
     serializer = RendezVousSerializer(rdvs, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
-
+# recuperer un rendez-vous par son statut 
 @api_view(["GET"])
 def get_rendezvous_by_statut(request, statut):
     rdvs = rendezvous_service.get_rendezvous_by_statut(statut)
     serializer = RendezVousSerializer(rdvs, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
+# recuperer un rendez-vous par patient 
 
 @api_view(["GET"])
 def get_rendezvous_by_patient(request, patient_id):
@@ -59,13 +60,14 @@ def get_rendezvous_by_patient(request, patient_id):
     serializer = RendezVousSerializer(rdvs, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
-
+# recuperer les rendez-vous d'un medecin
 @api_view(["GET"])
 def get_rendezvous_by_medecin(request, medecin_id):
     rdvs = rendezvous_service.get_rendezvous_by_medecin(medecin_id)
     serializer = RendezVousSerializer(rdvs, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
+# recuperer un rendez-vous par son id
 
 @api_view(["GET"])
 def get_rendezvous(request, rdv_id):
@@ -74,7 +76,7 @@ def get_rendezvous(request, rdv_id):
         return Response({"message": "Rendez-vous introuvable"}, status=status.HTTP_404_NOT_FOUND)
     return Response(RendezVousSerializer(rdv).data, status=status.HTTP_200_OK)
 
-
+# mettre à jour les données d'un rendez-vous 
 @api_view(["PUT", "PATCH"])
 def update_rendezvous(request, rdv_id):
     rdv = rendezvous_service.get_rendezvous(rdv_id)

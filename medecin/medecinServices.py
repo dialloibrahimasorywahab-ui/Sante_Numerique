@@ -104,6 +104,7 @@ class MedecinService:
                 self.user_service.updateUser(medecin.idUtilisateur, **user_updates)
             return self.repository.update_Medecin(medecin, **data)
 
-    # Supprimer un médecin
-    def delete_medecin(self, medecin):
-        return self.repository.delete_medecin(medecin)
+    # Désactiver ou supprimer un médecin
+    def delete_medecin(self, medecin, hard=False):
+        return self.repository.delete_medecin(medecin, hard=hard)
+

@@ -102,7 +102,7 @@ def update_patient(request, patient_id):
     )
 
 
-# Supprimer un patient
+# Désactiver (soft delete) ou supprimer un patient
 @api_view(["DELETE"])
 def delete_patient(request, patient_id):
     patient = patient_service.get_Patient(patient_id)
@@ -113,10 +113,17 @@ def delete_patient(request, patient_id):
             status=status.HTTP_404_NOT_FOUND
         )
 
-    patient_service.delete_patient(patient)
+    hard = str(request.query_params.get("hard", "")).lower() in ["true", "1"]
+    patient_service.delete_patient(patient, hard=hard)
 
+    if hard:
+        return Response(
+            {"message": "Dossier patient supprimé définitivement avec succès."},
+            status=status.HTTP_200_OK
+        )
     return Response(
-        {"message": "Patient supprimé avec succès"},
-        status=status.HTTP_204_NO_CONTENT
+        {"message": "Compte patient désactivé (archivé) avec succès. L'historique médical a été préservé."},
+        status=status.HTTP_200_OK
     )
+
 

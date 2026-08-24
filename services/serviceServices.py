@@ -40,9 +40,10 @@ class ServiceService:
     def update_service(self, service, **data):
         return self.repository.update_service(service, **data)
 
-    # Supprimer un service
-    def delete_service(self, service):
-        return self.repository.delete_service(service)
+    # Désactiver ou supprimer un service
+    def delete_service(self, service, hard=False):
+        return self.repository.delete_service(service, hard=hard)
+
 
     # Initialisation de tous les services du dictionnaire s'ils n'existent pas
     def seed_default_services(self):

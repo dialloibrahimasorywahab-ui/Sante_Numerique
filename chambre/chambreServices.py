@@ -38,6 +38,7 @@ class ChambreService:
     def update_chambre(self, chambre, **data):
         return self.repository.update_chambre(chambre, **data)
 
-    def delete_chambre(self, chambre):
-        return self.repository.delete_chambre(chambre)
+    def delete_chambre(self, chambre, hard=False):
+        return self.repository.delete_chambre(chambre, hard=hard)
+
 

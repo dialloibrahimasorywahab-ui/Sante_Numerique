@@ -41,6 +41,15 @@ class LitSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, attrs):
+        chambre = attrs.get('chambre') or (self.instance.chambre if self.instance else None)
         if not self.instance and 'chambre' not in attrs:
             raise serializers.ValidationError({"id_chambre": "Le champ id_chambre est obligatoire."})
+
+        if not self.instance and chambre:
+            lits_count = chambre.lits.count()
+            if lits_count >= chambre.capacite:
+                raise serializers.ValidationError({
+                    "id_chambre": f"La capacité maximale de la Chambre {chambre.numero_chambre} ({chambre.capacite} lit(s)) est déjà atteinte."
+                })
         return attrs
+

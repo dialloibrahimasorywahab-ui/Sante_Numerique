@@ -34,7 +34,9 @@ class Lit(models.Model):
     class Meta:
         verbose_name = "Lit"
         verbose_name_plural = "Lits"
+        unique_together = ('chambre', 'numero_lit')
         ordering = ["chambre", "id"]
+
 
     def __str__(self):
         label_lit = f" {self.numero_lit}" if self.numero_lit else f" #{self.id}"

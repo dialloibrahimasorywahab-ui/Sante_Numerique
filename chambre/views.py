@@ -97,9 +97,13 @@ def delete_chambre(request, chambre_id):
         return Response({"message": "Chambre introuvable"}, status=status.HTTP_404_NOT_FOUND)
 
     batiment = chambre.batiment
-    chambre_service.delete_chambre(chambre)
+    hard = str(request.query_params.get("hard", "")).lower() in ["true", "1"]
+    chambre_service.delete_chambre(chambre, hard=hard)
     if batiment:
         batiment.sync_nombre_chambres()
 
-    return Response({"message": "Chambre supprimée avec succès"}, status=status.HTTP_200_OK)
+    if hard:
+        return Response({"message": "Chambre supprimée définitivement avec succès."}, status=status.HTTP_200_OK)
+    return Response({"message": "Chambre marquée comme hors service (archivée) avec succès."}, status=status.HTTP_200_OK)
+
 

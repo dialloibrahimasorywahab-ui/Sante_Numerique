@@ -1,0 +1,66 @@
+from django.db.models import Q
+from .models import Natalite
+
+
+class NataliteRepository:
+    
+    # Enregistrement d'un nouveau-né
+    def createNouveauNe(self, **data):
+        return Natalite.objects.create(**data)
+
+    # Rechercher et afficher un nouveau-né par son id
+    def get_NouveauNeById(self, nouveauNe_id):
+        try:
+            return Natalite.objects.get(pk=nouveauNe_id)
+        except Natalite.DoesNotExist:
+            return None
+
+    # Afficher tous les nouveaux-nés
+    def get_all_nouveaux_nes(self):
+        return Natalite.objects.all()
+
+    # Afficher les nouveaux-nés d'une patiente (mère)
+    def get_nouveaux_nes_by_patient(self, patient_id):
+        return Natalite.objects.filter(id_patient_id=patient_id)
+
+    # Afficher les nouveaux-nés venus au monde sous la supervision d'un médecin
+    def get_nouveaux_nes_by_medecin(self, medecin_id):
+        return Natalite.objects.filter(id_medecin_id=medecin_id)
+
+    # Afficher les nouveaux-nés par leur sexe
+    def get_natalities_by_sexe(self, sexe):
+        return Natalite.objects.filter(sexe=sexe)
+
+    # Afficher les nouveaux-nés d'une date spécifique
+    def get_nouveaux_nes_by_date(self, date_naissance):
+        return Natalite.objects.filter(date_naissance=date_naissance)
+
+    # Recherche textuelle
+    def search_nouveaux_nes(self, query):
+        if not query:
+            return self.get_all_nouveaux_nes()
+        return Natalite.objects.filter(
+            Q(prenom_nouveau_ne__icontains=query) |
+            Q(nom_nouveau_ne__icontains=query) |
+            Q(lieu_naissance__icontains=query) |
+            Q(observation__icontains=query)
+        )
+
+    # Mettre à jour les informations d'un nouveau-né
+    def update_data_nouveau_ne(self, nouveau_ne, **data):
+        for field, value in data.items():
+            setattr(nouveau_ne, field, value)
+        nouveau_ne.save()
+        return nouveau_ne
+    
+    # Retirer un nouveau-né par son id ou son instance
+    def delete_nouveau_ne(self, nouveau_ne_or_id):
+        if isinstance(nouveau_ne_or_id, Natalite):
+            nouveau_ne_or_id.delete()
+            return True
+        else:
+            instance = self.get_NouveauNeById(nouveau_ne_or_id)
+            if instance:
+                instance.delete()
+                return True
+        return False

@@ -4,3 +4,7 @@ from django.apps import AppConfig
 class ChambreConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'chambre'
+
+    def ready(self):
+        import chambre.signals  # noqa
+
