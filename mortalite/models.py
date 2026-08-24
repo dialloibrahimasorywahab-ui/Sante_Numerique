@@ -28,6 +28,8 @@ class Mortalite(models.Model):
     cause_deces = models.TextField(help_text="Cause principale ou diagnostiquée du décès")
     lieu_deces = models.CharField(max_length=255, blank=True, null=True)
     observation = models.TextField(blank=True, null=True)
+    actif = models.BooleanField(default=True)
+
 
     class Meta:
         verbose_name = "Mortalité"

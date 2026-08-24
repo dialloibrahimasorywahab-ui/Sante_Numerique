@@ -86,10 +86,14 @@ class NataliteModelAndRepositoryTests(TestCase):
         )
         self.assertEqual(self.repository.get_all_nouveaux_nes().count(), 2)
 
-        self.repository.delete_nouveau_ne(n1.id_nouveau_ne)
-        self.assertEqual(self.repository.get_all_nouveaux_nes().count(), 1)
+        self.repository.delete_nouveau_ne(n1.id_nouveau_ne, hard=False)
+        n1.refresh_from_db()
+        self.assertFalse(n1.actif)
+
+        self.repository.delete_nouveau_ne(n1.id_nouveau_ne, hard=True)
         self.assertIsNone(self.repository.get_NouveauNeById(n1.id_nouveau_ne))
         self.assertIsNotNone(self.repository.get_NouveauNeById(n2.id_nouveau_ne))
+
 
 
 class NataliteAPITests(TestCase):

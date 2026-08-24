@@ -124,4 +124,10 @@ class RendezVousAPITests(TestCase):
     def test_delete_rendezvous_api(self):
         response = self.client.delete(f"/rendezvous/{self.rdv.id}/delete/")
         self.assertEqual(response.status_code, 200)
+        self.rdv.refresh_from_db()
+        self.assertEqual(self.rdv.statut, "ANNULE")
+
+        response_hard = self.client.delete(f"/rendezvous/{self.rdv.id}/delete/?hard=true")
+        self.assertEqual(response_hard.status_code, 200)
         self.assertFalse(RendezVous.objects.filter(id=self.rdv.id).exists())
+

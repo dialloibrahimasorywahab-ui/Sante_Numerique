@@ -52,7 +52,7 @@ class RendezVousService:
     def update_rendezvous(self, rdv, **data):
         return self.repository.update_rendezvous(rdv, **data)
 
-    # Annuler un rendez-vous
+    # Annuler ou supprimer un rendez-vous
+    def delete_rendezvous(self, rdv, hard=False):
+        return self.repository.delete_rendezvous(rdv, hard=hard)
 
-    def delete_rendezvous(self, rdv):
-        return self.repository.delete_rendezvous(rdv)

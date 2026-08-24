@@ -116,6 +116,12 @@ class ChambreAPITests(TestCase):
     def test_delete_chambre_api(self):
         response = self.client.delete(f"/chambres/{self.chambre.id}/delete/")
         self.assertEqual(response.status_code, 200)
+        self.chambre.refresh_from_db()
+        self.assertEqual(self.chambre.statut, "HORS_SERVICE")
+
+        response_hard = self.client.delete(f"/chambres/{self.chambre.id}/delete/?hard=true")
+        self.assertEqual(response_hard.status_code, 200)
         self.assertFalse(Chambre.objects.filter(id=self.chambre.id).exists())
+
 
 

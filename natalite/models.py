@@ -100,6 +100,9 @@ class Natalite(models.Model):
         null=True
     )
 
+    actif = models.BooleanField(default=True)
+
+
     class Meta:
         verbose_name = "Natalité"
         verbose_name_plural = "Natalités"

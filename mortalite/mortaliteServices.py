@@ -29,5 +29,6 @@ class MortaliteService:
     def update_deces(self, deces, **data):
         return self.repository.update_deces(deces, **data)
 
-    def delete_deces(self, deces_or_id):
-        return self.repository.delete_deces(deces_or_id)
+    def delete_deces(self, deces_or_id, hard=False):
+        return self.repository.delete_deces(deces_or_id, hard=hard)
+

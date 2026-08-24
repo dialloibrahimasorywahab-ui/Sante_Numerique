@@ -115,5 +115,11 @@ class BatimentAPITests(TestCase):
     def test_delete_batiment_api(self):
         response = self.client.delete(f"/batiments/{self.batiment.idBatiment}/delete/")
         self.assertEqual(response.status_code, 200)
+        self.batiment.refresh_from_db()
+        self.assertFalse(self.batiment.actif)
+
+        response_hard = self.client.delete(f"/batiments/{self.batiment.idBatiment}/delete/?hard=true")
+        self.assertEqual(response_hard.status_code, 200)
         self.assertFalse(Batiment.objects.filter(idBatiment=self.batiment.idBatiment).exists())
+
 

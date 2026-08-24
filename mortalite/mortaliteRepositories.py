@@ -41,13 +41,14 @@ class MortaliteRepository:
         deces.save()
         return deces
 
-    def delete_deces(self, deces_or_id):
-        if isinstance(deces_or_id, Mortalite):
-            deces_or_id.delete()
-            return True
-        else:
-            instance = self.get_DecesById(deces_or_id)
-            if instance:
+    def delete_deces(self, deces_or_id, hard=False):
+        instance = deces_or_id if isinstance(deces_or_id, Mortalite) else self.get_DecesById(deces_or_id)
+        if instance:
+            if hard:
                 instance.delete()
-                return True
+            else:
+                instance.actif = False
+                instance.save()
+            return True
         return False
+

@@ -141,6 +141,11 @@ def delete_rendezvous(request, rdv_id):
     if rdv is None:
         return Response({"message": "Rendez-vous introuvable"}, status=status.HTTP_404_NOT_FOUND)
 
-    rendezvous_service.delete_rendezvous(rdv)
-    return Response({"message": "Rendez-vous supprimé avec succès"}, status=status.HTTP_200_OK)
+    hard = str(request.query_params.get("hard", "")).lower() in ["true", "1"]
+    rendezvous_service.delete_rendezvous(rdv, hard=hard)
+
+    if hard:
+        return Response({"message": "Rendez-vous supprimé définitivement avec succès."}, status=status.HTTP_200_OK)
+    return Response({"message": "Rendez-vous annulé (archivé) avec succès."}, status=status.HTTP_200_OK)
+
 

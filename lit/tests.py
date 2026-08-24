@@ -110,4 +110,10 @@ class LitAPITests(TestCase):
     def test_delete_lit_api(self):
         response = self.client.delete(f"/lits/{self.lit.id}/delete/")
         self.assertEqual(response.status_code, 200)
+        self.lit.refresh_from_db()
+        self.assertEqual(self.lit.etat, "HORS_SERVICE")
+
+        response_hard = self.client.delete(f"/lits/{self.lit.id}/delete/?hard=true")
+        self.assertEqual(response_hard.status_code, 200)
         self.assertFalse(Lit.objects.filter(id=self.lit.id).exists())
+

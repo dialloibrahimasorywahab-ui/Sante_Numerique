@@ -82,5 +82,10 @@ def delete_mortalite(request, deces_id):
     if deces is None:
         return Response({"message": "Fiche de décès introuvable"}, status=status.HTTP_404_NOT_FOUND)
 
-    mortalite_service.delete_deces(deces)
-    return Response({"message": "Fiche de décès supprimée avec succès"}, status=status.HTTP_200_OK)
+    hard = str(request.query_params.get("hard", "")).lower() in ["true", "1"]
+    mortalite_service.delete_deces(deces, hard=hard)
+
+    if hard:
+        return Response({"message": "Fiche de décès supprimée définitivement avec succès."}, status=status.HTTP_200_OK)
+    return Response({"message": "Fiche de décès désactivée (archivée) avec succès."}, status=status.HTTP_200_OK)
+

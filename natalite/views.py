@@ -1,5 +1,8 @@
+# pyrefly: ignore [missing-import]
 from rest_framework import status
+# pyrefly: ignore [missing-import]
 from rest_framework.decorators import api_view
+# pyrefly: ignore [missing-import]
 from rest_framework.response import Response
 from .nataliteSerializers import NataliteSerializer
 from .nataliteServices import NataliteService
@@ -108,12 +111,17 @@ def update_natality(request, natality_id):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# Supprimer une fiche de natalité
+# Désactiver (soft delete) ou supprimer une fiche de natalité
 @api_view(["DELETE"])
 def delete_natality(request, natality_id):
     natality = natalite_service.get_nouveauneById(natality_id)
     if natality is None:
         return Response({"message": "Aucune natalité trouvée"}, status=status.HTTP_404_NOT_FOUND)
 
-    natalite_service.delete_nouveau_ne(natality)
-    return Response({"message": "Fiche de natalité supprimée avec succès"}, status=status.HTTP_200_OK)
+    hard = str(request.query_params.get("hard", "")).lower() in ["true", "1"]
+    natalite_service.delete_nouveau_ne(natality, hard=hard)
+
+    if hard:
+        return Response({"message": "Fiche de natalité supprimée définitivement avec succès."}, status=status.HTTP_200_OK)
+    return Response({"message": "Fiche de natalité désactivée (archivée) avec succès."}, status=status.HTTP_200_OK)
+

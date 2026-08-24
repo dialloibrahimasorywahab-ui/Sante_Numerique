@@ -41,6 +41,6 @@ class NataliteService:
     def update_data_nouveau_ne(self, nouveau_ne, **data):
         return self.repository.update_data_nouveau_ne(nouveau_ne, **data)
     
-    # Supprimer une natalité
-    def delete_nouveau_ne(self, nouveau_ne_or_id):
-        return self.repository.delete_nouveau_ne(nouveau_ne_or_id)
+    # Désactiver ou supprimer une natalité
+    def delete_nouveau_ne(self, nouveau_ne_or_id, hard=False):
+        return self.repository.delete_nouveau_ne(nouveau_ne_or_id, hard=hard)

@@ -53,14 +53,14 @@ class NataliteRepository:
         nouveau_ne.save()
         return nouveau_ne
     
-    # Retirer un nouveau-né par son id ou son instance
-    def delete_nouveau_ne(self, nouveau_ne_or_id):
-        if isinstance(nouveau_ne_or_id, Natalite):
-            nouveau_ne_or_id.delete()
-            return True
-        else:
-            instance = self.get_NouveauNeById(nouveau_ne_or_id)
-            if instance:
+    # Désactiver ou supprimer un nouveau-né par son id ou son instance
+    def delete_nouveau_ne(self, nouveau_ne_or_id, hard=False):
+        instance = nouveau_ne_or_id if isinstance(nouveau_ne_or_id, Natalite) else self.get_NouveauNeById(nouveau_ne_or_id)
+        if instance:
+            if hard:
                 instance.delete()
-                return True
+            else:
+                instance.actif = False
+                instance.save()
+            return True
         return False

@@ -1,11 +1,18 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import User
 
 
 @admin.register(User)
-class UserAdmin(admin.ModelAdmin):
-    list_display = ('idUser', 'nom', 'prenom', 'email', 'telephone', 'login', 'role', 'actif', 'derniereConnexion')
-    list_filter = ('role', 'actif')
+class UserAdmin(BaseUserAdmin):
+    list_display = ('idUser', 'login', 'nom', 'prenom', 'email', 'telephone', 'role', 'actif', 'is_staff', 'is_superuser')
+    list_filter = ('role', 'actif', 'is_staff', 'is_superuser')
     search_fields = ('nom', 'prenom', 'email', 'telephone', 'login')
     ordering = ('-idUser',)
 
+    fieldsets = (
+        (None, {'fields': ('login', 'password')}),
+        ('Informations personnelles', {'fields': ('nom', 'prenom', 'email', 'telephone', 'dateNaissance', 'role', 'actif')}),
+        ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
+        ('Dates importantes', {'fields': ('last_login', 'date_joined')}),
+    )

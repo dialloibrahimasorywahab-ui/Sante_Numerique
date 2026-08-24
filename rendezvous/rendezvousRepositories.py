@@ -116,5 +116,10 @@ class RendezVousRepository:
         rdv.save()
         return rdv
 
-    def delete_rendezvous(self, rdv):
-        rdv.delete()
+    def delete_rendezvous(self, rdv, hard=False):
+        if hard:
+            rdv.delete()
+        else:
+            rdv.statut = RendezVous.StatutRendezVous.ANNULE
+            rdv.save()
+
