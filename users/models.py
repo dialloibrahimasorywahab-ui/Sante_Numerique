@@ -1,3 +1,6 @@
+from datetime import datetime
+from typing import Optional
+
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 
@@ -101,7 +104,7 @@ class User(AbstractUser):
                 self.set_password(raw_password)
 
     @property
-    def derniereConnexion(self):
+    def derniereConnexion(self) -> Optional[datetime]:
         return self.last_login
 
     @derniereConnexion.setter

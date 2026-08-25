@@ -1,8 +1,12 @@
 from django.db import IntegrityError
-from rest_framework import status
+from drf_spectacular.utils import extend_schema, inline_serializer
+from rest_framework import serializers, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
+from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer
+from drf_spectacular.utils import OpenApiParameter
+from drf_spectacular.types import OpenApiTypes
 from .usersSerializers import UserSerializers
 from .usersServices import UserService
 
@@ -11,6 +15,13 @@ user_service = UserService()
 
 
 # enregistrement d'un utilisateur
+@extend_schema(
+    tags=["Utilisateurs"],
+    summary="Créer un utilisateur",
+    description="Enregistre un nouvel utilisateur (compte de connexion à l'application).",
+    request=UserSerializers,
+    responses={201: UserSerializers, 400: ErrorResponseSerializer},
+)
 @api_view(["POST"])
 def create_user(request):
     serializer = UserSerializers(data=request.data)
@@ -37,6 +48,12 @@ def create_user(request):
 
 
 # recuperer et afficher un utilisateur grace a son id
+@extend_schema(
+    tags=["Utilisateurs"],
+    summary="Récupérer un utilisateur",
+    description="Retourne un utilisateur à partir de son identifiant.",
+    responses={200: UserSerializers, 404: MessageResponseSerializer},
+)
 @api_view(["GET"])
 def get_user(request, user_id):
     user = user_service.getUser(user_id)
@@ -55,6 +72,18 @@ def get_user(request, user_id):
 
 
 # recuperer et afficher tous les utilisateurs (avec filtres ?role=... ou ?search=...)
+@extend_schema(
+    tags=["Utilisateurs"],
+    summary="Lister les utilisateurs",
+    description="Retourne la liste des utilisateurs, avec filtre optionnel par rôle ou recherche libre.",
+    parameters=[
+        OpenApiParameter(name="role", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False,
+                          description="Filtre les utilisateurs par rôle."),
+        OpenApiParameter(name="search", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False,
+                          description="Recherche libre (alias : q)."),
+    ],
+    responses={200: UserSerializers(many=True)},
+)
 @api_view(["GET"])
 def get_all_user(request):
     role = request.query_params.get("role")
@@ -75,6 +104,26 @@ def get_all_user(request):
 
 
 # Connexion / Authentification d'un utilisateur (par login ou email)
+@extend_schema(
+    tags=["Utilisateurs"],
+    summary="Se connecter",
+    description="Authentifie un utilisateur par login (ou email) et mot de passe.",
+    request=inline_serializer(
+        name="LoginRequest",
+        fields={
+            "login": serializers.CharField(required=False, help_text="Login de l'utilisateur"),
+            "email": serializers.CharField(required=False, help_text="Email (alternative au login)"),
+            "password": serializers.CharField(required=False, style={"input_type": "password"}),
+            "motDePasse": serializers.CharField(required=False, style={"input_type": "password"}),
+        },
+    ),
+    responses={
+        200: UserSerializers,
+        400: MessageResponseSerializer,
+        401: MessageResponseSerializer,
+        403: MessageResponseSerializer,
+    },
+)
 @api_view(["POST"])
 def login_user(request):
     login = request.data.get("login") or request.data.get("email") or request.data.get("username")
@@ -109,6 +158,13 @@ def login_user(request):
 
 
 # Mettre à jour les informations d'un utilisateur
+@extend_schema(
+    tags=["Utilisateurs"],
+    summary="Modifier un utilisateur",
+    description="Met à jour totalement (PUT) ou partiellement (PATCH) les informations d'un utilisateur.",
+    request=UserSerializers,
+    responses={200: UserSerializers, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
+)
 @api_view(["PUT", "PATCH"])
 def update_user(request, user_id):
     user = user_service.getUser(user_id)
@@ -144,6 +200,13 @@ def update_user(request, user_id):
 
 
 # désactiver (soft delete) ou supprimer définitivement un utilisateur
+@extend_schema(
+    tags=["Utilisateurs"],
+    summary="Supprimer / désactiver un utilisateur",
+    description="Désactive (soft delete) le compte utilisateur, ou le supprime définitivement si ?hard=true.",
+    parameters=[HARD_DELETE_PARAM],
+    responses={200: MessageResponseSerializer, 404: MessageResponseSerializer},
+)
 @api_view(["DELETE"])
 def delete_user(request, user_id):
     user = user_service.getUser(user_id)
@@ -165,4 +228,4 @@ def delete_user(request, user_id):
     return Response(
         {"message": "Compte utilisateur désactivé (archivé) avec succès.", "actif": False},
         status=status.HTTP_200_OK
-    )
+    )

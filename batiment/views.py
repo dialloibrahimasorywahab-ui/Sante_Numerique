@@ -1,12 +1,15 @@
 # pyrefly: ignore [missing-import]
 from django.db import IntegrityError
 # pyrefly: ignore [missing-import]
-from rest_framework import status
+from drf_spectacular.utils import extend_schema, inline_serializer
+# pyrefly: ignore [missing-import]
+from rest_framework import serializers, status
 # pyrefly: ignore [missing-import]
 from rest_framework.decorators import api_view
 # pyrefly: ignore [missing-import]
 from rest_framework.response import Response
 
+from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer, SEARCH_PARAM
 from .batimentSerializers import BatimentSerializer
 from .batimentServices import BatimentService
 from chambre.chambreSerializers import ChambreSerializer
@@ -14,6 +17,13 @@ from chambre.chambreSerializers import ChambreSerializer
 batiment_service = BatimentService()
 
 
+@extend_schema(
+    tags=["Bâtiments"],
+    summary="Créer un bâtiment",
+    description="Enregistre un nouveau bâtiment.",
+    request=BatimentSerializer,
+    responses={201: BatimentSerializer, 400: ErrorResponseSerializer},
+)
 @api_view(["POST"])
 def create_batiment(request):
     serializer = BatimentSerializer(data=request.data)
@@ -26,6 +36,13 @@ def create_batiment(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@extend_schema(
+    tags=["Bâtiments"],
+    summary="Lister les bâtiments",
+    description="Retourne la liste des bâtiments, avec recherche libre optionnelle.",
+    parameters=[SEARCH_PARAM],
+    responses={200: BatimentSerializer(many=True)},
+)
 @api_view(["GET"])
 def get_all_batiments(request):
     query = request.query_params.get("search") or request.query_params.get("q")
@@ -37,6 +54,12 @@ def get_all_batiments(request):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+@extend_schema(
+    tags=["Bâtiments"],
+    summary="Récupérer un bâtiment",
+    description="Retourne un bâtiment à partir de son identifiant.",
+    responses={200: BatimentSerializer, 404: MessageResponseSerializer},
+)
 @api_view(["GET"])
 def get_batiment(request, batiment_id):
     batiment = batiment_service.get_batiment(batiment_id)
@@ -45,6 +68,22 @@ def get_batiment(request, batiment_id):
     return Response(BatimentSerializer(batiment).data, status=status.HTTP_200_OK)
 
 
+@extend_schema(
+    tags=["Bâtiments"],
+    summary="Lister les chambres d'un bâtiment",
+    description="Retourne le bâtiment ainsi que la liste de ses chambres et leur total.",
+    responses={
+        200: inline_serializer(
+            name="BatimentChambresResponse",
+            fields={
+                "batiment": BatimentSerializer(),
+                "chambres": ChambreSerializer(many=True),
+                "total_chambres": serializers.IntegerField(),
+            },
+        ),
+        404: MessageResponseSerializer,
+    },
+)
 @api_view(["GET"])
 def get_batiment_chambres(request, batiment_id):
     batiment = batiment_service.get_batiment(batiment_id)
@@ -63,6 +102,13 @@ def get_batiment_chambres(request, batiment_id):
     )
 
 
+@extend_schema(
+    tags=["Bâtiments"],
+    summary="Modifier un bâtiment",
+    description="Met à jour totalement (PUT) ou partiellement (PATCH) un bâtiment.",
+    request=BatimentSerializer,
+    responses={200: BatimentSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
+)
 @api_view(["PUT", "PATCH"])
 def update_batiment(request, batiment_id):
     batiment = batiment_service.get_batiment(batiment_id)
@@ -82,6 +128,13 @@ def update_batiment(request, batiment_id):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@extend_schema(
+    tags=["Bâtiments"],
+    summary="Supprimer / désactiver un bâtiment",
+    description="Désactive (soft delete) le bâtiment, ou le supprime définitivement si ?hard=true.",
+    parameters=[HARD_DELETE_PARAM],
+    responses={200: MessageResponseSerializer, 404: MessageResponseSerializer},
+)
 @api_view(["DELETE"])
 def delete_batiment(request, batiment_id):
     batiment = batiment_service.get_batiment(batiment_id)
@@ -94,5 +147,3 @@ def delete_batiment(request, batiment_id):
     if hard:
         return Response({"message": "Bâtiment supprimé définitivement avec succès."}, status=status.HTTP_200_OK)
     return Response({"message": "Bâtiment désactivé (archivé) avec succès."}, status=status.HTTP_200_OK)
-
-

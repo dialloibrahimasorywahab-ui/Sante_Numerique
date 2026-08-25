@@ -1,12 +1,22 @@
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer, SEARCH_PARAM
 from .mortaliteSerializers import MortaliteSerializer
 from .mortaliteServices import MortaliteService
 
 mortalite_service = MortaliteService()
 
 
+@extend_schema(
+    tags=["Mortalité"],
+    summary="Créer une fiche de décès",
+    description="Enregistre une nouvelle fiche de décès.",
+    request=MortaliteSerializer,
+    responses={201: MortaliteSerializer, 400: ErrorResponseSerializer},
+)
 @api_view(["POST"])
 def create_deces(request):
     serializer = MortaliteSerializer(data=request.data)
@@ -25,6 +35,21 @@ def create_deces(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@extend_schema(
+    tags=["Mortalité"],
+    summary="Lister les fiches de décès",
+    description="Retourne la liste des fiches de décès, avec filtres optionnels (patient, médecin, date, recherche).",
+    parameters=[
+        OpenApiParameter(name="patient_id", type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=False,
+                          description="Filtre par identifiant patient (alias : id_patient)."),
+        OpenApiParameter(name="medecin_id", type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=False,
+                          description="Filtre par identifiant médecin (alias : id_medecin)."),
+        OpenApiParameter(name="date", type=OpenApiTypes.DATE, location=OpenApiParameter.QUERY, required=False,
+                          description="Filtre par date de décès (alias : date_deces)."),
+        SEARCH_PARAM,
+    ],
+    responses={200: MortaliteSerializer(many=True)},
+)
 @api_view(["GET"])
 def get_all_mortalite(request):
     patient_id = request.query_params.get('patient_id') or request.query_params.get('id_patient')
@@ -47,6 +72,12 @@ def get_all_mortalite(request):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+@extend_schema(
+    tags=["Mortalité"],
+    summary="Récupérer une fiche de décès",
+    description="Retourne une fiche de décès à partir de son identifiant.",
+    responses={200: MortaliteSerializer, 404: MessageResponseSerializer},
+)
 @api_view(["GET"])
 def get_mortalite(request, id_deces):
     deces = mortalite_service.get_deces_by_id(id_deces)
@@ -55,6 +86,13 @@ def get_mortalite(request, id_deces):
     return Response(MortaliteSerializer(deces).data, status=status.HTTP_200_OK)
 
 
+@extend_schema(
+    tags=["Mortalité"],
+    summary="Modifier une fiche de décès",
+    description="Met à jour totalement (PUT) ou partiellement (PATCH) une fiche de décès.",
+    request=MortaliteSerializer,
+    responses={200: MortaliteSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
+)
 @api_view(["PUT", "PATCH"])
 def update_mortalite(request, deces_id):
     deces = mortalite_service.get_deces_by_id(deces_id)
@@ -76,6 +114,13 @@ def update_mortalite(request, deces_id):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@extend_schema(
+    tags=["Mortalité"],
+    summary="Supprimer / désactiver une fiche de décès",
+    description="Désactive (soft delete) la fiche de décès, ou la supprime définitivement si ?hard=true.",
+    parameters=[HARD_DELETE_PARAM],
+    responses={200: MessageResponseSerializer, 404: MessageResponseSerializer},
+)
 @api_view(["DELETE"])
 def delete_mortalite(request, deces_id):
     deces = mortalite_service.get_deces_by_id(deces_id)
@@ -88,4 +133,3 @@ def delete_mortalite(request, deces_id):
     if hard:
         return Response({"message": "Fiche de décès supprimée définitivement avec succès."}, status=status.HTTP_200_OK)
     return Response({"message": "Fiche de décès désactivée (archivée) avec succès."}, status=status.HTTP_200_OK)
-

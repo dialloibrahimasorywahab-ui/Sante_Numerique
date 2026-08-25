@@ -49,5 +49,5 @@ class RendezVous(models.Model):
         return f"RDV #{self.id} - {pat_nom} avec {med_nom} le {self.date_rdv} à {self.heure} ({self.get_statut_display()})"
 
     @property
-    def idRendezVous(self):
+    def idRendezVous(self) -> int:
         return self.id

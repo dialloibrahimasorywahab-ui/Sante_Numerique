@@ -1,13 +1,23 @@
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
+from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer, SEARCH_PARAM
 from .litSerializers import LitSerializer
 from .litServices import LitService
 
 lit_service = LitService()
 
 
+@extend_schema(
+    tags=["Lits"],
+    summary="Créer un lit",
+    description="Enregistre un nouveau lit, rattaché à une chambre.",
+    request=LitSerializer,
+    responses={201: LitSerializer, 400: ErrorResponseSerializer},
+)
 @api_view(["POST"])
 def create_lit(request):
     serializer = LitSerializer(data=request.data)
@@ -20,6 +30,19 @@ def create_lit(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@extend_schema(
+    tags=["Lits"],
+    summary="Lister les lits",
+    description="Retourne la liste des lits, avec filtres optionnels (chambre, état, recherche).",
+    parameters=[
+        OpenApiParameter(name="chambre_id", type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=False,
+                          description="Filtre par identifiant de chambre (alias : id_chambre)."),
+        OpenApiParameter(name="etat", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False,
+                          description="Filtre par état du lit."),
+        SEARCH_PARAM,
+    ],
+    responses={200: LitSerializer(many=True)},
+)
 @api_view(["GET"])
 def get_all_lits(request):
     chambre_id = request.query_params.get('chambre_id') or request.query_params.get('id_chambre')
@@ -39,6 +62,12 @@ def get_all_lits(request):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+@extend_schema(
+    tags=["Lits"],
+    summary="Lister les lits par état",
+    description="Retourne les lits correspondant à l'état donné.",
+    responses={200: LitSerializer(many=True)},
+)
 @api_view(["GET"])
 def get_lits_by_etat(request, etat):
     lits = lit_service.get_lits_by_etat(etat)
@@ -46,6 +75,12 @@ def get_lits_by_etat(request, etat):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+@extend_schema(
+    tags=["Lits"],
+    summary="Récupérer un lit",
+    description="Retourne un lit à partir de son identifiant.",
+    responses={200: LitSerializer, 404: MessageResponseSerializer},
+)
 @api_view(["GET"])
 def get_lit(request, lit_id):
 
@@ -55,6 +90,13 @@ def get_lit(request, lit_id):
     return Response(LitSerializer(lit).data, status=status.HTTP_200_OK)
 
 
+@extend_schema(
+    tags=["Lits"],
+    summary="Modifier un lit",
+    description="Met à jour totalement (PUT) ou partiellement (PATCH) un lit.",
+    request=LitSerializer,
+    responses={200: LitSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
+)
 @api_view(["PUT", "PATCH"])
 def update_lit(request, lit_id):
     lit = lit_service.get_lit(lit_id)
@@ -74,6 +116,13 @@ def update_lit(request, lit_id):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@extend_schema(
+    tags=["Lits"],
+    summary="Supprimer / désactiver un lit",
+    description="Marque le lit comme hors service (soft delete), ou le supprime définitivement si ?hard=true.",
+    parameters=[HARD_DELETE_PARAM],
+    responses={200: MessageResponseSerializer, 404: MessageResponseSerializer},
+)
 @api_view(["DELETE"])
 def delete_lit(request, lit_id):
     lit = lit_service.get_lit(lit_id)
@@ -86,4 +135,3 @@ def delete_lit(request, lit_id):
     if hard:
         return Response({"message": "Lit supprimé définitivement avec succès."}, status=status.HTTP_200_OK)
     return Response({"message": "Lit marqué comme hors service (archivé) avec succès."}, status=status.HTTP_200_OK)
-

@@ -1,17 +1,26 @@
 # pyrefly: ignore [missing-import]
+from drf_spectacular.types import OpenApiTypes
+# pyrefly: ignore [missing-import]
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
-# pyrefly: ignore [missing-import]
 from rest_framework.decorators import api_view
-# pyrefly: ignore [missing-import]
 from rest_framework.response import Response
+from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer, SEARCH_PARAM
 from .nataliteSerializers import NataliteSerializer
 from .nataliteServices import NataliteService
 
-# Instanciation du service de natalite 
+# Instanciation du service de natalite
 natalite_service = NataliteService()
 
 
 # Enregistrer un nouveau-né
+@extend_schema(
+    tags=["Natalité"],
+    summary="Créer une fiche de naissance",
+    description="Enregistre un nouveau-né.",
+    request=NataliteSerializer,
+    responses={201: NataliteSerializer, 400: ErrorResponseSerializer},
+)
 @api_view(["POST"])
 def create_naissance(request):
     serializer = NataliteSerializer(data=request.data)
@@ -31,6 +40,23 @@ def create_naissance(request):
 
 
 # Récupération de tous les nouveaux-nés avec filtres
+@extend_schema(
+    tags=["Natalité"],
+    summary="Lister les naissances",
+    description="Retourne la liste des naissances, avec filtres optionnels (patient, médecin, sexe, date, recherche).",
+    parameters=[
+        OpenApiParameter(name="patient_id", type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=False,
+                          description="Filtre par identifiant de la patiente/mère (alias : id_patient)."),
+        OpenApiParameter(name="medecin_id", type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=False,
+                          description="Filtre par identifiant du médecin superviseur (alias : id_medecin)."),
+        OpenApiParameter(name="sexe", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False,
+                          description="Filtre par sexe du nouveau-né."),
+        OpenApiParameter(name="date", type=OpenApiTypes.DATE, location=OpenApiParameter.QUERY, required=False,
+                          description="Filtre par date de naissance (alias : date_naissance)."),
+        SEARCH_PARAM,
+    ],
+    responses={200: NataliteSerializer(many=True)},
+)
 @api_view(["GET"])
 def get_all_natality(request):
     patient_id = request.query_params.get('patient_id') or request.query_params.get('id_patient')
@@ -56,7 +82,13 @@ def get_all_natality(request):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-# Récupérer les nouveaux-nés par leur sexe 
+# Récupérer les nouveaux-nés par leur sexe
+@extend_schema(
+    tags=["Natalité"],
+    summary="Lister les naissances par sexe",
+    description="Retourne les naissances correspondant au sexe donné.",
+    responses={200: NataliteSerializer(many=True)},
+)
 @api_view(["GET"])
 def get_natalities_by_sexe(request, sexe):
     natalities = natalite_service.get_natalities_by_sexe(sexe)
@@ -65,6 +97,12 @@ def get_natalities_by_sexe(request, sexe):
 
 
 # Afficher les nouveaux-nés d'une patiente (mère)
+@extend_schema(
+    tags=["Natalité"],
+    summary="Lister les naissances d'une patiente",
+    description="Retourne les naissances rattachées à la patiente (mère) donnée.",
+    responses={200: NataliteSerializer(many=True)},
+)
 @api_view(["GET"])
 def get_natalities_by_patient(request, patient_id):
     natalities = natalite_service.get_nouveaux_nes_by_patient(patient_id)
@@ -73,6 +111,12 @@ def get_natalities_by_patient(request, patient_id):
 
 
 # Afficher les nouveaux-nés d'un médecin superviseur
+@extend_schema(
+    tags=["Natalité"],
+    summary="Lister les naissances supervisées par un médecin",
+    description="Retourne les naissances rattachées au médecin superviseur donné.",
+    responses={200: NataliteSerializer(many=True)},
+)
 @api_view(["GET"])
 def get_natalities_by_medecin(request, medecin_id):
     natalities = natalite_service.get_nouveaux_nes_by_medecin(medecin_id)
@@ -81,15 +125,28 @@ def get_natalities_by_medecin(request, medecin_id):
 
 
 # Afficher un nouveau-né par son ID
+@extend_schema(
+    tags=["Natalité"],
+    summary="Récupérer une fiche de naissance",
+    description="Retourne une fiche de naissance à partir de son identifiant.",
+    responses={200: NataliteSerializer, 404: MessageResponseSerializer},
+)
 @api_view(["GET"])
 def get_natality(request, id_natality):
     natality = natalite_service.get_nouveauneById(id_natality)
-    if natality is None: 
+    if natality is None:
         return Response({"message": "Aucune natalité correspondante"}, status=status.HTTP_404_NOT_FOUND)
     return Response(NataliteSerializer(natality).data, status=status.HTTP_200_OK)
 
 
-# Mettre à jour les informations d'un nouveau-né 
+# Mettre à jour les informations d'un nouveau-né
+@extend_schema(
+    tags=["Natalité"],
+    summary="Modifier une fiche de naissance",
+    description="Met à jour totalement (PUT) ou partiellement (PATCH) une fiche de naissance.",
+    request=NataliteSerializer,
+    responses={200: NataliteSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
+)
 @api_view(["PUT", "PATCH"])
 def update_natality(request, natality_id):
     natality = natalite_service.get_nouveauneById(natality_id)
@@ -112,6 +169,13 @@ def update_natality(request, natality_id):
 
 
 # Désactiver (soft delete) ou supprimer une fiche de natalité
+@extend_schema(
+    tags=["Natalité"],
+    summary="Supprimer / désactiver une fiche de naissance",
+    description="Désactive (soft delete) la fiche de naissance, ou la supprime définitivement si ?hard=true.",
+    parameters=[HARD_DELETE_PARAM],
+    responses={200: MessageResponseSerializer, 404: MessageResponseSerializer},
+)
 @api_view(["DELETE"])
 def delete_natality(request, natality_id):
     natality = natalite_service.get_nouveauneById(natality_id)
@@ -124,4 +188,3 @@ def delete_natality(request, natality_id):
     if hard:
         return Response({"message": "Fiche de natalité supprimée définitivement avec succès."}, status=status.HTTP_200_OK)
     return Response({"message": "Fiche de natalité désactivée (archivée) avec succès."}, status=status.HTTP_200_OK)
-

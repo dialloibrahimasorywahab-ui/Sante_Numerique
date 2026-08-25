@@ -53,7 +53,7 @@ class Chambre(models.Model):
         return f"Chambre {self.numero_chambre} - {self.batiment.nom} ({self.get_type_chambre_display()}, {self.get_statut_display()})"
 
     @property
-    def idChambre(self):
+    def idChambre(self) -> int:
         return self.id
 
     @property

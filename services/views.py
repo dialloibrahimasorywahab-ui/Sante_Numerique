@@ -1,8 +1,10 @@
 from django.db import IntegrityError
+from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
+from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer
 from .serviceSerializers import ServiceSerializer
 from .serviceServices import ServiceService
 
@@ -11,6 +13,13 @@ service_service = ServiceService()
 
 
 # Enregistrement d'un service
+@extend_schema(
+    tags=["Services"],
+    summary="Créer un service",
+    description="Enregistre un nouveau service hospitalier.",
+    request=ServiceSerializer,
+    responses={201: ServiceSerializer, 400: ErrorResponseSerializer},
+)
 @api_view(["POST"])
 def create_service(request):
     serializer = ServiceSerializer(data=request.data)
@@ -37,6 +46,12 @@ def create_service(request):
 
 
 # Récupérer tous les services
+@extend_schema(
+    tags=["Services"],
+    summary="Lister les services",
+    description="Retourne la liste de tous les services hospitaliers.",
+    responses={200: ServiceSerializer(many=True)},
+)
 @api_view(["GET"])
 def get_all_services(request):
     services = service_service.get_all_services()
@@ -48,6 +63,12 @@ def get_all_services(request):
 
 
 # Récupérer et afficher un service par son ID
+@extend_schema(
+    tags=["Services"],
+    summary="Récupérer un service",
+    description="Retourne un service à partir de son identifiant.",
+    responses={200: ServiceSerializer, 404: MessageResponseSerializer},
+)
 @api_view(["GET"])
 def get_service(request, service_id):
     service = service_service.get_service(service_id)
@@ -66,6 +87,13 @@ def get_service(request, service_id):
 
 
 # Modifier un service
+@extend_schema(
+    tags=["Services"],
+    summary="Modifier un service",
+    description="Met à jour totalement (PUT) ou partiellement (PATCH) un service.",
+    request=ServiceSerializer,
+    responses={200: ServiceSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
+)
 @api_view(["PUT", "PATCH"])
 def update_service(request, service_id):
     service = service_service.get_service(service_id)
@@ -101,6 +129,13 @@ def update_service(request, service_id):
 
 
 # Désactiver (soft delete) ou supprimer un service
+@extend_schema(
+    tags=["Services"],
+    summary="Supprimer / désactiver un service",
+    description="Désactive (soft delete) le service, ou le supprime définitivement si ?hard=true.",
+    parameters=[HARD_DELETE_PARAM],
+    responses={200: MessageResponseSerializer, 404: MessageResponseSerializer},
+)
 @api_view(["DELETE"])
 def delete_service(request, service_id):
     service = service_service.get_service(service_id)
@@ -123,4 +158,3 @@ def delete_service(request, service_id):
         {"message": "Service désactivé (archivé) avec succès."},
         status=status.HTTP_200_OK
     )
-

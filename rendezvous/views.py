@@ -1,14 +1,35 @@
 # pyrefly: ignore [missing-import]
-from rest_framework import status
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema, inline_serializer
+from rest_framework import serializers, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
+from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer, SEARCH_PARAM
 from .rendezvousSerializers import RendezVousSerializer
 from .rendezvousServices import RendezVousService
 
 rendezvous_service = RendezVousService()
 
 
+def _rendezvous_action_response(message_example):
+    """Sérialiseur de réponse commun aux actions confirmer/annuler/terminer."""
+    return inline_serializer(
+        name=f"RendezVousAction_{message_example}",
+        fields={
+            "message": serializers.CharField(),
+            "rendezvous": RendezVousSerializer(),
+        },
+    )
+
+
+@extend_schema(
+    tags=["Rendez-vous"],
+    summary="Créer un rendez-vous",
+    description="Enregistre un nouveau rendez-vous entre un patient et un médecin.",
+    request=RendezVousSerializer,
+    responses={201: RendezVousSerializer, 400: ErrorResponseSerializer},
+)
 @api_view(["POST"])
 def create_rendezvous(request):
     serializer = RendezVousSerializer(data=request.data)
@@ -20,7 +41,24 @@ def create_rendezvous(request):
             return Response({"error": "Erreur lors de la création du rendez-vous.", "detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# recuperation de tous les rendez-vous 
+# recuperation de tous les rendez-vous
+@extend_schema(
+    tags=["Rendez-vous"],
+    summary="Lister les rendez-vous",
+    description="Retourne la liste des rendez-vous, avec filtres optionnels (patient, médecin, statut, date, recherche).",
+    parameters=[
+        OpenApiParameter(name="patient_id", type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=False,
+                          description="Filtre par identifiant patient (alias : id_patient)."),
+        OpenApiParameter(name="medecin_id", type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=False,
+                          description="Filtre par identifiant médecin (alias : id_medecin)."),
+        OpenApiParameter(name="statut", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False,
+                          description="Filtre par statut du rendez-vous."),
+        OpenApiParameter(name="date", type=OpenApiTypes.DATE, location=OpenApiParameter.QUERY, required=False,
+                          description="Filtre par date du rendez-vous (alias : date_rdv)."),
+        SEARCH_PARAM,
+    ],
+    responses={200: RendezVousSerializer(many=True)},
+)
 @api_view(["GET"])
 def get_all_rendezvous(request):
     patient_id = request.query_params.get('patient_id') or request.query_params.get('id_patient')
@@ -45,15 +83,27 @@ def get_all_rendezvous(request):
     serializer = RendezVousSerializer(rdvs, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
-# recuperer un rendez-vous par son statut 
+# recuperer un rendez-vous par son statut
+@extend_schema(
+    tags=["Rendez-vous"],
+    summary="Lister les rendez-vous par statut",
+    description="Retourne les rendez-vous correspondant au statut donné.",
+    responses={200: RendezVousSerializer(many=True)},
+)
 @api_view(["GET"])
 def get_rendezvous_by_statut(request, statut):
     rdvs = rendezvous_service.get_rendezvous_by_statut(statut)
     serializer = RendezVousSerializer(rdvs, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
-# recuperer un rendez-vous par patient 
+# recuperer un rendez-vous par patient
 
+@extend_schema(
+    tags=["Rendez-vous"],
+    summary="Lister les rendez-vous d'un patient",
+    description="Retourne les rendez-vous rattachés au patient donné.",
+    responses={200: RendezVousSerializer(many=True)},
+)
 @api_view(["GET"])
 def get_rendezvous_by_patient(request, patient_id):
     rdvs = rendezvous_service.get_rendezvous_by_patient(patient_id)
@@ -61,6 +111,12 @@ def get_rendezvous_by_patient(request, patient_id):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 # recuperer les rendez-vous d'un medecin
+@extend_schema(
+    tags=["Rendez-vous"],
+    summary="Lister les rendez-vous d'un médecin",
+    description="Retourne les rendez-vous rattachés au médecin donné.",
+    responses={200: RendezVousSerializer(many=True)},
+)
 @api_view(["GET"])
 def get_rendezvous_by_medecin(request, medecin_id):
     rdvs = rendezvous_service.get_rendezvous_by_medecin(medecin_id)
@@ -69,6 +125,12 @@ def get_rendezvous_by_medecin(request, medecin_id):
 
 # recuperer un rendez-vous par son id
 
+@extend_schema(
+    tags=["Rendez-vous"],
+    summary="Récupérer un rendez-vous",
+    description="Retourne un rendez-vous à partir de son identifiant.",
+    responses={200: RendezVousSerializer, 404: MessageResponseSerializer},
+)
 @api_view(["GET"])
 def get_rendezvous(request, rdv_id):
     rdv = rendezvous_service.get_rendezvous(rdv_id)
@@ -76,7 +138,14 @@ def get_rendezvous(request, rdv_id):
         return Response({"message": "Rendez-vous introuvable"}, status=status.HTTP_404_NOT_FOUND)
     return Response(RendezVousSerializer(rdv).data, status=status.HTTP_200_OK)
 
-# mettre à jour les données d'un rendez-vous 
+# mettre à jour les données d'un rendez-vous
+@extend_schema(
+    tags=["Rendez-vous"],
+    summary="Modifier un rendez-vous",
+    description="Met à jour totalement (PUT) ou partiellement (PATCH) un rendez-vous.",
+    request=RendezVousSerializer,
+    responses={200: RendezVousSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
+)
 @api_view(["PUT", "PATCH"])
 def update_rendezvous(request, rdv_id):
     rdv = rendezvous_service.get_rendezvous(rdv_id)
@@ -96,6 +165,13 @@ def update_rendezvous(request, rdv_id):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@extend_schema(
+    tags=["Rendez-vous"],
+    summary="Confirmer un rendez-vous",
+    description="Passe le statut du rendez-vous à CONFIRME. Aucun corps de requête requis.",
+    request=None,
+    responses={200: _rendezvous_action_response("confirme"), 404: MessageResponseSerializer},
+)
 @api_view(["PATCH", "POST"])
 def confirmer_rendezvous(request, rdv_id):
     rdv = rendezvous_service.get_rendezvous(rdv_id)
@@ -109,6 +185,13 @@ def confirmer_rendezvous(request, rdv_id):
     )
 
 
+@extend_schema(
+    tags=["Rendez-vous"],
+    summary="Annuler un rendez-vous",
+    description="Passe le statut du rendez-vous à ANNULE. Aucun corps de requête requis.",
+    request=None,
+    responses={200: _rendezvous_action_response("annule"), 404: MessageResponseSerializer},
+)
 @api_view(["PATCH", "POST"])
 def annuler_rendezvous(request, rdv_id):
     rdv = rendezvous_service.get_rendezvous(rdv_id)
@@ -122,6 +205,13 @@ def annuler_rendezvous(request, rdv_id):
     )
 
 
+@extend_schema(
+    tags=["Rendez-vous"],
+    summary="Terminer un rendez-vous",
+    description="Passe le statut du rendez-vous à TERMINE. Aucun corps de requête requis.",
+    request=None,
+    responses={200: _rendezvous_action_response("termine"), 404: MessageResponseSerializer},
+)
 @api_view(["PATCH", "POST"])
 def terminer_rendezvous(request, rdv_id):
     rdv = rendezvous_service.get_rendezvous(rdv_id)
@@ -135,6 +225,13 @@ def terminer_rendezvous(request, rdv_id):
     )
 
 
+@extend_schema(
+    tags=["Rendez-vous"],
+    summary="Supprimer / annuler un rendez-vous",
+    description="Annule (soft delete) le rendez-vous, ou le supprime définitivement si ?hard=true.",
+    parameters=[HARD_DELETE_PARAM],
+    responses={200: MessageResponseSerializer, 404: MessageResponseSerializer},
+)
 @api_view(["DELETE"])
 def delete_rendezvous(request, rdv_id):
     rdv = rendezvous_service.get_rendezvous(rdv_id)
@@ -147,5 +244,3 @@ def delete_rendezvous(request, rdv_id):
     if hard:
         return Response({"message": "Rendez-vous supprimé définitivement avec succès."}, status=status.HTTP_200_OK)
     return Response({"message": "Rendez-vous annulé (archivé) avec succès."}, status=status.HTTP_200_OK)
-
-

@@ -43,5 +43,5 @@ class Lit(models.Model):
         return f"Lit{label_lit} - {self.chambre.batiment.nom} / Chambre {self.chambre.numero_chambre} ({self.get_etat_display()})"
 
     @property
-    def idLit(self):
+    def idLit(self) -> int:
         return self.id
