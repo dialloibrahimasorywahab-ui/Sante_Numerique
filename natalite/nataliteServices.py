@@ -2,6 +2,7 @@ from .nataliteRepositories import NataliteRepository
 
 
 class NataliteService:
+    # instanciation du repository pour avoir accèes à ces données
     def __init__(self):
         self.repository = NataliteRepository()
     
