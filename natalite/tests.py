@@ -1,5 +1,8 @@
+# pyrefly: ignore [missing-import]
 from django.test import TestCase
-# from rest_framework.test import APIClient
+# pyrefly: ignore [missing-import]
+from rest_framework.test import APIClient
+# pyrefly: ignore [missing-import]
 from rest_framework import status
 from users.models import User
 from patients.models import Patient

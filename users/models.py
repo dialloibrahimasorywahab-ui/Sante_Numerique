@@ -1,7 +1,6 @@
-from datetime import datetime
-from typing import Optional
-
+# pyrefly: ignore [missing-import]
 from django.db import models
+# pyrefly: ignore [missing-import]
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 
 
@@ -75,20 +74,6 @@ class User(AbstractUser):
         self.first_name = self.prenom
         self.last_name = self.nom
         self.is_active = self.actif
-        if "update_fields" in kwargs and kwargs["update_fields"]:
-            uf = set(kwargs["update_fields"])
-            if "derniereConnexion" in uf:
-                uf.remove("derniereConnexion")
-                uf.add("last_login")
-            if "actif" in uf:
-                uf.add("is_active")
-            if "nom" in uf:
-                uf.add("last_name")
-            if "prenom" in uf:
-                uf.add("first_name")
-            if "login" in uf:
-                uf.add("username")
-            kwargs["update_fields"] = list(uf)
         super().save(*args, **kwargs)
 
     @property
@@ -104,7 +89,7 @@ class User(AbstractUser):
                 self.set_password(raw_password)
 
     @property
-    def derniereConnexion(self) -> Optional[datetime]:
+    def derniereConnexion(self):
         return self.last_login
 
     @derniereConnexion.setter

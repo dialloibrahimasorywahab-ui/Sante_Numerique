@@ -1,4 +1,6 @@
+# pyrefly: ignore [missing-import]
 from datetime import date
+# pyrefly: ignore [missing-import]
 from rest_framework import serializers
 from .models import Natalite
 from patients.models import Patient

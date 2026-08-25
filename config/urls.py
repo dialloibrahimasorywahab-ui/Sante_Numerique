@@ -16,7 +16,9 @@ Including another URLconf
 """
 # pyrefly: ignore [missing-import]
 from django.contrib import admin
+# pyrefly: ignore [missing-import]
 from django.urls import include, path
+# pyrefly: ignore [missing-import]
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularRedocView,
@@ -54,6 +56,8 @@ urlpatterns = [
     path('natalites/', include('natalite.nataliteUrls')),
     path('mortalite/', include('mortalite.mortaliteUrls')),
     path('mortalites/', include('mortalite.mortaliteUrls')),
+    path('hospitalisation/', include('hospitalisation.hospitalisationUrls')),
+    path('hospitalisations/', include('hospitalisation.hospitalisationUrls')),
 ]
 
 

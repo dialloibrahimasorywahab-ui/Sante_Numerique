@@ -1,4 +1,6 @@
+# pyrefly: ignore [missing-import]
 from django.contrib import admin
+# pyrefly: ignore [missing-import]
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import User
 
