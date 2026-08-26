@@ -58,6 +58,13 @@ def run_all_seeds():
     except Exception as e:
         print(f" Warning seed_consultations: {e}")
 
+    try:
+        from seed_ordonnances import run_seed_ordonnances
+        print("\n8. Execution de seed_ordonnances.py...")
+        run_seed_ordonnances()
+    except Exception as e:
+        print(f" Warning seed_ordonnances: {e}")
+
     print("\n=========================================================")
     print("===      TOUS LES SEEDS ONT ETE EXECUTES AVEC SUCCES    ===")
     print("=========================================================\n")

@@ -49,4 +49,5 @@ class Ordonnance(models.Model):
 
     @property
     def idOrdonnance(self) -> int:
+        # pyrefly: ignore [untyped-return]
         return self.id

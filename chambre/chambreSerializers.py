@@ -12,6 +12,17 @@ class ChambreSerializer(serializers.ModelSerializer):
         write_only=True,
         required=False
     )
+    numero_chambre = serializers.IntegerField(
+        default=0,
+        min_value=0,
+        help_text="Numéro de la chambre (par défaut 0)."
+    )
+    capacite = serializers.IntegerField(
+        default=1,
+        min_value=1,
+        max_value=50,
+        help_text="Capacité / nombre de lits dans la chambre (par défaut 1)."
+    )
     batiment_detail = BatimentSerializer(source='batiment', read_only=True)
     typeChambreDisplay = serializers.CharField(source="get_type_chambre_display", read_only=True)
     statutDisplay = serializers.CharField(source="get_statut_display", read_only=True)

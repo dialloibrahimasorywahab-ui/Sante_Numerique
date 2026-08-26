@@ -37,7 +37,7 @@ class UserService:
         user = self.repository.getUserByLogin(login)
         if user and user.actif and check_password(password, user.motDePasseHash):
             user.derniereConnexion = timezone.now()
-            user.save(update_fields=["derniereConnexion"])
+            user.save(update_fields=["last_login"])
             return user
         return None
 

@@ -176,5 +176,8 @@ def run_seed():
     print("=========================================================")
 
 
+run_seed_batiment_chambres = run_seed
+
+
 if __name__ == "__main__":
     run_seed()

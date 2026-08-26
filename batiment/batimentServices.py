@@ -22,7 +22,7 @@ class BatimentService:
     def search_batiments(self, query):
         return self.repository.search_batiments(query)
 
-    def get_or_create_batiment(self, nom, nombre_chambre=0, description=""):
+    def get_or_create_batiment(self, nom, nombre_chambre=None, description=""):
         if not nom:
             return None
         batiment = self.get_batiment_by_nom(nom)

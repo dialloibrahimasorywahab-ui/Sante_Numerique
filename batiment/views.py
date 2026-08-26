@@ -1,7 +1,7 @@
 # pyrefly: ignore [missing-import]
 from django.db import IntegrityError
 # pyrefly: ignore [missing-import]
-from drf_spectacular.utils import extend_schema, inline_serializer
+from drf_spectacular.utils import OpenApiExample, extend_schema, inline_serializer
 # pyrefly: ignore [missing-import]
 from rest_framework import serializers, status
 # pyrefly: ignore [missing-import]
@@ -23,6 +23,30 @@ batiment_service = BatimentService()
     description="Enregistre un nouveau bâtiment.",
     request=BatimentSerializer,
     responses={201: BatimentSerializer, 400: ErrorResponseSerializer},
+    examples=[
+        OpenApiExample(
+            name="Création bâtiment (par défaut - sans nombre de chambres)",
+            description="Création d'un bâtiment sans nombre de chambres (la valeur reste null jusqu'à affectation).",
+            value={
+                "nom": "Pavillon Administratif",
+                "description": "Administration et direction",
+                "nombre_chambre": None,
+                "actif": True
+            },
+            request_only=True,
+        ),
+        OpenApiExample(
+            name="Création bâtiment (avec nombre de chambres défini)",
+            description="Création avec un nombre prévisionnel de chambres.",
+            value={
+                "nom": "Bâtiment Principal C",
+                "description": "Consultations et soins polyvalents",
+                "nombre_chambre": 10,
+                "actif": True
+            },
+            request_only=True,
+        ),
+    ]
 )
 @api_view(["POST"])
 def create_batiment(request):
@@ -108,6 +132,18 @@ def get_batiment_chambres(request, batiment_id):
     description="Met à jour totalement (PUT) ou partiellement (PATCH) un bâtiment.",
     request=BatimentSerializer,
     responses={200: BatimentSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
+    examples=[
+        OpenApiExample(
+            name="Modification partielle / complète",
+            value={
+                "nom": "Bâtiment Principal Modifié",
+                "description": "Nouvelle description",
+                "nombre_chambre": None,
+                "actif": True
+            },
+            request_only=True,
+        )
+    ]
 )
 @api_view(["PUT", "PATCH"])
 def update_batiment(request, batiment_id):

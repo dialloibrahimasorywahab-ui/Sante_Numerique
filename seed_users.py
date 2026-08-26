@@ -117,5 +117,8 @@ def generate_users(count=50):
     print(f"\n[OK] {created_count} utilisateurs (et leurs fiches associées) ont ete generes avec succes !")
 
 
+run_seed_users = generate_users
+
+
 if __name__ == "__main__":
     generate_users(50)

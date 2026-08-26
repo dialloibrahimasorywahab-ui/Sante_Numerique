@@ -103,5 +103,8 @@ def add_7_medecins():
     print("\n[OK] Les 7 médecins ont été enregistrés avec succès !")
 
 
+run_seed_7_medecins = add_7_medecins
+
+
 if __name__ == "__main__":
     add_7_medecins()

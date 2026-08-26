@@ -58,6 +58,16 @@ urlpatterns = [
     path('mortalites/', include('mortalite.mortaliteUrls')),
     path('hospitalisation/', include('hospitalisation.hospitalisationUrls')),
     path('hospitalisations/', include('hospitalisation.hospitalisationUrls')),
+
+
+    path('consultations/', include('consultation.consultationUrls')),
+    path('consultation/', include('consultation.consultationUrls')),
+    path('ordonnances/', include('ordonnance.ordonnanceUrls')),
+    path('ordonnance/', include('ordonnance.ordonnanceUrls')),
+    path('frais-consultations/', include('frais_consultation.fraisUrls')),
+    path('frais-consultation/', include('frais_consultation.fraisUrls')),
+    path('frais_consultations/', include('frais_consultation.fraisUrls')),
+    path('frais_consultation/', include('frais_consultation.fraisUrls')),
 ]
 
 

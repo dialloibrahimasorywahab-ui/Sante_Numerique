@@ -1,6 +1,6 @@
 from django.db import IntegrityError
 from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import OpenApiParameter, extend_schema
+from drf_spectacular.utils import OpenApiExample, OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -18,6 +18,19 @@ chambre_service = ChambreService()
     description="Enregistre une nouvelle chambre, rattachée éventuellement à un bâtiment.",
     request=ChambreSerializer,
     responses={201: ChambreSerializer, 400: ErrorResponseSerializer},
+    examples=[
+        OpenApiExample(
+            name="Création de chambre",
+            value={
+                "id_batiment": 1,
+                "numero_chambre": 0,
+                "type_chambre": "INDIVIDUELLE",
+                "capacite": 1,
+                "statut": "DISPONIBLE"
+            },
+            request_only=True,
+        )
+    ]
 )
 @api_view(["POST"])
 def create_chambre(request):
@@ -116,6 +129,18 @@ def get_chambre(request, chambre_id):
     description="Met à jour totalement (PUT) ou partiellement (PATCH) une chambre.",
     request=ChambreSerializer,
     responses={200: ChambreSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
+    examples=[
+        OpenApiExample(
+            name="Modification de chambre",
+            value={
+                "numero_chambre": 0,
+                "type_chambre": "INDIVIDUELLE",
+                "capacite": 1,
+                "statut": "DISPONIBLE"
+            },
+            request_only=True,
+        )
+    ]
 )
 @api_view(["PUT", "PATCH"])
 def update_chambre(request, chambre_id):

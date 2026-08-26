@@ -28,7 +28,7 @@ class Chambre(models.Model):
         related_name="chambres",
         db_column="id_batiment"
     )
-    numero_chambre = models.IntegerField()
+    numero_chambre = models.IntegerField(default=0)
     type_chambre = models.CharField(
         max_length=50,
         choices=TypeChambre.choices,

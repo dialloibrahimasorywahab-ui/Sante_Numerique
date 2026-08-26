@@ -145,5 +145,8 @@ def register_medical_staff():
     print(f"\n[Terminé] {registered_count}/{len(PERSONNEL_MEDICAL_DATA)} membres du personnel médical ont été traités et enregistrés avec succès !")
 
 
+run_seed_personnel = register_medical_staff
+
+
 if __name__ == "__main__":
     register_medical_staff()
