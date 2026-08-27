@@ -1,13 +1,15 @@
-# pyrefly: ignore [missing-import]
+from django.db import IntegrityError
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema, inline_serializer
 from rest_framework import serializers, status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from config.permissions import IsStaffOrAdmin, deny_unless_owner_or_staff
 from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer, SEARCH_PARAM
 from .rendezvousSerializers import RendezVousSerializer
-from .rendezvousServices import RendezVousService
+from .rendezvousServices import ConflictError, RendezVousService
 
 rendezvous_service = RendezVousService()
 
@@ -28,15 +30,22 @@ def _rendezvous_action_response(message_example):
     summary="Créer un rendez-vous",
     description="Enregistre un nouveau rendez-vous entre un patient et un médecin.",
     request=RendezVousSerializer,
-    responses={201: RendezVousSerializer, 400: ErrorResponseSerializer},
+    responses={201: RendezVousSerializer, 400: ErrorResponseSerializer, 409: ErrorResponseSerializer},
 )
 @api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def create_rendezvous(request):
     serializer = RendezVousSerializer(data=request.data)
     if serializer.is_valid():
         try:
             rdv = rendezvous_service.create_rendezvous(**serializer.validated_data)
             return Response(RendezVousSerializer(rdv).data, status=status.HTTP_201_CREATED)
+        except ConflictError as e:
+            return Response({"error": "Conflit de rendez-vous.", "detail": str(e)}, status=status.HTTP_409_CONFLICT)
+        except ValueError as e:
+            return Response({"error": "Données de rendez-vous invalides.", "detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except IntegrityError as e:
+            return Response({"error": "Conflit de rendez-vous.", "detail": "Un rendez-vous existe déjà pour ce médecin à cette date et heure."}, status=status.HTTP_409_CONFLICT)
         except Exception as e:
             return Response({"error": "Erreur lors de la création du rendez-vous.", "detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -60,6 +69,7 @@ def create_rendezvous(request):
     responses={200: RendezVousSerializer(many=True)},
 )
 @api_view(["GET"])
+@permission_classes([IsStaffOrAdmin])
 def get_all_rendezvous(request):
     patient_id = request.query_params.get('patient_id') or request.query_params.get('id_patient')
     medecin_id = request.query_params.get('medecin_id') or request.query_params.get('id_medecin')
@@ -91,6 +101,7 @@ def get_all_rendezvous(request):
     responses={200: RendezVousSerializer(many=True)},
 )
 @api_view(["GET"])
+@permission_classes([IsStaffOrAdmin])
 def get_rendezvous_by_statut(request, statut):
     rdvs = rendezvous_service.get_rendezvous_by_statut(statut)
     serializer = RendezVousSerializer(rdvs, many=True)
@@ -105,6 +116,7 @@ def get_rendezvous_by_statut(request, statut):
     responses={200: RendezVousSerializer(many=True)},
 )
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def get_rendezvous_by_patient(request, patient_id):
     rdvs = rendezvous_service.get_rendezvous_by_patient(patient_id)
     serializer = RendezVousSerializer(rdvs, many=True)
@@ -118,6 +130,7 @@ def get_rendezvous_by_patient(request, patient_id):
     responses={200: RendezVousSerializer(many=True)},
 )
 @api_view(["GET"])
+@permission_classes([IsStaffOrAdmin])
 def get_rendezvous_by_medecin(request, medecin_id):
     rdvs = rendezvous_service.get_rendezvous_by_medecin(medecin_id)
     serializer = RendezVousSerializer(rdvs, many=True)
@@ -132,10 +145,12 @@ def get_rendezvous_by_medecin(request, medecin_id):
     responses={200: RendezVousSerializer, 404: MessageResponseSerializer},
 )
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def get_rendezvous(request, rdv_id):
     rdv = rendezvous_service.get_rendezvous(rdv_id)
     if rdv is None:
         return Response({"message": "Rendez-vous introuvable"}, status=status.HTTP_404_NOT_FOUND)
+    deny_unless_owner_or_staff(request, rdv)
     return Response(RendezVousSerializer(rdv).data, status=status.HTTP_200_OK)
 
 # mettre à jour les données d'un rendez-vous
@@ -147,10 +162,13 @@ def get_rendezvous(request, rdv_id):
     responses={200: RendezVousSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
 )
 @api_view(["PUT", "PATCH"])
+@permission_classes([IsAuthenticated])
 def update_rendezvous(request, rdv_id):
     rdv = rendezvous_service.get_rendezvous(rdv_id)
     if rdv is None:
         return Response({"message": "Rendez-vous introuvable"}, status=status.HTTP_404_NOT_FOUND)
+
+    deny_unless_owner_or_staff(request, rdv)
 
     partial = request.method == "PATCH" or request.data.get("partial", False)
     serializer = RendezVousSerializer(rdv, data=request.data, partial=partial)
@@ -173,6 +191,7 @@ def update_rendezvous(request, rdv_id):
     responses={200: _rendezvous_action_response("confirme"), 404: MessageResponseSerializer},
 )
 @api_view(["PATCH", "POST"])
+@permission_classes([IsStaffOrAdmin])
 def confirmer_rendezvous(request, rdv_id):
     rdv = rendezvous_service.get_rendezvous(rdv_id)
     if rdv is None:
@@ -193,10 +212,13 @@ def confirmer_rendezvous(request, rdv_id):
     responses={200: _rendezvous_action_response("annule"), 404: MessageResponseSerializer},
 )
 @api_view(["PATCH", "POST"])
+@permission_classes([IsAuthenticated])
 def annuler_rendezvous(request, rdv_id):
     rdv = rendezvous_service.get_rendezvous(rdv_id)
     if rdv is None:
         return Response({"message": "Rendez-vous introuvable"}, status=status.HTTP_404_NOT_FOUND)
+
+    deny_unless_owner_or_staff(request, rdv)
 
     updated = rendezvous_service.update_rendezvous(rdv, statut="ANNULE")
     return Response(
@@ -213,6 +235,7 @@ def annuler_rendezvous(request, rdv_id):
     responses={200: _rendezvous_action_response("termine"), 404: MessageResponseSerializer},
 )
 @api_view(["PATCH", "POST"])
+@permission_classes([IsStaffOrAdmin])
 def terminer_rendezvous(request, rdv_id):
     rdv = rendezvous_service.get_rendezvous(rdv_id)
     if rdv is None:
@@ -233,6 +256,7 @@ def terminer_rendezvous(request, rdv_id):
     responses={200: MessageResponseSerializer, 404: MessageResponseSerializer},
 )
 @api_view(["DELETE"])
+@permission_classes([IsStaffOrAdmin])
 def delete_rendezvous(request, rdv_id):
     rdv = rendezvous_service.get_rendezvous(rdv_id)
     if rdv is None:
@@ -244,3 +268,4 @@ def delete_rendezvous(request, rdv_id):
     if hard:
         return Response({"message": "Rendez-vous supprimé définitivement avec succès."}, status=status.HTTP_200_OK)
     return Response({"message": "Rendez-vous annulé (archivé) avec succès."}, status=status.HTTP_200_OK)
+

@@ -18,6 +18,11 @@ class PersonnelProjectConfigTests(SimpleTestCase):
 
 
 class PersonnelRepositoryTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create(nom="Admin", prenom="Super", email="adm_pers@test.com", telephone="0101010101", login="adm_pers", motDePasseHash="hash", role=User.Role.ADMINISTRATEUR)
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.admin)
+
     def test_update_personnel_updates_fields(self):
         user = User.objects.create(
             login='inf_nurse',
@@ -49,12 +54,10 @@ class PersonnelRepositoryTests(TestCase):
         self.assertIsNone(personnel)
 
     def test_get_personnel_api_not_found_returns_404(self):
-        client = APIClient()
-        response = client.get("/personnel/9999/")
+        response = self.client.get("/personnel/9999/")
         self.assertEqual(response.status_code, 404)
 
     def test_create_personnel_combined_frontend_post(self):
-        client = APIClient()
         payload = {
             "nom": "Bah",
             "prenom": "Mariama",
@@ -69,14 +72,13 @@ class PersonnelRepositoryTests(TestCase):
             "matricule": "EMP-INF-999",
             "dateEmbauche": "2024-03-01",
         }
-        response = client.post("/personnel/", payload, format="json")
+        response = self.client.post("/personnel/", payload, format="json")
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data["nom"], "Bah")
         self.assertEqual(response.data["prenom"], "Mariama")
         self.assertEqual(response.data["typePersonnel"], "INFIRMIER")
 
     def test_update_personnel_nested_user_fields(self):
-        client = APIClient()
         user = User.objects.create(
             nom="Camara", prenom="Aminata", email="a.camara@hosp.com",
             telephone="+224623112233", login="inf_aminata", role=User.Role.INFIRMIER
@@ -89,7 +91,7 @@ class PersonnelRepositoryTests(TestCase):
             "prenom": "Aminata Binta",
             "poste": "Infirmière Major",
         }
-        response = client.patch(f"/personnel/{personnel.idPersonnel}/update/", update_payload, format="json")
+        response = self.client.patch(f"/personnel/{personnel.idPersonnel}/update/", update_payload, format="json")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["prenom"], "Aminata Binta")
         self.assertEqual(response.data["poste"], "Infirmière Major")
@@ -97,8 +99,7 @@ class PersonnelRepositoryTests(TestCase):
         self.assertEqual(user.prenom, "Aminata Binta")
 
     def test_create_personnel_empty_payload_returns_400(self):
-        client = APIClient()
-        response = client.post("/personnel/", {}, format="json")
+        response = self.client.post("/personnel/", {}, format="json")
         self.assertEqual(response.status_code, 400)
         self.assertIn("nom", response.data)
         self.assertIn("prenom", response.data)

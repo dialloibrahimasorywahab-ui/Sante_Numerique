@@ -111,6 +111,8 @@ class NataliteAPITests(TestCase):
             motDePasseHash="pass123",
             role=User.Role.PATIENT,
         )
+        self.admin = User.objects.create(nom="Admin", prenom="Super", email="adm_nat@test.com", telephone="0101010101", login="adm_nat", motDePasseHash="hash", role=User.Role.ADMINISTRATEUR)
+        self.client.force_authenticate(user=self.admin)
         self.patient = Patient.objects.create(
             idUtilisateur=self.user_mother,
             dateNaissance="1998-07-20",

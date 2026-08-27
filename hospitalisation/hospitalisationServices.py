@@ -39,8 +39,8 @@ class HospitalisationService:
                     actif=True
                 ).exists()
 
-                if active_hosp or lit_locked.etat in [Lit.EtatLit.OCCUPE, Lit.EtatLit.HORS_SERVICE]:
-                    raise ValueError(f"Le lit {lit_locked.numero_lit or lit_locked.id} est actuellement indisponible ou déjà occupé.")
+                if lit_locked.etat != Lit.EtatLit.DISPONIBLE or active_hosp:
+                    raise ValueError(f"Le lit {lit_locked.numero_lit or lit_locked.id} est actuellement indisponible ou déjà occupé (état : {lit_locked.get_etat_display()}).")
 
                 if statut == Hospitalisation.StatutHospitalisation.EN_COURS:
                     lit_locked.etat = Lit.EtatLit.OCCUPE
@@ -98,8 +98,8 @@ class HospitalisationService:
                     actif=True
                 ).exclude(pk=hospitalisation_id).exists()
 
-                if active_hosp or nouveau_lit_locked.etat in [Lit.EtatLit.OCCUPE, Lit.EtatLit.HORS_SERVICE]:
-                    raise ValueError(f"Le lit {nouveau_lit_locked.numero_lit or nouveau_lit_locked.id} est actuellement indisponible ou déjà occupé.")
+                if nouveau_lit_locked.etat != Lit.EtatLit.DISPONIBLE or active_hosp:
+                    raise ValueError(f"Le lit {nouveau_lit_locked.numero_lit or nouveau_lit_locked.id} est actuellement indisponible ou déjà occupé (état : {nouveau_lit_locked.get_etat_display()}).")
 
                 nouveau_lit = nouveau_lit_locked
                 kwargs['lit'] = nouveau_lit

@@ -11,11 +11,32 @@ urlpatterns = [
         name="create_user"
     ),
 
-    # connexion / authentification (sans JWT)
+    # connexion / authentification avec cookies JWT HttpOnly
     path(
         "login/",
         views.login_user,
         name="login_user"
+    ),
+
+    # deconnexion (invalidation refresh token et suppression cookies)
+    path(
+        "logout/",
+        views.logout_user,
+        name="logout_user"
+    ),
+
+    # deconnexion de toutes les sessions
+    path(
+        "logout-all/",
+        views.logout_all_users,
+        name="logout_all_users"
+    ),
+
+    # rafraichissement du token via cookie HttpOnly
+    path(
+        "token/refresh/",
+        views.CookieTokenRefreshView.as_view(),
+        name="token_refresh"
     ),
 
     # recuperation d'un utilisateur par son id

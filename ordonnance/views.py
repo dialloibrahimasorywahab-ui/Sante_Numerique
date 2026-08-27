@@ -1,15 +1,11 @@
-# pyrefly: ignore [missing-import]
 from drf_spectacular.types import OpenApiTypes
-# pyrefly: ignore [missing-import]
 from drf_spectacular.utils import OpenApiParameter, extend_schema
-# pyrefly: ignore [missing-import]
 from rest_framework import status
-# pyrefly: ignore [missing-import]
-from rest_framework.decorators import api_view
-# pyrefly: ignore [missing-import]
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-# pyrefly: ignore [missing-import]
+from config.permissions import IsMedecinOuAdmin, IsStaffOrAdmin, deny_unless_owner_or_staff
 from config.schema_helpers import (
     ErrorResponseSerializer,
     HARD_DELETE_PARAM,
@@ -39,8 +35,12 @@ ordonnance_service = OrdonnanceService()
     },
 )
 @api_view(["GET", "POST"])
+@permission_classes([IsAuthenticated])
 def ordonnance_list_create_view(request):
     if request.method == "GET":
+        if getattr(request.user, "role", None) not in ["MEDECIN", "INFIRMIER", "ADMINISTRATEUR"]:
+            return Response({"error": "Accès réservé au personnel soignant et administrateurs."}, status=status.HTTP_403_FORBIDDEN)
+
         actif_only = request.query_params.get("all", "false").lower() != "true"
         qs = ordonnance_service.repository.get_all_ordonnances(actif_only=actif_only)
 
@@ -56,6 +56,9 @@ def ordonnance_list_create_view(request):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     elif request.method == "POST":
+        if getattr(request.user, "role", None) not in ["MEDECIN", "ADMINISTRATEUR"]:
+            return Response({"error": "Seul un médecin ou administrateur peut prescrire une ordonnance."}, status=status.HTTP_403_FORBIDDEN)
+
         serializer = OrdonnanceSerializer(data=request.data)
         if serializer.is_valid():
             try:
@@ -78,13 +81,19 @@ def ordonnance_list_create_view(request):
     },
 )
 @api_view(["GET", "PUT", "PATCH"])
+@permission_classes([IsAuthenticated])
 def ordonnance_detail_view(request, pk):
     ord_obj = ordonnance_service.repository.get_ordonnance_by_id(pk)
     if not ord_obj:
         return Response({"error": f"Ordonnance #{pk} introuvable."}, status=status.HTTP_404_NOT_FOUND)
 
+    deny_unless_owner_or_staff(request, ord_obj)
+
     if request.method == "GET":
         return Response(OrdonnanceReadSerializer(ord_obj).data, status=status.HTTP_200_OK)
+
+    if getattr(request.user, "role", None) not in ["MEDECIN", "ADMINISTRATEUR"]:
+        return Response({"error": "Seul un médecin ou administrateur peut modifier une ordonnance."}, status=status.HTTP_403_FORBIDDEN)
 
     partial = (request.method == "PATCH")
     serializer = OrdonnanceSerializer(ord_obj, data=request.data, partial=partial)
@@ -108,6 +117,7 @@ def ordonnance_detail_view(request, pk):
     },
 )
 @api_view(["DELETE"])
+@permission_classes([IsMedecinOuAdmin])
 def ordonnance_delete_view(request, pk):
     hard = request.query_params.get("hard", "false").lower() == "true"
     success = ordonnance_service.supprimer_ordonnance(pk, hard=hard)

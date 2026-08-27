@@ -43,3 +43,10 @@ class UserSerializers(serializers.ModelSerializer):
             if errors:
                 raise serializers.ValidationError(errors)
         return attrs
+
+    def update(self, instance, validated_data):
+        request = self.context.get("request")
+        if request and getattr(request.user, "role", None) != "ADMINISTRATEUR":
+            validated_data.pop("role", None)
+            validated_data.pop("idUser", None)
+        return super().update(instance, validated_data)

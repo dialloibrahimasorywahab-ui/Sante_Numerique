@@ -1,8 +1,11 @@
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+
+from config.permissions import IsMedecinOuAdmin, IsStaffOrAdmin, deny_unless_owner_or_staff
 from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer, SEARCH_PARAM
 from .mortaliteSerializers import MortaliteSerializer
 from .mortaliteServices import MortaliteService
@@ -18,6 +21,7 @@ mortalite_service = MortaliteService()
     responses={201: MortaliteSerializer, 400: ErrorResponseSerializer},
 )
 @api_view(["POST"])
+@permission_classes([IsMedecinOuAdmin])
 def create_deces(request):
     serializer = MortaliteSerializer(data=request.data)
     if serializer.is_valid():
@@ -51,6 +55,7 @@ def create_deces(request):
     responses={200: MortaliteSerializer(many=True)},
 )
 @api_view(["GET"])
+@permission_classes([IsStaffOrAdmin])
 def get_all_mortalite(request):
     patient_id = request.query_params.get('patient_id') or request.query_params.get('id_patient')
     medecin_id = request.query_params.get('medecin_id') or request.query_params.get('id_medecin')
@@ -79,10 +84,12 @@ def get_all_mortalite(request):
     responses={200: MortaliteSerializer, 404: MessageResponseSerializer},
 )
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def get_mortalite(request, id_deces):
     deces = mortalite_service.get_deces_by_id(id_deces)
     if deces is None:
         return Response({"message": "Fiche de décès introuvable"}, status=status.HTTP_404_NOT_FOUND)
+    deny_unless_owner_or_staff(request, deces)
     return Response(MortaliteSerializer(deces).data, status=status.HTTP_200_OK)
 
 
@@ -94,6 +101,7 @@ def get_mortalite(request, id_deces):
     responses={200: MortaliteSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
 )
 @api_view(["PUT", "PATCH"])
+@permission_classes([IsMedecinOuAdmin])
 def update_mortalite(request, deces_id):
     deces = mortalite_service.get_deces_by_id(deces_id)
     if deces is None:
@@ -122,6 +130,7 @@ def update_mortalite(request, deces_id):
     responses={200: MessageResponseSerializer, 404: MessageResponseSerializer},
 )
 @api_view(["DELETE"])
+@permission_classes([IsMedecinOuAdmin])
 def delete_mortalite(request, deces_id):
     deces = mortalite_service.get_deces_by_id(deces_id)
     if deces is None:

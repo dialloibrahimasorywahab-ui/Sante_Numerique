@@ -1,9 +1,11 @@
 from django.db import IntegrityError
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from config.permissions import IsAdmin, IsStaffOrAdmin, deny_unless_owner_or_staff
 from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer, SEARCH_PARAM
 from .patientSerializers import PatientSerializer
 from .patientServices import PatientService
@@ -23,6 +25,7 @@ patient_service = PatientService()
     responses={200: PatientSerializer(many=True), 201: PatientSerializer, 400: ErrorResponseSerializer},
 )
 @api_view(["GET", "POST"])
+@permission_classes([IsStaffOrAdmin])
 def create_patient(request):
     if request.method == "GET":
         query = request.query_params.get("search") or request.query_params.get("q")
@@ -64,6 +67,7 @@ def create_patient(request):
     responses={200: PatientSerializer(many=True)},
 )
 @api_view(["GET"])
+@permission_classes([IsStaffOrAdmin])
 def get_all_patient(request):
     patients = patient_service.get_all_patient()
     serializer = PatientSerializer(patients, many=True)
@@ -84,6 +88,7 @@ def get_all_patient(request):
     responses={200: PatientSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
 )
 @api_view(["GET", "PUT", "PATCH", "DELETE"])
+@permission_classes([IsAuthenticated])
 def get_patient(request, patient_id):
     if request.method in ["PUT", "PATCH"]:
         return update_patient(request, patient_id)
@@ -97,6 +102,8 @@ def get_patient(request, patient_id):
             {"message": "Patient introuvable"},
             status=status.HTTP_404_NOT_FOUND
         )
+
+    deny_unless_owner_or_staff(request, patient)
 
     serializer = PatientSerializer(patient)
     return Response(
@@ -114,6 +121,7 @@ def get_patient(request, patient_id):
     responses={200: PatientSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
 )
 @api_view(["PUT", "PATCH"])
+@permission_classes([IsAuthenticated])
 def update_patient(request, patient_id):
     patient = patient_service.get_Patient(patient_id)
 
@@ -123,8 +131,10 @@ def update_patient(request, patient_id):
             status=status.HTTP_404_NOT_FOUND
         )
 
+    deny_unless_owner_or_staff(request, patient)
+
     partial = request.method == "PATCH" or request.data.get("partial", False)
-    serializer = PatientSerializer(patient, data=request.data, partial=partial)
+    serializer = PatientSerializer(patient, data=request.data, partial=partial, context={"request": request})
 
     if serializer.is_valid():
         try:
@@ -156,6 +166,7 @@ def update_patient(request, patient_id):
     responses={200: MessageResponseSerializer, 404: MessageResponseSerializer},
 )
 @api_view(["DELETE"])
+@permission_classes([IsAdmin])
 def delete_patient(request, patient_id):
     patient = patient_service.get_Patient(patient_id)
 

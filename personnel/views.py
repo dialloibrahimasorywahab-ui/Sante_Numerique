@@ -2,9 +2,11 @@ from django.db import IntegrityError
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from config.permissions import IsAdmin, IsStaffOrAdmin, deny_unless_owner_or_staff
 from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer
 from .personnelSerializers import PersonnelSerializer
 from .personnelServices import PersonnelService
@@ -28,6 +30,7 @@ personnel_service = PersonnelService()
     responses={200: PersonnelSerializer(many=True), 201: PersonnelSerializer, 400: ErrorResponseSerializer},
 )
 @api_view(["GET", "POST"])
+@permission_classes([IsStaffOrAdmin])
 def create_personnel(request):
     if request.method == "GET":
         type_personnel = request.query_params.get("type") or request.query_params.get("category")
@@ -40,6 +43,9 @@ def create_personnel(request):
             personnels = personnel_service.get_all_personnel()
         serializer = PersonnelSerializer(personnels, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    if getattr(request.user, "role", None) != "ADMINISTRATEUR":
+        return Response({"message": "Seul un administrateur peut enregistrer un membre du personnel."}, status=status.HTTP_403_FORBIDDEN)
 
     serializer = PersonnelSerializer(data=request.data)
 
@@ -76,6 +82,7 @@ def create_personnel(request):
     responses={200: PersonnelSerializer(many=True)},
 )
 @api_view(["GET"])
+@permission_classes([IsStaffOrAdmin])
 def get_all_personnel(request):
     type_personnel = request.query_params.get("type") or request.query_params.get("category")
     if type_personnel:
@@ -98,6 +105,7 @@ def get_all_personnel(request):
     responses={200: PersonnelSerializer(many=True)},
 )
 @api_view(["GET"])
+@permission_classes([IsStaffOrAdmin])
 def get_personnel_by_type(request, type_personnel):
     personnels = personnel_service.get_personnel_by_type(type_personnel)
     serializer = PersonnelSerializer(personnels, many=True)
@@ -117,6 +125,7 @@ def get_personnel_by_type(request, type_personnel):
     responses={200: PersonnelSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
 )
 @api_view(["GET", "PUT", "PATCH", "DELETE"])
+@permission_classes([IsAuthenticated])
 def get_personnel(request, personnel_id):
     if request.method in ["PUT", "PATCH"]:
         return update_personnel(request, personnel_id)
@@ -130,6 +139,8 @@ def get_personnel(request, personnel_id):
             {"message": "Membre du personnel introuvable"},
             status=status.HTTP_404_NOT_FOUND
         )
+
+    deny_unless_owner_or_staff(request, personnel)
 
     serializer = PersonnelSerializer(personnel)
     return Response(
@@ -147,6 +158,7 @@ def get_personnel(request, personnel_id):
     responses={200: PersonnelSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
 )
 @api_view(["PUT", "PATCH"])
+@permission_classes([IsAuthenticated])
 def update_personnel(request, personnel_id):
     personnel = personnel_service.get_Personnel(personnel_id)
 
@@ -156,8 +168,10 @@ def update_personnel(request, personnel_id):
             status=status.HTTP_404_NOT_FOUND
         )
 
+    deny_unless_owner_or_staff(request, personnel)
+
     partial = request.method == "PATCH" or request.data.get("partial", False)
-    serializer = PersonnelSerializer(personnel, data=request.data, partial=partial)
+    serializer = PersonnelSerializer(personnel, data=request.data, partial=partial, context={"request": request})
 
     if serializer.is_valid():
         try:
@@ -189,6 +203,7 @@ def update_personnel(request, personnel_id):
     responses={200: MessageResponseSerializer, 404: MessageResponseSerializer},
 )
 @api_view(["DELETE"])
+@permission_classes([IsAdmin])
 def delete_personnel(request, personnel_id):
     personnel = personnel_service.get_Personnel(personnel_id)
 

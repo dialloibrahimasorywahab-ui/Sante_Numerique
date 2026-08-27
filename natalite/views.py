@@ -1,10 +1,11 @@
-# pyrefly: ignore [missing-import]
 from drf_spectacular.types import OpenApiTypes
-# pyrefly: ignore [missing-import]
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+
+from config.permissions import IsMedecinOuAdmin, IsStaffOrAdmin, deny_unless_owner_or_staff
 from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer, SEARCH_PARAM
 from .nataliteSerializers import NataliteSerializer
 from .nataliteServices import NataliteService
@@ -22,6 +23,7 @@ natalite_service = NataliteService()
     responses={201: NataliteSerializer, 400: ErrorResponseSerializer},
 )
 @api_view(["POST"])
+@permission_classes([IsMedecinOuAdmin])
 def create_naissance(request):
     serializer = NataliteSerializer(data=request.data)
     if serializer.is_valid():
@@ -58,6 +60,7 @@ def create_naissance(request):
     responses={200: NataliteSerializer(many=True)},
 )
 @api_view(["GET"])
+@permission_classes([IsStaffOrAdmin])
 def get_all_natality(request):
     patient_id = request.query_params.get('patient_id') or request.query_params.get('id_patient')
     medecin_id = request.query_params.get('medecin_id') or request.query_params.get('id_medecin')
@@ -90,6 +93,7 @@ def get_all_natality(request):
     responses={200: NataliteSerializer(many=True)},
 )
 @api_view(["GET"])
+@permission_classes([IsStaffOrAdmin])
 def get_natalities_by_sexe(request, sexe):
     natalities = natalite_service.get_natalities_by_sexe(sexe)
     serializer = NataliteSerializer(natalities, many=True)
@@ -104,6 +108,7 @@ def get_natalities_by_sexe(request, sexe):
     responses={200: NataliteSerializer(many=True)},
 )
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def get_natalities_by_patient(request, patient_id):
     natalities = natalite_service.get_nouveaux_nes_by_patient(patient_id)
     serializer = NataliteSerializer(natalities, many=True)
@@ -118,6 +123,7 @@ def get_natalities_by_patient(request, patient_id):
     responses={200: NataliteSerializer(many=True)},
 )
 @api_view(["GET"])
+@permission_classes([IsStaffOrAdmin])
 def get_natalities_by_medecin(request, medecin_id):
     natalities = natalite_service.get_nouveaux_nes_by_medecin(medecin_id)
     serializer = NataliteSerializer(natalities, many=True)
@@ -132,10 +138,12 @@ def get_natalities_by_medecin(request, medecin_id):
     responses={200: NataliteSerializer, 404: MessageResponseSerializer},
 )
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def get_natality(request, id_natality):
     natality = natalite_service.get_nouveauneById(id_natality)
     if natality is None:
         return Response({"message": "Aucune natalité correspondante"}, status=status.HTTP_404_NOT_FOUND)
+    deny_unless_owner_or_staff(request, natality)
     return Response(NataliteSerializer(natality).data, status=status.HTTP_200_OK)
 
 
@@ -148,6 +156,7 @@ def get_natality(request, id_natality):
     responses={200: NataliteSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
 )
 @api_view(["PUT", "PATCH"])
+@permission_classes([IsMedecinOuAdmin])
 def update_natality(request, natality_id):
     natality = natalite_service.get_nouveauneById(natality_id)
     if natality is None:
@@ -177,6 +186,7 @@ def update_natality(request, natality_id):
     responses={200: MessageResponseSerializer, 404: MessageResponseSerializer},
 )
 @api_view(["DELETE"])
+@permission_classes([IsMedecinOuAdmin])
 def delete_natality(request, natality_id):
     natality = natalite_service.get_nouveauneById(natality_id)
     if natality is None:

@@ -208,6 +208,7 @@ class HospitalisationAPITests(TestCase):
         self.batiment = Batiment.objects.create(nom="Bâtiment B")
         self.chambre = Chambre.objects.create(batiment=self.batiment, numero_chambre=202, capacite=1)
         self.lit = Lit.objects.create(chambre=self.chambre, numero_lit="LIT-202-A", etat=Lit.EtatLit.DISPONIBLE)
+        self.client.force_authenticate(user=self.user_doctor)
 
     def test_api_create_and_get_hospitalisation(self):
         url = "/hospitalisations/"

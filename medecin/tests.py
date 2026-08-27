@@ -18,6 +18,11 @@ class MedecinProjectConfigTests(SimpleTestCase):
 
 
 class MedecinRepositoryTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create(nom="Admin", prenom="Super", email="adm_med@test.com", telephone="0101010101", login="adm_med", motDePasseHash="hash", role=User.Role.ADMINISTRATEUR)
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.admin)
+
     def test_update_medecin_updates_fields(self):
         user = User.objects.create(
             login='dr_smith',
@@ -50,12 +55,10 @@ class MedecinRepositoryTests(TestCase):
         self.assertIsNone(medecin)
 
     def test_get_medecin_api_not_found_returns_404(self):
-        client = APIClient()
-        response = client.get("/medecins/9999/")
+        response = self.client.get("/medecins/9999/")
         self.assertEqual(response.status_code, 404)
 
     def test_create_medecin_combined_frontend_post(self):
-        client = APIClient()
         payload = {
             "nom": "Camara",
             "prenom": "Aissatou",
@@ -68,14 +71,13 @@ class MedecinRepositoryTests(TestCase):
             "bureau": "Cabinet 302",
             "dateEmbauche": "2025-02-01",
         }
-        response = client.post("/medecins/", payload, format="json")
+        response = self.client.post("/medecins/", payload, format="json")
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data["nom"], "Camara")
         self.assertEqual(response.data["prenom"], "Aissatou")
         self.assertEqual(response.data["specialite"], "PEDIATRIE")
 
     def test_get_medecins_by_service_filter(self):
-        client = APIClient()
         user1 = User.objects.create(login="doc_cardio", email="cardio@hospital.com", telephone="+224600000001", role=User.Role.MEDECIN)
         user2 = User.objects.create(login="doc_pedia", email="pedia@hospital.com", telephone="+224600000002", role=User.Role.MEDECIN)
 
@@ -92,18 +94,17 @@ class MedecinRepositoryTests(TestCase):
             dateEmbauche="2025-01-01"
         )
 
-        response = client.get("/medecins/service/CARDIOLOGIE/")
+        response = self.client.get("/medecins/service/CARDIOLOGIE/")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]["specialite"], "CARDIOLOGIE")
 
-        response_param = client.get("/medecins/all/?service=PEDIATRIE")
+        response_param = self.client.get("/medecins/all/?service=PEDIATRIE")
         self.assertEqual(response_param.status_code, 200)
         self.assertEqual(len(response_param.data), 1)
         self.assertEqual(response_param.data[0]["specialite"], "PEDIATRIE")
 
     def test_update_medecin_nested_user_fields(self):
-        client = APIClient()
         user = User.objects.create(
             nom="Diallo", prenom="Mamadou", email="m.diallo@hosp.com",
             telephone="+224622001122", login="doc_diallo", role=User.Role.MEDECIN
@@ -116,7 +117,7 @@ class MedecinRepositoryTests(TestCase):
             "nom": "Diallo-Bah",
             "bureau": "Cabinet 5",
         }
-        response = client.patch(f"/medecins/{medecin.idMedecin}/update/", update_payload, format="json")
+        response = self.client.patch(f"/medecins/{medecin.idMedecin}/update/", update_payload, format="json")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["nom"], "Diallo-Bah")
         self.assertEqual(response.data["bureau"], "Cabinet 5")

@@ -2,9 +2,11 @@ from django.db import IntegrityError
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from config.permissions import IsAdmin, deny_unless_owner_or_staff
 from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer
 from .medecinSerializers import MedecinSerializer
 from .medecinServices import MedecinService
@@ -30,6 +32,7 @@ medecin_service = MedecinService()
     responses={200: MedecinSerializer(many=True), 201: MedecinSerializer, 400: ErrorResponseSerializer},
 )
 @api_view(["GET", "POST"])
+@permission_classes([IsAuthenticated])
 def create_medecin(request):
     if request.method == "GET":
         specialite = request.query_params.get("service") or request.query_params.get("specialite")
@@ -42,6 +45,9 @@ def create_medecin(request):
             medecins = medecin_service.get_all_medecin()
         serializer = MedecinSerializer(medecins, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    if getattr(request.user, "role", None) != "ADMINISTRATEUR":
+        return Response({"message": "Seul un administrateur peut enregistrer un médecin."}, status=status.HTTP_403_FORBIDDEN)
 
     serializer = MedecinSerializer(data=request.data)
 
@@ -80,6 +86,7 @@ def create_medecin(request):
     responses={200: MedecinSerializer(many=True)},
 )
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def get_all_medecin(request):
     specialite = request.query_params.get("service") or request.query_params.get("specialite")
     if specialite:
@@ -102,6 +109,7 @@ def get_all_medecin(request):
     responses={200: MedecinSerializer(many=True)},
 )
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def get_medecins_by_specialite(request, specialite):
     medecins = medecin_service.get_medecins_by_specialite(specialite)
     serializer = MedecinSerializer(medecins, many=True)
@@ -121,6 +129,7 @@ def get_medecins_by_specialite(request, specialite):
     responses={200: MedecinSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
 )
 @api_view(["GET", "PUT", "PATCH", "DELETE"])
+@permission_classes([IsAuthenticated])
 def get_medecin(request, medecin_id):
     if request.method in ["PUT", "PATCH"]:
         return update_medecin(request, medecin_id)
@@ -151,6 +160,7 @@ def get_medecin(request, medecin_id):
     responses={200: MedecinSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
 )
 @api_view(["PUT", "PATCH"])
+@permission_classes([IsAuthenticated])
 def update_medecin(request, medecin_id):
     medecin = medecin_service.get_Medecin(medecin_id)
 
@@ -160,8 +170,10 @@ def update_medecin(request, medecin_id):
             status=status.HTTP_404_NOT_FOUND
         )
 
+    deny_unless_owner_or_staff(request, medecin)
+
     partial = request.method == "PATCH" or request.data.get("partial", False)
-    serializer = MedecinSerializer(medecin, data=request.data, partial=partial)
+    serializer = MedecinSerializer(medecin, data=request.data, partial=partial, context={"request": request})
 
     if serializer.is_valid():
         try:
@@ -193,6 +205,7 @@ def update_medecin(request, medecin_id):
     responses={200: MessageResponseSerializer, 404: MessageResponseSerializer},
 )
 @api_view(["DELETE"])
+@permission_classes([IsAdmin])
 def delete_medecin(request, medecin_id):
     medecin = medecin_service.get_Medecin(medecin_id)
 

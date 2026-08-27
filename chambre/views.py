@@ -2,9 +2,11 @@ from django.db import IntegrityError
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiExample, OpenApiParameter, extend_schema
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from config.permissions import IsAdmin
 from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer, SEARCH_PARAM
 from .chambreSerializers import ChambreSerializer
 from .chambreServices import ChambreService
@@ -30,6 +32,7 @@ chambre_service = ChambreService()
     responses={200: ChambreSerializer(many=True), 201: ChambreSerializer, 400: ErrorResponseSerializer},
 )
 @api_view(["GET", "POST"])
+@permission_classes([IsAuthenticated])
 def create_chambre(request):
     if request.method == "GET":
         batiment_id = request.query_params.get('batiment_id') or request.query_params.get('id_batiment')
@@ -50,6 +53,9 @@ def create_chambre(request):
 
         serializer = ChambreSerializer(chambres, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    if getattr(request.user, "role", None) not in ["ADMINISTRATEUR"]:
+        return Response({"error": "Seul un administrateur peut créer une chambre."}, status=status.HTTP_403_FORBIDDEN)
 
     serializer = ChambreSerializer(data=request.data)
     if serializer.is_valid():
@@ -79,6 +85,7 @@ def create_chambre(request):
     responses={200: ChambreSerializer(many=True)},
 )
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def get_all_chambres(request):
     batiment_id = request.query_params.get('batiment_id') or request.query_params.get('id_batiment')
     type_chambre = request.query_params.get('type_chambre') or request.query_params.get('type')
@@ -107,6 +114,7 @@ def get_all_chambres(request):
     responses={200: ChambreSerializer(many=True)},
 )
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def get_chambres_by_type(request, type_chambre):
     chambres = chambre_service.get_chambres_by_type(type_chambre)
     serializer = ChambreSerializer(chambres, many=True)
@@ -120,6 +128,7 @@ def get_chambres_by_type(request, type_chambre):
     responses={200: ChambreSerializer(many=True)},
 )
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def get_chambres_by_statut(request, statut):
     chambres = chambre_service.get_chambres_by_statut(statut)
     serializer = ChambreSerializer(chambres, many=True)
@@ -136,6 +145,7 @@ def get_chambres_by_statut(request, statut):
     responses={200: ChambreSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
 )
 @api_view(["GET", "PUT", "PATCH", "DELETE"])
+@permission_classes([IsAuthenticated])
 def get_chambre(request, chambre_id):
     if request.method in ["PUT", "PATCH"]:
         return update_chambre(request, chambre_id)
@@ -168,6 +178,7 @@ def get_chambre(request, chambre_id):
     ]
 )
 @api_view(["PUT", "PATCH"])
+@permission_classes([IsAdmin])
 def update_chambre(request, chambre_id):
     chambre = chambre_service.get_chambre(chambre_id)
     if chambre is None:
@@ -196,6 +207,7 @@ def update_chambre(request, chambre_id):
     responses={200: MessageResponseSerializer, 404: MessageResponseSerializer},
 )
 @api_view(["DELETE"])
+@permission_classes([IsAdmin])
 def delete_chambre(request, chambre_id):
     chambre = chambre_service.get_chambre(chambre_id)
     if chambre is None:

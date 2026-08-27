@@ -29,6 +29,7 @@ class OrdonnanceTests(TestCase):
             patient=self.patient, medecin=self.medecin, symptomes="Toux sèche", diagnostic="Bronchite"
         )
         self.service = OrdonnanceService()
+        self.client.force_authenticate(user=self.user_m)
 
     def test_prescrire_ordonnance_service(self):
         ord_obj = self.service.prescrire_ordonnance(

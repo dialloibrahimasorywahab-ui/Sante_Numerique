@@ -1,9 +1,11 @@
 from django.db import IntegrityError
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from config.permissions import IsAdmin
 from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer, SEARCH_PARAM
 from .serviceSerializers import ServiceSerializer
 from .serviceServices import ServiceService
@@ -22,6 +24,7 @@ service_service = ServiceService()
     responses={200: ServiceSerializer(many=True), 201: ServiceSerializer, 400: ErrorResponseSerializer},
 )
 @api_view(["GET", "POST"])
+@permission_classes([IsAuthenticated])
 def create_service(request):
     if request.method == "GET":
         query = request.query_params.get("search") or request.query_params.get("q")
@@ -31,6 +34,9 @@ def create_service(request):
             services = service_service.get_all_services()
         serializer = ServiceSerializer(services, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    if getattr(request.user, "role", None) not in ["ADMINISTRATEUR"]:
+        return Response({"error": "Seul un administrateur peut créer un service hospitalier."}, status=status.HTTP_403_FORBIDDEN)
 
     serializer = ServiceSerializer(data=request.data)
 
@@ -63,6 +69,7 @@ def create_service(request):
     responses={200: ServiceSerializer(many=True)},
 )
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def get_all_services(request):
     services = service_service.get_all_services()
     serializer = ServiceSerializer(services, many=True)
@@ -82,6 +89,7 @@ def get_all_services(request):
     responses={200: ServiceSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
 )
 @api_view(["GET", "PUT", "PATCH", "DELETE"])
+@permission_classes([IsAuthenticated])
 def get_service(request, service_id):
     if request.method in ["PUT", "PATCH"]:
         return update_service(request, service_id)
@@ -112,6 +120,7 @@ def get_service(request, service_id):
     responses={200: ServiceSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
 )
 @api_view(["PUT", "PATCH"])
+@permission_classes([IsAdmin])
 def update_service(request, service_id):
     service = service_service.get_service(service_id)
 
@@ -154,6 +163,7 @@ def update_service(request, service_id):
     responses={200: MessageResponseSerializer, 404: MessageResponseSerializer},
 )
 @api_view(["DELETE"])
+@permission_classes([IsAdmin])
 def delete_service(request, service_id):
     service = service_service.get_service(service_id)
 

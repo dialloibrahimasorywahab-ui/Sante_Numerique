@@ -5,10 +5,15 @@ from .models import FraisConsultation
 from .fraisServices import FraisConsultationService
 
 
+from users.models import User
+
+
 class FraisConsultationTests(TestCase):
 
     def setUp(self):
+        self.admin = User.objects.create(nom="Admin", prenom="Super", email="adm_frais@test.com", telephone="0101010101", login="adm_frais", motDePasseHash="hash", role=User.Role.ADMINISTRATEUR)
         self.client = APIClient()
+        self.client.force_authenticate(user=self.admin)
         self.service = FraisConsultationService()
 
     def test_creer_frais_and_reglement(self):

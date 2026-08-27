@@ -42,6 +42,12 @@ class RendezVous(models.Model):
         verbose_name = "Rendez-vous"
         verbose_name_plural = "Rendez-vous"
         ordering = ['-date_rdv', '-heure']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['medecin', 'date_rdv', 'heure'],
+                name='unique_medecin_date_heure_rdv'
+            )
+        ]
 
     def __str__(self):
         pat_nom = f"{self.patient.idUtilisateur.prenom} {self.patient.idUtilisateur.nom}" if self.patient and self.patient.idUtilisateur else f"Patient #{self.patient_id}"

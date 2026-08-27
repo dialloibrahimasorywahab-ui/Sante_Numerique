@@ -1,9 +1,11 @@
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from config.permissions import IsStaffOrAdmin, deny_unless_owner_or_staff
 from config.schema_helpers import (
     ErrorResponseSerializer,
     HARD_DELETE_PARAM,
@@ -33,6 +35,7 @@ frais_service = FraisConsultationService()
     },
 )
 @api_view(["GET", "POST"])
+@permission_classes([IsStaffOrAdmin])
 def frais_list_create_view(request):
     if request.method == "GET":
         actif_only = request.query_params.get("all", "false").lower() != "true"
@@ -72,13 +75,19 @@ def frais_list_create_view(request):
     },
 )
 @api_view(["GET", "PUT", "PATCH"])
+@permission_classes([IsAuthenticated])
 def frais_detail_view(request, pk):
     frais = frais_service.repository.get_frais_by_id(pk)
     if not frais:
         return Response({"error": f"Frais #{pk} introuvable."}, status=status.HTTP_404_NOT_FOUND)
 
+    deny_unless_owner_or_staff(request, frais)
+
     if request.method == "GET":
         return Response(FraisConsultationSerializer(frais).data, status=status.HTTP_200_OK)
+
+    if getattr(request.user, "role", None) not in ["MEDECIN", "INFIRMIER", "ADMINISTRATEUR"]:
+        return Response({"error": "Action réservée au personnel médical et administrateurs."}, status=status.HTTP_403_FORBIDDEN)
 
     partial = (request.method == "PATCH")
     serializer = FraisConsultationSerializer(frais, data=request.data, partial=partial)
@@ -102,6 +111,7 @@ def frais_detail_view(request, pk):
     },
 )
 @api_view(["POST"])
+@permission_classes([IsStaffOrAdmin])
 def frais_payer_view(request, pk):
     updated = frais_service.enregistrer_reglement(pk)
     if not updated:
@@ -120,6 +130,7 @@ def frais_payer_view(request, pk):
     },
 )
 @api_view(["DELETE"])
+@permission_classes([IsStaffOrAdmin])
 def frais_delete_view(request, pk):
     hard = request.query_params.get("hard", "false").lower() == "true"
     success = frais_service.supprimer_frais(pk, hard=hard)

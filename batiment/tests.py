@@ -53,9 +53,14 @@ class BatimentModelAndRepositoryTests(TestCase):
         self.assertTrue(Batiment.objects.filter(nom="Bâtiment Principal A").exists())
 
 
+from users.models import User
+
+
 class BatimentAPITests(TestCase):
     def setUp(self):
+        self.admin = User.objects.create(nom="Admin", prenom="Super", email="adm_bat@test.com", telephone="0101010101", login="adm_bat", motDePasseHash="hash", role=User.Role.ADMINISTRATEUR)
         self.client = APIClient()
+        self.client.force_authenticate(user=self.admin)
         self.batiment = Batiment.objects.create(
             nom="Bâtiment A",
             description="Aile Est",

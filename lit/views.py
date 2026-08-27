@@ -1,9 +1,11 @@
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from config.permissions import IsAdmin
 from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer, SEARCH_PARAM
 from .litSerializers import LitSerializer
 from .litServices import LitService
@@ -27,6 +29,7 @@ lit_service = LitService()
     responses={200: LitSerializer(many=True), 201: LitSerializer, 400: ErrorResponseSerializer},
 )
 @api_view(["GET", "POST"])
+@permission_classes([IsAuthenticated])
 def create_lit(request):
     if request.method == "GET":
         chambre_id = request.query_params.get('chambre_id') or request.query_params.get('id_chambre')
@@ -44,6 +47,9 @@ def create_lit(request):
 
         serializer = LitSerializer(lits, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    if getattr(request.user, "role", None) not in ["ADMINISTRATEUR"]:
+        return Response({"error": "Seul un administrateur peut créer un lit."}, status=status.HTTP_403_FORBIDDEN)
 
     serializer = LitSerializer(data=request.data)
     if serializer.is_valid():
@@ -69,6 +75,7 @@ def create_lit(request):
     responses={200: LitSerializer(many=True)},
 )
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def get_all_lits(request):
     chambre_id = request.query_params.get('chambre_id') or request.query_params.get('id_chambre')
     etat = request.query_params.get('etat')
@@ -94,6 +101,7 @@ def get_all_lits(request):
     responses={200: LitSerializer(many=True)},
 )
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def get_lits_by_etat(request, etat):
     lits = lit_service.get_lits_by_etat(etat)
     serializer = LitSerializer(lits, many=True)
@@ -110,6 +118,7 @@ def get_lits_by_etat(request, etat):
     responses={200: LitSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
 )
 @api_view(["GET", "PUT", "PATCH", "DELETE"])
+@permission_classes([IsAuthenticated])
 def get_lit(request, lit_id):
     if request.method in ["PUT", "PATCH"]:
         return update_lit(request, lit_id)
@@ -130,6 +139,7 @@ def get_lit(request, lit_id):
     responses={200: LitSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
 )
 @api_view(["PUT", "PATCH"])
+@permission_classes([IsAdmin])
 def update_lit(request, lit_id):
     lit = lit_service.get_lit(lit_id)
     if lit is None:
@@ -156,6 +166,7 @@ def update_lit(request, lit_id):
     responses={200: MessageResponseSerializer, 404: MessageResponseSerializer},
 )
 @api_view(["DELETE"])
+@permission_classes([IsAdmin])
 def delete_lit(request, lit_id):
     lit = lit_service.get_lit(lit_id)
     if lit is None:

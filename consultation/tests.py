@@ -26,6 +26,7 @@ class ConsultationTests(TestCase):
         self.medecin = Medecin.objects.create(idUtilisateur=self.user_m, specialite=Medecin.Specialite.PEDIATRIE, dateEmbauche="2020-01-01")
         self.frais = FraisConsultation.objects.create(montant=10000.0, description="Consultation Générale")
         self.service = ConsultationService()
+        self.client.force_authenticate(user=self.user_m)
 
     def test_creer_consultation_service(self):
         cons = self.service.creer_consultation(

@@ -50,9 +50,14 @@ class ChambreModelAndRepositoryTests(TestCase):
         self.assertEqual(searched[0].numero_chambre, 102)
 
 
+from users.models import User
+
+
 class ChambreAPITests(TestCase):
     def setUp(self):
+        self.admin = User.objects.create(nom="Admin", prenom="Super", email="adm_chm@test.com", telephone="0101010101", login="adm_chm", motDePasseHash="hash", role=User.Role.ADMINISTRATEUR)
         self.client = APIClient()
+        self.client.force_authenticate(user=self.admin)
         self.batiment = Batiment.objects.create(nom="Pavillon A", nombre_chambre=0)
         self.chambre = Chambre.objects.create(
             batiment=self.batiment,

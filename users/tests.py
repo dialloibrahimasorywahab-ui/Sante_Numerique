@@ -28,7 +28,9 @@ class UserServiceTests(TestCase):
         self.assertIsNone(user)
 
     def test_get_user_api_not_found_returns_404(self):
+        admin = User.objects.create(nom="Admin", prenom="Super", email="adm@test.com", telephone="0101010101", login="adm_usr", motDePasseHash="hash", role=User.Role.ADMINISTRATEUR)
         client = APIClient()
+        client.force_authenticate(user=admin)
         response = client.get("/users/9999/")
         self.assertEqual(response.status_code, 404)
 
@@ -71,10 +73,55 @@ class UserServiceTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["idUser"], user.idUser)
 
-    def test_get_users_by_role_api(self):
+    def test_login_user_sets_jwt_cookies(self):
+        service = UserService()
+        user = service.createUser(
+            nom="Dupont",
+            prenom="Claire",
+            email="claire.dupont@example.com",
+            telephone="0799887766",
+            login="cdupont",
+            motDePasseHash="monPasswordSecurise123",
+            role=User.Role.MEDECIN,
+        )
+
         client = APIClient()
-        response = client.get("/users/all/?role=MEDECIN")
+        response = client.post("/users/login/", {"login": "cdupont", "motDePasse": "monPasswordSecurise123"}, format="json")
         self.assertEqual(response.status_code, 200)
-        self.assertIsInstance(response.data, list)
+        self.assertIn("access_token", response.cookies)
+        self.assertIn("refresh_token", response.cookies)
+        self.assertTrue(response.cookies["access_token"]["httponly"])
+        self.assertTrue(response.cookies["refresh_token"]["httponly"])
+
+    def test_logout_user_clears_cookies(self):
+        client = APIClient()
+        client.cookies["access_token"] = "fake_access"
+        client.cookies["refresh_token"] = "fake_refresh"
+        response = client.post("/users/logout/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["message"], "Déconnexion réussie.")
+
+    def test_token_refresh_via_cookie(self):
+        service = UserService()
+        user = service.createUser(
+            nom="Sissoko",
+            prenom="Moussa",
+            email="moussa@example.com",
+            telephone="0788776655",
+            login="msissoko",
+            motDePasseHash="pass12345",
+            role=User.Role.ADMINISTRATEUR,
+        )
+
+        client = APIClient()
+        login_res = client.post("/users/login/", {"login": "msissoko", "motDePasse": "pass12345"}, format="json")
+        refresh_cookie = login_res.cookies["refresh_token"].value
+
+        # Client refresh request with cookie
+        refresh_client = APIClient()
+        refresh_client.cookies["refresh_token"] = refresh_cookie
+        refresh_res = refresh_client.post("/users/token/refresh/")
+        self.assertEqual(refresh_res.status_code, 200)
+        self.assertIn("access_token", refresh_res.cookies)
 
 

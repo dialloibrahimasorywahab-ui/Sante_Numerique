@@ -64,9 +64,14 @@ class LitModelAndRepositoryTests(TestCase):
         self.assertEqual(len(searched), 1)
 
 
+from users.models import User
+
+
 class LitAPITests(TestCase):
     def setUp(self):
+        self.admin = User.objects.create(nom="Admin", prenom="Super", email="adm_lit@test.com", telephone="0101010101", login="adm_lit", motDePasseHash="hash", role=User.Role.ADMINISTRATEUR)
         self.client = APIClient()
+        self.client.force_authenticate(user=self.admin)
         self.batiment = Batiment.objects.create(nom="Bâtiment API", nombre_chambre=1)
         self.chambre = Chambre.objects.create(
             batiment=self.batiment,

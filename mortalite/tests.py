@@ -57,6 +57,8 @@ class MortaliteAPITests(TestCase):
             motDePasseHash="pass123",
             role=User.Role.PATIENT,
         )
+        self.admin = User.objects.create(nom="Admin", prenom="Super", email="adm_mor@test.com", telephone="0101010101", login="adm_mor", motDePasseHash="hash", role=User.Role.ADMINISTRATEUR)
+        self.client.force_authenticate(user=self.admin)
         self.patient = Patient.objects.create(
             idUtilisateur=self.user,
             dateNaissance="1965-06-10",

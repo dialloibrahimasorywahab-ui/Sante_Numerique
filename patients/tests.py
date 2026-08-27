@@ -51,13 +51,17 @@ class PatientRepositoryTests(TestCase):
 
     def test_get_patient_api_not_found_returns_404(self):
         from rest_framework.test import APIClient
+        admin = User.objects.create(nom="Admin", prenom="Super", email="adm_pat@test.com", telephone="0101010101", login="adm_pat", motDePasseHash="hash", role=User.Role.ADMINISTRATEUR)
         client = APIClient()
+        client.force_authenticate(user=admin)
         response = client.get("/patients/9999/")
         self.assertEqual(response.status_code, 404)
 
     def test_create_patient_combined_frontend_post(self):
         from rest_framework.test import APIClient
+        admin = User.objects.create(nom="Admin", prenom="Super", email="adm_pat2@test.com", telephone="0101010102", login="adm_pat2", motDePasseHash="hash", role=User.Role.ADMINISTRATEUR)
         client = APIClient()
+        client.force_authenticate(user=admin)
         payload = {
             "nom": "Kaba",
             "prenom": "Sekou",
