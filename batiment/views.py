@@ -24,35 +24,7 @@ batiment_service = BatimentService()
     description="Retourne la liste des bâtiments (GET avec ?search= optionnel) ou enregistre un nouveau bâtiment (POST).",
     parameters=[SEARCH_PARAM],
     request=BatimentSerializer,
-<<<<<<< HEAD
-    responses={201: BatimentSerializer, 400: ErrorResponseSerializer},
-    examples=[
-        OpenApiExample(
-            name="Création bâtiment (par défaut - sans nombre de chambres)",
-            description="Création d'un bâtiment sans nombre de chambres (la valeur reste null jusqu'à affectation).",
-            value={
-                "nom": "Pavillon Administratif",
-                "description": "Administration et direction",
-                "nombre_chambre": None,
-                "actif": True
-            },
-            request_only=True,
-        ),
-        OpenApiExample(
-            name="Création bâtiment (avec nombre de chambres défini)",
-            description="Création avec un nombre prévisionnel de chambres.",
-            value={
-                "nom": "Bâtiment Principal C",
-                "description": "Consultations et soins polyvalents",
-                "nombre_chambre": 10,
-                "actif": True
-            },
-            request_only=True,
-        ),
-    ]
-=======
     responses={200: BatimentSerializer(many=True), 201: BatimentSerializer, 400: ErrorResponseSerializer},
->>>>>>> 91c409f (Ajout du dossiers common et de ses fichiers)
 )
 @api_view(["GET", "POST"])
 def create_batiment(request):

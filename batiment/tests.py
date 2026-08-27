@@ -74,30 +74,18 @@ class BatimentAPITests(TestCase):
         self.assertEqual(response.data["nombre_chambre"], 12)
         self.assertEqual(response.data["totalChambresEffectif"], 12)
 
-<<<<<<< HEAD
-    def test_create_batiment_without_nombre_chambre_defaults_to_null(self):
-        payload = {
-            "nom": "Bâtiment Sans Chambres",
-            "description": "Nouveau bâtiment",
-        }
-        response = self.client.post("/batiments/", payload, format="json")
-        self.assertEqual(response.status_code, 201)
-        self.assertIsNone(response.data["nombre_chambre"])
-        self.assertIsNone(response.data["totalChambresEffectif"])
-
-    def test_total_chambres_effectif_reflects_actual_chambres_when_created(self):
-        bat = Batiment.objects.create(nom="Bâtiment Test", nombre_chambre=10)
-        self.assertEqual(bat.total_chambres_effectif, 10)
-        Chambre.objects.create(batiment=bat, numero_chambre=201, type_chambre="INDIVIDUELLE", capacite=1)
-        self.assertEqual(bat.total_chambres_effectif, 1)
-=======
     def test_create_batiment_default_nombre_chambre_zero(self):
         payload = {"nom": "Bâtiment Sans Chambre"}
         response = self.client.post("/batiments/", payload, format="json")
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data["nombre_chambre"], 0)
         self.assertEqual(response.data["totalChambresEffectif"], 0)
->>>>>>> 91c409f (Ajout du dossiers common et de ses fichiers)
+
+    def test_total_chambres_effectif_reflects_actual_chambres_when_created(self):
+        bat = Batiment.objects.create(nom="Bâtiment Test", nombre_chambre=10)
+        self.assertEqual(bat.total_chambres_effectif, 10)
+        Chambre.objects.create(batiment=bat, numero_chambre=201, type_chambre="INDIVIDUELLE", capacite=1)
+        self.assertEqual(bat.total_chambres_effectif, 1)
 
     def test_create_batiment_duplicate_name_returns_400(self):
         payload = {"nom": "Bâtiment A"}

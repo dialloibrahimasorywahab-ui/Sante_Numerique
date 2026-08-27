@@ -27,24 +27,7 @@ chambre_service = ChambreService()
         SEARCH_PARAM,
     ],
     request=ChambreSerializer,
-<<<<<<< HEAD
-    responses={201: ChambreSerializer, 400: ErrorResponseSerializer},
-    examples=[
-        OpenApiExample(
-            name="Création de chambre",
-            value={
-                "id_batiment": 1,
-                "numero_chambre": 0,
-                "type_chambre": "INDIVIDUELLE",
-                "capacite": 1,
-                "statut": "DISPONIBLE"
-            },
-            request_only=True,
-        )
-    ]
-=======
     responses={200: ChambreSerializer(many=True), 201: ChambreSerializer, 400: ErrorResponseSerializer},
->>>>>>> 91c409f (Ajout du dossiers common et de ses fichiers)
 )
 @api_view(["GET", "POST"])
 def create_chambre(request):

@@ -36,44 +36,7 @@ urlpatterns = [
     path('redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 
     path('admin/', admin.site.urls),
-<<<<<<< HEAD
-    path('users/', include('users.usersURLs')),
-    path('user/', include('users.usersURLs')),
-    path('patients/', include('patients.patientUrls')),
-    path('patient/', include('patients.patientUrls')),
-    path('medecins/', include('medecin.medecinUrls')),
-    path('medecin/', include('medecin.medecinUrls')),
-    path('personnels/', include('personnel.personnelUrls')),
-    path('personnel/', include('personnel.personnelUrls')),
-    path('services/', include('services.serviceUrls')),
-    path('service/', include('services.serviceUrls')),
-    path('batiments/', include('batiment.batimentUrls')),
-    path('batiment/', include('batiment.batimentUrls')),
-    path('chambres/', include('chambre.chambreUrls')),
-    path('chambre/', include('chambre.chambreUrls')),
-    path('lits/', include('lit.litUrls')),
-    path('lit/', include('lit.litUrls')),
-    path('rendezvous/', include('rendezvous.rendezvousUrls')),
-    path('rdv/', include('rendezvous.rendezvousUrls')),
-    path('natalite/', include('natalite.nataliteUrls')),
-    path('natalites/', include('natalite.nataliteUrls')),
-    path('mortalite/', include('mortalite.mortaliteUrls')),
-    path('mortalites/', include('mortalite.mortaliteUrls')),
-    path('hospitalisation/', include('hospitalisation.hospitalisationUrls')),
-    path('hospitalisations/', include('hospitalisation.hospitalisationUrls')),
-
-
-    path('consultations/', include('consultation.consultationUrls')),
-    path('consultation/', include('consultation.consultationUrls')),
-    path('ordonnances/', include('ordonnance.ordonnanceUrls')),
-    path('ordonnance/', include('ordonnance.ordonnanceUrls')),
-    path('frais-consultations/', include('frais_consultation.fraisUrls')),
-    path('frais-consultation/', include('frais_consultation.fraisUrls')),
-    path('frais_consultations/', include('frais_consultation.fraisUrls')),
-    path('frais_consultation/', include('frais_consultation.fraisUrls')),
-=======
     path('', include('common.commonURLs.urls')),
->>>>>>> 91c409f (Ajout du dossiers common et de ses fichiers)
 ]
 
 

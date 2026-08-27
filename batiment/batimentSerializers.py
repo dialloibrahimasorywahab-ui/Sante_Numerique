@@ -4,14 +4,13 @@ from .models import Batiment
 
 
 class BatimentSerializer(serializers.ModelSerializer):
-<<<<<<< HEAD
     nombre_chambre = serializers.IntegerField(
         required=False,
         allow_null=True,
         min_value=0,
         max_value=1000,
-        default=None,
-        help_text="Nombre prévisionnel de chambres (optionnel, null par défaut)."
+        default=0,
+        help_text="Nombre prévisionnel de chambres (optionnel, 0 par défaut)."
     )
     totalChambresEffectif = serializers.IntegerField(
         source="total_chambres_effectif",
@@ -19,10 +18,6 @@ class BatimentSerializer(serializers.ModelSerializer):
         allow_null=True,
         help_text="Nombre total de chambres effectives."
     )
-=======
-    nombre_chambre = serializers.IntegerField(default=0, required=False, min_value=0)
-    totalChambresEffectif = serializers.IntegerField(source="total_chambres_effectif", read_only=True)
->>>>>>> 91c409f (Ajout du dossiers common et de ses fichiers)
 
     class Meta:
         model = Batiment
