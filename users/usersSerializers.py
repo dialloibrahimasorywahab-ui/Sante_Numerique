@@ -1,8 +1,11 @@
 from rest_framework import serializers
+from common.validators import validate_phone_number, validate_date_not_in_future
 from .models import User
 
 
 class UserSerializers(serializers.ModelSerializer):
+    telephone = serializers.CharField(validators=[validate_phone_number], required=False)
+    dateNaissance = serializers.DateField(validators=[validate_date_not_in_future], required=False, allow_null=True)
     motDePasseHash = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     class Meta:

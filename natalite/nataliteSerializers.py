@@ -62,6 +62,38 @@ class NataliteSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("La date de naissance ne peut pas être dans le futur.")
         return value
 
+    def validate(self, attrs):
+        patient = attrs.get('id_patient')
+        if not patient and self.instance:
+            patient = self.instance.id_patient
+
+        if patient and getattr(patient, 'sexe', None):
+            sexe_code = str(patient.sexe).upper()
+            if sexe_code not in ('F', 'FEMININ'):
+                raise serializers.ValidationError(
+                    {"id_patient": "La patiente associée à une déclaration de naissance doit être de sexe féminin."}
+                )
+
+        poids = attrs.get('poids')
+        taille = attrs.get('taille')
+        if poids is not None:
+            try:
+                p = float(poids)
+                if p < 0.3 or p > 7.0:
+                    raise serializers.ValidationError({"poids": "Le poids du nouveau-né doit être compris entre 0.3 kg et 7.0 kg."})
+            except (ValueError, TypeError):
+                raise serializers.ValidationError({"poids": "Poids du nouveau-né invalide."})
+
+        if taille is not None:
+            try:
+                t = float(taille)
+                if t < 20.0 or t > 70.0:
+                    raise serializers.ValidationError({"taille": "La taille du nouveau-né doit être comprise entre 20.0 cm et 70.0 cm."})
+            except (ValueError, TypeError):
+                raise serializers.ValidationError({"taille": "Taille du nouveau-né invalide."})
+
+        return attrs
+
 
 # Alias pour rétrocompatibilité en cas d'ancienne dépendance avec l'orthographe "Serialiszer"
 NataliteSerialiszer = NataliteSerializer

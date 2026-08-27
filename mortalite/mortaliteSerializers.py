@@ -52,3 +52,20 @@ class MortaliteSerializer(serializers.ModelSerializer):
         if value and value > date.today():
             raise serializers.ValidationError("La date de décès ne peut pas être dans le futur.")
         return value
+
+    def validate(self, attrs):
+        patient = attrs.get('id_patient')
+        if not patient and self.instance:
+            patient = self.instance.id_patient
+
+        date_deces = attrs.get('date_deces')
+        if not date_deces and self.instance:
+            date_deces = self.instance.date_deces
+
+        if patient and date_deces and getattr(patient, 'dateNaissance', None):
+            if date_deces < patient.dateNaissance:
+                raise serializers.ValidationError(
+                    {"date_deces": "La date de décès ne peut pas être antérieure à la date de naissance du patient."}
+                )
+
+        return attrs
