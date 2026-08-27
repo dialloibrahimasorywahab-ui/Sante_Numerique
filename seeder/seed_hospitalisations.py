@@ -68,9 +68,9 @@ def run_seed_hospitalisations():
             lit = lits_dispo.pop(0)
             statut = Hospitalisation.StatutHospitalisation.EN_COURS
             date_sortie = None
-        elif i % 3 == 1:
+        elif i % 3 == 1 and lits_dispo:
             # Hospitalisation terminée / sortie
-            lit = random.choice(list(Lit.objects.all())) if Lit.objects.exists() else None
+            lit = lits_dispo.pop(0)
             statut = Hospitalisation.StatutHospitalisation.TERMINEE
             date_sortie = date_entree + timedelta(days=random.randint(2, 7))
         else:

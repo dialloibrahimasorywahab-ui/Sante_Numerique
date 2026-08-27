@@ -108,6 +108,10 @@ class PersonnelService:
     def get_personnel_by_type(self, type_personnel):
         return self.repository.get_personnel_by_type(type_personnel)
 
+    # Rechercher des membres du personnel
+    def search_personnel(self, query):
+        return self.repository.search_personnel(query)
+
     # Mettre à jour les données d'un membre du personnel
     def update_personnel(self, personnel, **data):
         id_user_data = data.pop("idUtilisateur", None)

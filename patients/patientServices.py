@@ -70,6 +70,10 @@ class PatientService:
     def get_all_patient(self):
         return self.repository.get_all_patient()
 
+    # rechercher des patients
+    def search_patients(self, query):
+        return self.repository.search_patients(query)
+
     # mettre à jour les données d'un patient
     def update_patient(self, patient, **data):
         id_user_data = data.pop("idUtilisateur", None)

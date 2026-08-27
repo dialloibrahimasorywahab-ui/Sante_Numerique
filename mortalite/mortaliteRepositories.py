@@ -8,21 +8,36 @@ class MortaliteRepository:
 
     def get_DecesById(self, deces_id):
         try:
-            return Mortalite.objects.get(pk=deces_id)
+            return Mortalite.objects.select_related(
+                'id_patient__idUtilisateur',
+                'id_medecin__idUtilisateur'
+            ).get(pk=deces_id)
         except Mortalite.DoesNotExist:
             return None
 
     def get_all_mortalites(self):
-        return Mortalite.objects.all()
+        return Mortalite.objects.select_related(
+            'id_patient__idUtilisateur',
+            'id_medecin__idUtilisateur'
+        ).all()
 
     def get_mortalites_by_patient(self, patient_id):
-        return Mortalite.objects.filter(id_patient_id=patient_id)
+        return Mortalite.objects.filter(id_patient_id=patient_id).select_related(
+            'id_patient__idUtilisateur',
+            'id_medecin__idUtilisateur'
+        )
 
     def get_mortalites_by_medecin(self, medecin_id):
-        return Mortalite.objects.filter(id_medecin_id=medecin_id)
+        return Mortalite.objects.filter(id_medecin_id=medecin_id).select_related(
+            'id_patient__idUtilisateur',
+            'id_medecin__idUtilisateur'
+        )
 
     def get_mortalites_by_date(self, date_deces):
-        return Mortalite.objects.filter(date_deces=date_deces)
+        return Mortalite.objects.filter(date_deces=date_deces).select_related(
+            'id_patient__idUtilisateur',
+            'id_medecin__idUtilisateur'
+        )
 
     def search_mortalites(self, query):
         if not query:
@@ -33,6 +48,9 @@ class MortaliteRepository:
             Q(observation__icontains=query) |
             Q(id_patient__idUtilisateur__nom__icontains=query) |
             Q(id_patient__idUtilisateur__prenom__icontains=query)
+        ).select_related(
+            'id_patient__idUtilisateur',
+            'id_medecin__idUtilisateur'
         )
 
     def update_deces(self, deces, **data):

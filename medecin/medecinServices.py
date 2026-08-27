@@ -84,6 +84,10 @@ class MedecinService:
     def get_medecins_by_specialite(self, specialite):
         return self.repository.get_medecins_by_specialite(specialite)
 
+    # Rechercher des médecins
+    def search_medecins(self, query):
+        return self.repository.search_medecins(query)
+
     # Mettre à jour les données d'un médecin
     def update_medecin(self, medecin, **data):
         id_user_data = data.pop("idUtilisateur", None)

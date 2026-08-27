@@ -14,16 +14,36 @@ from .usersServices import UserService
 user_service = UserService()
 
 
-# enregistrement d'un utilisateur
+# Enregistrement et listing des utilisateurs
 @extend_schema(
     tags=["Utilisateurs"],
-    summary="Créer un utilisateur",
-    description="Enregistre un nouvel utilisateur (compte de connexion à l'application).",
+    summary="Lister ou créer un utilisateur",
+    description="Retourne la liste des utilisateurs (GET avec filtres optionnels ?role=, ?search=) ou enregistre un nouvel utilisateur (POST).",
+    parameters=[
+        OpenApiParameter(name="role", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False,
+                          description="Filtre les utilisateurs par rôle."),
+        OpenApiParameter(name="search", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False,
+                          description="Recherche libre (alias : q)."),
+    ],
     request=UserSerializers,
-    responses={201: UserSerializers, 400: ErrorResponseSerializer},
+    responses={200: UserSerializers(many=True), 201: UserSerializers, 400: ErrorResponseSerializer},
 )
-@api_view(["POST"])
+@api_view(["GET", "POST"])
 def create_user(request):
+    if request.method == "GET":
+        role = request.query_params.get("role")
+        search_q = request.query_params.get("search") or request.query_params.get("q")
+
+        if role:
+            users = user_service.getUsersByRole(role)
+        elif search_q:
+            users = user_service.searchUsers(search_q)
+        else:
+            users = user_service.getAllUser()
+
+        serializer = UserSerializers(users, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
     serializer = UserSerializers(data=request.data)
 
     if serializer.is_valid():
@@ -47,15 +67,22 @@ def create_user(request):
     )
 
 
-# recuperer et afficher un utilisateur grace a son id
+# Récupérer, modifier ou supprimer un utilisateur grâce à son ID
 @extend_schema(
     tags=["Utilisateurs"],
-    summary="Récupérer un utilisateur",
-    description="Retourne un utilisateur à partir de son identifiant.",
-    responses={200: UserSerializers, 404: MessageResponseSerializer},
+    summary="Récupérer, modifier ou supprimer un utilisateur",
+    description="Retourne, modifie ou supprime un utilisateur à partir de son identifiant.",
+    parameters=[HARD_DELETE_PARAM],
+    request=UserSerializers,
+    responses={200: UserSerializers, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
 )
-@api_view(["GET"])
+@api_view(["GET", "PUT", "PATCH", "DELETE"])
 def get_user(request, user_id):
+    if request.method in ["PUT", "PATCH"]:
+        return update_user(request, user_id)
+    elif request.method == "DELETE":
+        return delete_user(request, user_id)
+
     user = user_service.getUser(user_id)
 
     if user is None:

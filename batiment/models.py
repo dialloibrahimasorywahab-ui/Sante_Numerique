@@ -19,7 +19,7 @@ class Batiment(models.Model):
         count = self.chambres.count()
         if count > 0:
             return count
-        return self.nombre_chambre
+        return self.nombre_chambre or 0
 
     def sync_nombre_chambres(self):
         self.nombre_chambre = self.chambres.count()

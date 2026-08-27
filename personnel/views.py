@@ -13,16 +13,34 @@ from .personnelServices import PersonnelService
 personnel_service = PersonnelService()
 
 
-# Enregistrement d'un membre du personnel
+# Enregistrement et listing du personnel
 @extend_schema(
     tags=["Personnel"],
-    summary="Créer un membre du personnel",
-    description="Enregistre un nouveau membre du personnel (et le compte utilisateur associé).",
+    summary="Lister ou créer un membre du personnel",
+    description="Retourne la liste du personnel (GET avec filtres ?type=, ?search=) ou enregistre un nouveau membre du personnel (POST).",
+    parameters=[
+        OpenApiParameter(name="type", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False,
+                          description="Filtre par type de personnel (ex : INFIRMIER, ADMINISTRATIF)."),
+        OpenApiParameter(name="search", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False,
+                          description="Recherche textuelle libre."),
+    ],
     request=PersonnelSerializer,
-    responses={201: PersonnelSerializer, 400: ErrorResponseSerializer},
+    responses={200: PersonnelSerializer(many=True), 201: PersonnelSerializer, 400: ErrorResponseSerializer},
 )
-@api_view(["POST"])
+@api_view(["GET", "POST"])
 def create_personnel(request):
+    if request.method == "GET":
+        type_personnel = request.query_params.get("type") or request.query_params.get("category")
+        search_q = request.query_params.get("search") or request.query_params.get("q")
+        if type_personnel:
+            personnels = personnel_service.get_personnel_by_type(type_personnel)
+        elif search_q:
+            personnels = personnel_service.search_personnel(search_q)
+        else:
+            personnels = personnel_service.get_all_personnel()
+        serializer = PersonnelSerializer(personnels, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
     serializer = PersonnelSerializer(data=request.data)
 
     if serializer.is_valid():
@@ -89,15 +107,22 @@ def get_personnel_by_type(request, type_personnel):
     )
 
 
-# Récupérer et afficher un membre du personnel grâce à son ID
+# Récupérer, modifier ou supprimer un membre du personnel grâce à son ID
 @extend_schema(
     tags=["Personnel"],
-    summary="Récupérer un membre du personnel",
-    description="Retourne un membre du personnel à partir de son identifiant.",
-    responses={200: PersonnelSerializer, 404: MessageResponseSerializer},
+    summary="Récupérer, modifier ou supprimer un membre du personnel",
+    description="Retourne, modifie ou supprime un membre du personnel à partir de son identifiant.",
+    parameters=[HARD_DELETE_PARAM],
+    request=PersonnelSerializer,
+    responses={200: PersonnelSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
 )
-@api_view(["GET"])
+@api_view(["GET", "PUT", "PATCH", "DELETE"])
 def get_personnel(request, personnel_id):
+    if request.method in ["PUT", "PATCH"]:
+        return update_personnel(request, personnel_id)
+    elif request.method == "DELETE":
+        return delete_personnel(request, personnel_id)
+
     personnel = personnel_service.get_Personnel(personnel_id)
 
     if personnel is None:

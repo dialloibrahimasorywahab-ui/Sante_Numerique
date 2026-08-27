@@ -75,7 +75,7 @@ class RendezVousSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({"heure": "L'heure du rendez-vous est déjà passée."})
 
 
-        # Anti Double-Booking Validation
+        # Anti Double-Booking Validation - Medecin
         if medecin and date_rdv and heure:
             conflict_qs = RendezVous.objects.filter(
                 medecin=medecin,
@@ -89,6 +89,23 @@ class RendezVousSerializer(serializers.ModelSerializer):
             if conflict_qs.exists():
                 raise serializers.ValidationError({
                     "heure": f"Le médecin Dr. {medecin.idUtilisateur.prenom} {medecin.idUtilisateur.nom} a déjà un rendez-vous à cette date ({date_rdv}) et heure ({heure})."
+                })
+
+        # Anti Double-Booking Validation - Patient
+        patient = attrs.get('patient') or (self.instance.patient if self.instance else None)
+        if patient and date_rdv and heure:
+            pat_conflict_qs = RendezVous.objects.filter(
+                patient=patient,
+                date_rdv=date_rdv,
+                heure=heure
+            ).exclude(statut=RendezVous.StatutRendezVous.ANNULE)
+
+            if self.instance:
+                pat_conflict_qs = pat_conflict_qs.exclude(id=self.instance.id)
+
+            if pat_conflict_qs.exists():
+                raise serializers.ValidationError({
+                    "heure": f"Ce patient a déjà un rendez-vous programmé le {date_rdv} à {heure}."
                 })
 
         return attrs

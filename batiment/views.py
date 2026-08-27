@@ -17,11 +17,14 @@ from chambre.chambreSerializers import ChambreSerializer
 batiment_service = BatimentService()
 
 
+# Enregistrement et listing des bâtiments
 @extend_schema(
     tags=["Bâtiments"],
-    summary="Créer un bâtiment",
-    description="Enregistre un nouveau bâtiment.",
+    summary="Lister ou créer un bâtiment",
+    description="Retourne la liste des bâtiments (GET avec ?search= optionnel) ou enregistre un nouveau bâtiment (POST).",
+    parameters=[SEARCH_PARAM],
     request=BatimentSerializer,
+<<<<<<< HEAD
     responses={201: BatimentSerializer, 400: ErrorResponseSerializer},
     examples=[
         OpenApiExample(
@@ -47,9 +50,21 @@ batiment_service = BatimentService()
             request_only=True,
         ),
     ]
+=======
+    responses={200: BatimentSerializer(many=True), 201: BatimentSerializer, 400: ErrorResponseSerializer},
+>>>>>>> 91c409f (Ajout du dossiers common et de ses fichiers)
 )
-@api_view(["POST"])
+@api_view(["GET", "POST"])
 def create_batiment(request):
+    if request.method == "GET":
+        query = request.query_params.get("search") or request.query_params.get("q")
+        if query:
+            batiments = batiment_service.search_batiments(query)
+        else:
+            batiments = batiment_service.get_all_batiments()
+        serializer = BatimentSerializer(batiments, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
     serializer = BatimentSerializer(data=request.data)
     if serializer.is_valid():
         try:
@@ -78,14 +93,22 @@ def get_all_batiments(request):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+# Récupérer, modifier ou supprimer un bâtiment grâce à son ID
 @extend_schema(
     tags=["Bâtiments"],
-    summary="Récupérer un bâtiment",
-    description="Retourne un bâtiment à partir de son identifiant.",
-    responses={200: BatimentSerializer, 404: MessageResponseSerializer},
+    summary="Récupérer, modifier ou supprimer un bâtiment",
+    description="Retourne, modifie ou supprime un bâtiment à partir de son identifiant.",
+    parameters=[HARD_DELETE_PARAM],
+    request=BatimentSerializer,
+    responses={200: BatimentSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
 )
-@api_view(["GET"])
+@api_view(["GET", "PUT", "PATCH", "DELETE"])
 def get_batiment(request, batiment_id):
+    if request.method in ["PUT", "PATCH"]:
+        return update_batiment(request, batiment_id)
+    elif request.method == "DELETE":
+        return delete_batiment(request, batiment_id)
+
     batiment = batiment_service.get_batiment(batiment_id)
     if batiment is None:
         return Response({"message": "Bâtiment introuvable"}, status=status.HTTP_404_NOT_FOUND)

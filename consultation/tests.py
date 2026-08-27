@@ -51,3 +51,47 @@ class ConsultationTests(TestCase):
         get_res = self.client.get(f"/consultations/{cons_id}/")
         self.assertEqual(get_res.status_code, status.HTTP_200_OK)
         self.assertEqual(get_res.data["diagnostic"], "Migraine")
+
+    def test_consultation_with_rdv_completes_rdv(self):
+        from rendezvous.models import RendezVous
+        rdv = RendezVous.objects.create(
+            patient=self.patient,
+            medecin=self.medecin,
+            date_rdv="2026-09-20",
+            heure="15:00:00",
+            statut=RendezVous.StatutRendezVous.CONFIRME
+        )
+
+        cons = self.service.creer_consultation(
+            patient=self.patient,
+            medecin=self.medecin,
+            rdv=rdv,
+            diagnostic="Contrôle OK"
+        )
+        rdv.refresh_from_db()
+        self.assertEqual(rdv.statut, RendezVous.StatutRendezVous.TERMINE)
+        self.assertEqual(cons.rdv, rdv)
+
+    def test_consultation_with_invalid_patient_rdv_raises_value_error(self):
+        from rendezvous.models import RendezVous
+        user_p2 = User.objects.create(
+            nom="Kane", prenom="Awa", email="awa.kane@example.com",
+            telephone="+221770007766", login="awa_k", motDePasseHash="pass123", role=User.Role.PATIENT
+        )
+        other_patient = Patient.objects.create(idUtilisateur=user_p2, dateNaissance="1998-03-03", sexe=Patient.Sexe.FEMININ, dateInscription="2024-01-01")
+
+        rdv_other = RendezVous.objects.create(
+            patient=other_patient,
+            medecin=self.medecin,
+            date_rdv="2026-09-21",
+            heure="16:00:00",
+            statut=RendezVous.StatutRendezVous.CONFIRME
+        )
+
+        with self.assertRaises(ValueError):
+            self.service.creer_consultation(
+                patient=self.patient,
+                medecin=self.medecin,
+                rdv=rdv_other,
+                diagnostic="Erreur patient"
+            )

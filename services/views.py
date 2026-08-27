@@ -4,7 +4,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer
+from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer, SEARCH_PARAM
 from .serviceSerializers import ServiceSerializer
 from .serviceServices import ServiceService
 
@@ -12,16 +12,26 @@ from .serviceServices import ServiceService
 service_service = ServiceService()
 
 
-# Enregistrement d'un service
+# Enregistrement et listing des services
 @extend_schema(
     tags=["Services"],
-    summary="Créer un service",
-    description="Enregistre un nouveau service hospitalier.",
+    summary="Lister ou créer un service",
+    description="Retourne la liste des services hospitaliers (GET avec ?search= optionnel) ou enregistre un nouveau service (POST).",
+    parameters=[SEARCH_PARAM],
     request=ServiceSerializer,
-    responses={201: ServiceSerializer, 400: ErrorResponseSerializer},
+    responses={200: ServiceSerializer(many=True), 201: ServiceSerializer, 400: ErrorResponseSerializer},
 )
-@api_view(["POST"])
+@api_view(["GET", "POST"])
 def create_service(request):
+    if request.method == "GET":
+        query = request.query_params.get("search") or request.query_params.get("q")
+        if query:
+            services = service_service.search_services(query)
+        else:
+            services = service_service.get_all_services()
+        serializer = ServiceSerializer(services, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
     serializer = ServiceSerializer(data=request.data)
 
     if serializer.is_valid():
@@ -62,15 +72,22 @@ def get_all_services(request):
     )
 
 
-# Récupérer et afficher un service par son ID
+# Récupérer, modifier ou supprimer un service grâce à son ID
 @extend_schema(
     tags=["Services"],
-    summary="Récupérer un service",
-    description="Retourne un service à partir de son identifiant.",
-    responses={200: ServiceSerializer, 404: MessageResponseSerializer},
+    summary="Récupérer, modifier ou supprimer un service",
+    description="Retourne, modifie ou supprime un service hospitalier à partir de son identifiant.",
+    parameters=[HARD_DELETE_PARAM],
+    request=ServiceSerializer,
+    responses={200: ServiceSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
 )
-@api_view(["GET"])
+@api_view(["GET", "PUT", "PATCH", "DELETE"])
 def get_service(request, service_id):
+    if request.method in ["PUT", "PATCH"]:
+        return update_service(request, service_id)
+    elif request.method == "DELETE":
+        return delete_service(request, service_id)
+
     service = service_service.get_service(service_id)
 
     if service is None:

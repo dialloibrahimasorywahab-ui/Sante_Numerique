@@ -19,7 +19,6 @@ class RendezvousConfigTests(SimpleTestCase):
     def test_rendezvous_routes_are_available(self):
         self.assertEqual(resolve('/rendezvous/').view_name, 'create_rendezvous')
         self.assertEqual(resolve('/rendezvous/all/').view_name, 'get_all_rendezvous')
-        self.assertEqual(resolve('/rdv/all/').view_name, 'get_all_rendezvous')
 
 
 class RendezVousModelAndRepositoryTests(TestCase):
@@ -130,4 +129,36 @@ class RendezVousAPITests(TestCase):
         response_hard = self.client.delete(f"/rendezvous/{self.rdv.id}/delete/?hard=true")
         self.assertEqual(response_hard.status_code, 200)
         self.assertFalse(RendezVous.objects.filter(id=self.rdv.id).exists())
+
+    def test_double_booking_medecin_rejected(self):
+        # Création d'un RDV avec le même médecin au même moment que self.rdv ("2026-09-10", "09:00:00")
+        user_pat2 = User.objects.create(nom="Konan", prenom="Paul", email="paul@test.com", telephone="0505050505", login="paul_k", motDePasseHash="hash", role=User.Role.PATIENT)
+        pat2 = Patient.objects.create(idUtilisateur=user_pat2, sexe="M", dateInscription="2026-01-01")
+
+        payload = {
+            "id_patient": pat2.idPatient,
+            "id_medecin": self.medecin.idMedecin,
+            "date_rdv": "2026-09-10",
+            "heure": "09:00:00",
+            "motif": "Double réservation médecin",
+        }
+        response = self.client.post("/rendezvous/", payload, format="json")
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("heure", response.data)
+
+    def test_double_booking_patient_rejected(self):
+        # Création d'un RDV avec un autre médecin mais pour le même patient au même moment
+        user_med2 = User.objects.create(nom="Koffi", prenom="Marie", email="marie@test.com", telephone="0606060606", login="marie_k", motDePasseHash="hash", role=User.Role.MEDECIN)
+        med2 = Medecin.objects.create(idUtilisateur=user_med2, specialite="PEDIATRIE", matricule="MED102", numeroOrdre="ORD102", dateEmbauche="2020-01-01")
+
+        payload = {
+            "id_patient": self.patient.idPatient,
+            "id_medecin": med2.idMedecin,
+            "date_rdv": "2026-09-10",
+            "heure": "09:00:00",
+            "motif": "Double réservation patient",
+        }
+        response = self.client.post("/rendezvous/", payload, format="json")
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("heure", response.data)
 

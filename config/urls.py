@@ -16,9 +16,8 @@ Including another URLconf
 """
 # pyrefly: ignore [missing-import]
 from django.contrib import admin
-# pyrefly: ignore [missing-import]
 from django.urls import include, path
-# pyrefly: ignore [missing-import]
+from django.views.generic import RedirectView
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularRedocView,
@@ -27,6 +26,9 @@ from drf_spectacular.views import (
 
 
 urlpatterns = [
+    # Redirection de la racine vers Swagger
+    path('', RedirectView.as_view(url='swagger/', permanent=False), name='index'),
+
     # Documentation Swagger UI & OpenAPI 3.0
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('swagger/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
@@ -34,6 +36,7 @@ urlpatterns = [
     path('redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 
     path('admin/', admin.site.urls),
+<<<<<<< HEAD
     path('users/', include('users.usersURLs')),
     path('user/', include('users.usersURLs')),
     path('patients/', include('patients.patientUrls')),
@@ -68,6 +71,9 @@ urlpatterns = [
     path('frais-consultation/', include('frais_consultation.fraisUrls')),
     path('frais_consultations/', include('frais_consultation.fraisUrls')),
     path('frais_consultation/', include('frais_consultation.fraisUrls')),
+=======
+    path('', include('common.commonURLs.urls')),
+>>>>>>> 91c409f (Ajout du dossiers common et de ses fichiers)
 ]
 
 

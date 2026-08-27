@@ -12,11 +12,22 @@ from .chambreServices import ChambreService
 chambre_service = ChambreService()
 
 
+# Enregistrement et listing des chambres
 @extend_schema(
     tags=["Chambres"],
-    summary="Créer une chambre",
-    description="Enregistre une nouvelle chambre, rattachée éventuellement à un bâtiment.",
+    summary="Lister ou créer une chambre",
+    description="Retourne la liste des chambres (GET avec filtres ?batiment_id=, ?type_chambre=, ?statut=, ?search=) ou enregistre une nouvelle chambre (POST).",
+    parameters=[
+        OpenApiParameter(name="batiment_id", type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=False,
+                          description="Filtre par identifiant de bâtiment."),
+        OpenApiParameter(name="type_chambre", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False,
+                          description="Filtre par type de chambre."),
+        OpenApiParameter(name="statut", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False,
+                          description="Filtre par statut de la chambre."),
+        SEARCH_PARAM,
+    ],
     request=ChambreSerializer,
+<<<<<<< HEAD
     responses={201: ChambreSerializer, 400: ErrorResponseSerializer},
     examples=[
         OpenApiExample(
@@ -31,9 +42,32 @@ chambre_service = ChambreService()
             request_only=True,
         )
     ]
+=======
+    responses={200: ChambreSerializer(many=True), 201: ChambreSerializer, 400: ErrorResponseSerializer},
+>>>>>>> 91c409f (Ajout du dossiers common et de ses fichiers)
 )
-@api_view(["POST"])
+@api_view(["GET", "POST"])
 def create_chambre(request):
+    if request.method == "GET":
+        batiment_id = request.query_params.get('batiment_id') or request.query_params.get('id_batiment')
+        type_chambre = request.query_params.get('type_chambre') or request.query_params.get('type')
+        statut = request.query_params.get('statut')
+        search_q = request.query_params.get('search') or request.query_params.get('q')
+
+        if batiment_id:
+            chambres = chambre_service.get_chambres_by_batiment(batiment_id)
+        elif type_chambre:
+            chambres = chambre_service.get_chambres_by_type(type_chambre)
+        elif statut:
+            chambres = chambre_service.get_chambres_by_statut(statut)
+        elif search_q:
+            chambres = chambre_service.search_chambres(search_q)
+        else:
+            chambres = chambre_service.get_all_chambres()
+
+        serializer = ChambreSerializer(chambres, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
     serializer = ChambreSerializer(data=request.data)
     if serializer.is_valid():
         try:
@@ -109,14 +143,22 @@ def get_chambres_by_statut(request, statut):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+# Récupérer, modifier ou supprimer une chambre grâce à son ID
 @extend_schema(
     tags=["Chambres"],
-    summary="Récupérer une chambre",
-    description="Retourne une chambre à partir de son identifiant.",
-    responses={200: ChambreSerializer, 404: MessageResponseSerializer},
+    summary="Récupérer, modifier ou supprimer une chambre",
+    description="Retourne, modifie ou supprime une chambre à partir de son identifiant.",
+    parameters=[HARD_DELETE_PARAM],
+    request=ChambreSerializer,
+    responses={200: ChambreSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
 )
-@api_view(["GET"])
+@api_view(["GET", "PUT", "PATCH", "DELETE"])
 def get_chambre(request, chambre_id):
+    if request.method in ["PUT", "PATCH"]:
+        return update_chambre(request, chambre_id)
+    elif request.method == "DELETE":
+        return delete_chambre(request, chambre_id)
+
     chambre = chambre_service.get_chambre(chambre_id)
     if chambre is None:
         return Response({"message": "Chambre introuvable"}, status=status.HTTP_404_NOT_FOUND)

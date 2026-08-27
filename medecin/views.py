@@ -13,16 +13,36 @@ from .medecinServices import MedecinService
 medecin_service = MedecinService()
 
 
-# Enregistrement d'un médecin
+# Enregistrement et listing des médecins
 @extend_schema(
     tags=["Médecins"],
-    summary="Créer un médecin",
-    description="Enregistre un nouveau médecin (et le compte utilisateur associé).",
+    summary="Lister ou créer un médecin",
+    description="Retourne la liste des médecins (GET avec filtres ?service=, ?specialite=, ?search=) ou enregistre un nouveau médecin (POST).",
+    parameters=[
+        OpenApiParameter(name="service", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False,
+                          description="Filtre par service ou spécialité (alias : specialite)."),
+        OpenApiParameter(name="specialite", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False,
+                          description="Filtre par spécialité."),
+        OpenApiParameter(name="search", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False,
+                          description="Recherche textuelle libre."),
+    ],
     request=MedecinSerializer,
-    responses={201: MedecinSerializer, 400: ErrorResponseSerializer},
+    responses={200: MedecinSerializer(many=True), 201: MedecinSerializer, 400: ErrorResponseSerializer},
 )
-@api_view(["POST"])
+@api_view(["GET", "POST"])
 def create_medecin(request):
+    if request.method == "GET":
+        specialite = request.query_params.get("service") or request.query_params.get("specialite")
+        search_q = request.query_params.get("search") or request.query_params.get("q")
+        if specialite:
+            medecins = medecin_service.get_medecins_by_specialite(specialite)
+        elif search_q:
+            medecins = medecin_service.search_medecins(search_q)
+        else:
+            medecins = medecin_service.get_all_medecin()
+        serializer = MedecinSerializer(medecins, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
     serializer = MedecinSerializer(data=request.data)
 
     if serializer.is_valid():
@@ -91,15 +111,22 @@ def get_medecins_by_specialite(request, specialite):
     )
 
 
-# Récupérer et afficher un médecin grâce à son ID
+# Récupérer, modifier ou supprimer un médecin grâce à son ID
 @extend_schema(
     tags=["Médecins"],
-    summary="Récupérer un médecin",
-    description="Retourne un médecin à partir de son identifiant.",
-    responses={200: MedecinSerializer, 404: MessageResponseSerializer},
+    summary="Récupérer, modifier ou supprimer un médecin",
+    description="Retourne, modifie ou supprime un médecin à partir de son identifiant.",
+    parameters=[HARD_DELETE_PARAM],
+    request=MedecinSerializer,
+    responses={200: MedecinSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
 )
-@api_view(["GET"])
+@api_view(["GET", "PUT", "PATCH", "DELETE"])
 def get_medecin(request, medecin_id):
+    if request.method in ["PUT", "PATCH"]:
+        return update_medecin(request, medecin_id)
+    elif request.method == "DELETE":
+        return delete_medecin(request, medecin_id)
+
     medecin = medecin_service.get_Medecin(medecin_id)
 
     if medecin is None:

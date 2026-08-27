@@ -65,9 +65,14 @@ def run_seed_consultations():
     tarifs = [5000.0, 10000.0, 15000.0, 20000.0]
 
     for i in range(10):
-        patient = random.choice(patients)
-        medecin = random.choice(medecins)
-        rdv = random.choice(rdvs) if rdvs and i % 2 == 0 else None
+        if rdvs and i % 2 == 0:
+            rdv = random.choice(rdvs)
+            patient = rdv.patient
+            medecin = rdv.medecin
+        else:
+            rdv = None
+            patient = random.choice(patients)
+            medecin = random.choice(medecins)
         montant = random.choice(tarifs)
 
         # 1. Créer le frais de consultation

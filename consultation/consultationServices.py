@@ -1,4 +1,5 @@
 from typing import Optional
+from django.db import transaction
 from django.utils import timezone
 from rendezvous.models import RendezVous
 from .models import Consultation
@@ -21,26 +22,31 @@ class ConsultationService:
         diagnostic: Optional[str] = None,
         observations: Optional[str] = None,
     ) -> Consultation:
-        consultation = self.repository.create_consultation(
-            patient=patient,
-            medecin=medecin,
-            rdv=rdv,
-            frais=frais,
-            date_cons=date_cons,
-            symptomes=symptomes,
-            diagnostic=diagnostic,
-            observations=observations,
-        )
+        with transaction.atomic():
+            if rdv:
+                patient_id_val = patient.pk if hasattr(patient, 'pk') else getattr(patient, 'idPatient', getattr(patient, 'id', patient))
+                if rdv.patient_id != patient_id_val:
+                    raise ValueError("Le rendez-vous sélectionné n'appartient pas à ce patient.")
+                if rdv.statut != RendezVous.StatutRendezVous.TERMINE:
+                    rdv.statut = RendezVous.StatutRendezVous.TERMINE
+                    rdv.save(update_fields=["statut"])
 
-        # Marquer le RDV associé comme TERMINE si présent
-        if rdv and rdv.statut != RendezVous.StatutRendezVous.TERMINE:
-            rdv.statut = RendezVous.StatutRendezVous.TERMINE
-            rdv.save()
+            consultation = self.repository.create_consultation(
+                patient=patient,
+                medecin=medecin,
+                rdv=rdv,
+                frais=frais,
+                date_cons=date_cons,
+                symptomes=symptomes,
+                diagnostic=diagnostic,
+                observations=observations,
+            )
 
-        return consultation
+            return consultation
 
     def mettre_a_jour_consultation(self, consultation_id: int, **kwargs) -> Optional[Consultation]:
-        return self.repository.update_consultation(consultation_id, **kwargs)
+        with transaction.atomic():
+            return self.repository.update_consultation(consultation_id, **kwargs)
 
     def supprimer_consultation(self, consultation_id: int, hard: bool = False) -> bool:
         return self.repository.delete_consultation(consultation_id, hard=hard)

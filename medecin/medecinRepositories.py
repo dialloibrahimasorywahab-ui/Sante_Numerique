@@ -10,17 +10,31 @@ class MedecinRepository:
     # Rechercher et afficher un médecin par son ID
     def get_medecin(self, medecin_id):
         try:
-            return Medecin.objects.get(idMedecin=medecin_id)
+            return Medecin.objects.select_related('idUtilisateur').get(idMedecin=medecin_id)
         except Medecin.DoesNotExist:
             return None
 
     # Afficher tous les médecins
     def get_all_medecin(self):
-        return Medecin.objects.all()
+        return Medecin.objects.select_related('idUtilisateur').all()
 
     # Rechercher les médecins par spécialité / service
     def get_medecins_by_specialite(self, specialite):
-        return Medecin.objects.filter(specialite__iexact=specialite)
+        return Medecin.objects.filter(specialite__iexact=specialite).select_related('idUtilisateur')
+
+    # Rechercher des médecins par mot-clé
+    def search_medecins(self, query):
+        if not query:
+            return self.get_all_medecin()
+        from django.db.models import Q
+        clean_q = str(query).strip()
+        return Medecin.objects.filter(
+            Q(idUtilisateur__nom__icontains=clean_q) |
+            Q(idUtilisateur__prenom__icontains=clean_q) |
+            Q(idUtilisateur__email__icontains=clean_q) |
+            Q(matricule__icontains=clean_q) |
+            Q(specialite__icontains=clean_q)
+        ).select_related('idUtilisateur')
 
     # Mettre à jour les informations d'un médecin
     def update_Medecin(self, medecin, **data):

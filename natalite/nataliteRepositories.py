@@ -11,29 +11,47 @@ class NataliteRepository:
     # Rechercher et afficher un nouveau-né par son id
     def get_NouveauNeById(self, nouveauNe_id):
         try:
-            return Natalite.objects.get(pk=nouveauNe_id)
+            return Natalite.objects.select_related(
+                'id_patient__idUtilisateur',
+                'id_medecin__idUtilisateur'
+            ).get(pk=nouveauNe_id)
         except Natalite.DoesNotExist:
             return None
 
     # Afficher tous les nouveaux-nés
     def get_all_nouveaux_nes(self):
-        return Natalite.objects.all()
+        return Natalite.objects.select_related(
+            'id_patient__idUtilisateur',
+            'id_medecin__idUtilisateur'
+        ).all()
 
     # Afficher les nouveaux-nés d'une patiente (mère)
     def get_nouveaux_nes_by_patient(self, patient_id):
-        return Natalite.objects.filter(id_patient_id=patient_id)
+        return Natalite.objects.filter(id_patient_id=patient_id).select_related(
+            'id_patient__idUtilisateur',
+            'id_medecin__idUtilisateur'
+        )
 
     # Afficher les nouveaux-nés venus au monde sous la supervision d'un médecin
     def get_nouveaux_nes_by_medecin(self, medecin_id):
-        return Natalite.objects.filter(id_medecin_id=medecin_id)
+        return Natalite.objects.filter(id_medecin_id=medecin_id).select_related(
+            'id_patient__idUtilisateur',
+            'id_medecin__idUtilisateur'
+        )
 
     # Afficher les nouveaux-nés par leur sexe
     def get_natalities_by_sexe(self, sexe):
-        return Natalite.objects.filter(sexe=sexe)
+        return Natalite.objects.filter(sexe=sexe).select_related(
+            'id_patient__idUtilisateur',
+            'id_medecin__idUtilisateur'
+        )
 
     # Afficher les nouveaux-nés d'une date spécifique
     def get_nouveaux_nes_by_date(self, date_naissance):
-        return Natalite.objects.filter(date_naissance=date_naissance)
+        return Natalite.objects.filter(date_naissance=date_naissance).select_related(
+            'id_patient__idUtilisateur',
+            'id_medecin__idUtilisateur'
+        )
 
     # Recherche textuelle
     def search_nouveaux_nes(self, query):
@@ -44,6 +62,9 @@ class NataliteRepository:
             Q(nom_nouveau_ne__icontains=query) |
             Q(lieu_naissance__icontains=query) |
             Q(observation__icontains=query)
+        ).select_related(
+            'id_patient__idUtilisateur',
+            'id_medecin__idUtilisateur'
         )
 
     # Mettre à jour les informations d'un nouveau-né

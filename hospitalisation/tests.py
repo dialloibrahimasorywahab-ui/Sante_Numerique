@@ -115,6 +115,48 @@ class HospitalisationModelAndServiceTests(TestCase):
                 date_sortie=yesterday
             )
 
+    def test_admettre_patient_occupied_lit_raises_value_error(self):
+        # Première admission
+        self.service.admettre_patient(
+            patient=self.patient,
+            medecin=self.medecin,
+            lit=self.lit,
+            motif="Première admission",
+            statut=Hospitalisation.StatutHospitalisation.EN_COURS,
+        )
+
+        # Deuxième patient
+        user_pat2 = User.objects.create(
+            nom="Ba", prenom="Fatou", email="fatou.ba@example.com",
+            telephone="+221770001122", login="fatou_b", motDePasseHash="pass123",
+            role=User.Role.PATIENT
+        )
+        patient2 = Patient.objects.create(idUtilisateur=user_pat2, dateNaissance="1995-02-02", sexe=Patient.Sexe.FEMININ, dateInscription="2024-01-01")
+
+        # Tenter d'admettre le 2e patient sur le même lit déjà occupé
+        with self.assertRaises(ValueError):
+            self.service.admettre_patient(
+                patient=patient2,
+                medecin=self.medecin,
+                lit=self.lit,
+                motif="Deuxième admission concurrente",
+            )
+
+    def test_chambre_sync_statut_on_admission_and_discharge(self):
+        # Chambre avec 1 lit disponible -> DISPONIBLE
+        self.chambre.sync_statut()
+        self.assertEqual(self.chambre.statut, Chambre.StatutChambre.DISPONIBLE)
+
+        # Admission -> lit devient OCCUPE -> chambre devient OCCUPEE (capacite=1)
+        hosp = self.service.admettre_patient(patient=self.patient, lit=self.lit)
+        self.chambre.refresh_from_db()
+        self.assertEqual(self.chambre.statut, Chambre.StatutChambre.OCCUPEE)
+
+        # Clôture -> lit redevient DISPONIBLE -> chambre redevient DISPONIBLE
+        self.service.cloturer_hospitalisation(hosp.id)
+        self.chambre.refresh_from_db()
+        self.assertEqual(self.chambre.statut, Chambre.StatutChambre.DISPONIBLE)
+
     def test_supprimer_hospitalisation_soft_and_hard(self):
         hosp = self.service.admettre_patient(patient=self.patient, lit=self.lit)
         self.assertTrue(self.service.supprimer_hospitalisation(hosp.id, hard=False))

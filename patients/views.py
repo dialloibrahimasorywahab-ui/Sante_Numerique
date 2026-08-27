@@ -4,7 +4,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer
+from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer, SEARCH_PARAM
 from .patientSerializers import PatientSerializer
 from .patientServices import PatientService
 
@@ -13,16 +13,26 @@ from .patientServices import PatientService
 patient_service = PatientService()
 
 
-# Enregistrement d'un patient
+# Enregistrement et listing des patients
 @extend_schema(
     tags=["Patients"],
-    summary="Créer un patient",
-    description="Enregistre un nouveau patient (et le compte utilisateur associé).",
+    summary="Lister ou créer un patient",
+    description="Retourne la liste des patients (GET avec ?search= optionnel) ou enregistre un nouveau patient (POST).",
+    parameters=[SEARCH_PARAM],
     request=PatientSerializer,
-    responses={201: PatientSerializer, 400: ErrorResponseSerializer},
+    responses={200: PatientSerializer(many=True), 201: PatientSerializer, 400: ErrorResponseSerializer},
 )
-@api_view(["POST"])
+@api_view(["GET", "POST"])
 def create_patient(request):
+    if request.method == "GET":
+        query = request.query_params.get("search") or request.query_params.get("q")
+        if query:
+            patients = patient_service.search_patients(query)
+        else:
+            patients = patient_service.get_all_patient()
+        serializer = PatientSerializer(patients, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
     serializer = PatientSerializer(data=request.data)
 
     if serializer.is_valid():
@@ -64,15 +74,22 @@ def get_all_patient(request):
     )
 
 
-# Recuperer et afficher un patient grace a son id
+# Recuperer, modifier ou supprimer un patient grace a son id
 @extend_schema(
     tags=["Patients"],
-    summary="Récupérer un patient",
-    description="Retourne un patient à partir de son identifiant.",
-    responses={200: PatientSerializer, 404: MessageResponseSerializer},
+    summary="Récupérer, modifier ou supprimer un patient",
+    description="Retourne, modifie ou supprime un patient à partir de son identifiant.",
+    parameters=[HARD_DELETE_PARAM],
+    request=PatientSerializer,
+    responses={200: PatientSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
 )
-@api_view(["GET"])
+@api_view(["GET", "PUT", "PATCH", "DELETE"])
 def get_patient(request, patient_id):
+    if request.method in ["PUT", "PATCH"]:
+        return update_patient(request, patient_id)
+    elif request.method == "DELETE":
+        return delete_patient(request, patient_id)
+
     patient = patient_service.get_Patient(patient_id)
 
     if patient is None:

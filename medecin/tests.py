@@ -92,12 +92,12 @@ class MedecinRepositoryTests(TestCase):
             dateEmbauche="2025-01-01"
         )
 
-        response = client.get("/medecin/service/CARDIOLOGIE/")
+        response = client.get("/medecins/service/CARDIOLOGIE/")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]["specialite"], "CARDIOLOGIE")
 
-        response_param = client.get("/medecin/all/?service=PEDIATRIE")
+        response_param = client.get("/medecins/all/?service=PEDIATRIE")
         self.assertEqual(response_param.status_code, 200)
         self.assertEqual(len(response_param.data), 1)
         self.assertEqual(response_param.data[0]["specialite"], "PEDIATRIE")
