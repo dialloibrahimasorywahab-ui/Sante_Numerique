@@ -6,7 +6,6 @@ from common.validators import (
     validate_phone_number,
     validate_date_not_in_future,
     validate_strict_positive,
-    validate_social_security_number,
     validate_blood_group,
     validate_numero_ordre,
     validate_nouveau_ne_metrics,
@@ -60,15 +59,6 @@ class UniversalValidatorsTests(TestCase):
         for val in [0, -1, -50.5, "0", "not_a_number"]:
             with self.assertRaises(ValidationError):
                 validate_strict_positive(val)
-
-    def test_validate_social_security_number_valid(self):
-        self.assertEqual(validate_social_security_number("1900123456789"), "1900123456789")
-        self.assertEqual(validate_social_security_number("NIR12345678"), "NIR12345678")
-
-    def test_validate_social_security_number_invalid(self):
-        for val in ["123", "ab", "!!@@##$$"]:
-            with self.assertRaises(ValidationError):
-                validate_social_security_number(val)
 
     def test_validate_blood_group_valid(self):
         for bg in ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-", "a+", "o-"]:

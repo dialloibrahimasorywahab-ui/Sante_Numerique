@@ -56,21 +56,6 @@ def validate_strict_positive(value):
     return value
 
 
-def validate_social_security_number(value: str):
-    """
-    Valide le numéro de sécurité sociale / identification nationale (NIR).
-    Doit comporter entre 8 et 20 caractères alphanumériques.
-    """
-    if not value:
-        return value
-    clean_val = str(value).strip()
-    if not re.match(r'^[0-9A-Z]{8,20}$', clean_val, re.IGNORECASE):
-        raise ValidationError(
-            "Numéro de sécurité sociale / NIR invalide (8 à 20 caractères alphanumériques requis)."
-        )
-    return value
-
-
 def validate_blood_group(value: str):
     """
     Valide le groupe sanguin parmi les 8 standards ABO et rhésus (+/-).

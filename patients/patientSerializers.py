@@ -2,7 +2,6 @@ from rest_framework import serializers
 from common.validators import (
     validate_phone_number,
     validate_date_not_in_future,
-    validate_social_security_number,
     validate_blood_group,
 )
 from .models import Patient
@@ -23,7 +22,6 @@ class PatientSerializer(serializers.ModelSerializer):
         allow_null=True
     )
     numeroSecuriteSociale = serializers.CharField(
-        validators=[validate_social_security_number],
         required=False,
         allow_null=True,
         allow_blank=True
