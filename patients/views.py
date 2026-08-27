@@ -5,8 +5,9 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from config.pagination import paginate_response
 from config.permissions import IsAdmin, IsStaffOrAdmin, deny_unless_owner_or_staff
-from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer, SEARCH_PARAM
+from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer, PAGINATION_PARAMS, SEARCH_PARAM
 from .patientSerializers import PatientSerializer
 from .patientServices import PatientService
 
@@ -20,7 +21,7 @@ patient_service = PatientService()
     tags=["Patients"],
     summary="Lister ou créer un patient",
     description="Retourne la liste des patients (GET avec ?search= optionnel) ou enregistre un nouveau patient (POST).",
-    parameters=[SEARCH_PARAM],
+    parameters=[SEARCH_PARAM, *PAGINATION_PARAMS],
     request=PatientSerializer,
     responses={200: PatientSerializer(many=True), 201: PatientSerializer, 400: ErrorResponseSerializer},
 )
@@ -33,8 +34,7 @@ def create_patient(request):
             patients = patient_service.search_patients(query)
         else:
             patients = patient_service.get_all_patient()
-        serializer = PatientSerializer(patients, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return paginate_response(patients, request, PatientSerializer)
 
     serializer = PatientSerializer(data=request.data)
 
@@ -64,18 +64,14 @@ def create_patient(request):
     tags=["Patients"],
     summary="Lister les patients",
     description="Retourne la liste de tous les patients enregistrés.",
+    parameters=[*PAGINATION_PARAMS],
     responses={200: PatientSerializer(many=True)},
 )
 @api_view(["GET"])
 @permission_classes([IsStaffOrAdmin])
 def get_all_patient(request):
     patients = patient_service.get_all_patient()
-    serializer = PatientSerializer(patients, many=True)
-
-    return Response(
-        serializer.data,
-        status=status.HTTP_200_OK
-    )
+    return paginate_response(patients, request, PatientSerializer)
 
 
 # Recuperer, modifier ou supprimer un patient grace a son id

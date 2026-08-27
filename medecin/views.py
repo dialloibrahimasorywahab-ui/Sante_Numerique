@@ -6,8 +6,9 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from config.pagination import paginate_response
 from config.permissions import IsAdmin, deny_unless_owner_or_staff
-from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer
+from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer, PAGINATION_PARAMS, SEARCH_PARAM
 from .medecinSerializers import MedecinSerializer
 from .medecinServices import MedecinService
 
@@ -25,8 +26,8 @@ medecin_service = MedecinService()
                           description="Filtre par service ou spécialité (alias : specialite)."),
         OpenApiParameter(name="specialite", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False,
                           description="Filtre par spécialité."),
-        OpenApiParameter(name="search", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False,
-                          description="Recherche textuelle libre."),
+        SEARCH_PARAM,
+        *PAGINATION_PARAMS,
     ],
     request=MedecinSerializer,
     responses={200: MedecinSerializer(many=True), 201: MedecinSerializer, 400: ErrorResponseSerializer},
@@ -43,8 +44,7 @@ def create_medecin(request):
             medecins = medecin_service.search_medecins(search_q)
         else:
             medecins = medecin_service.get_all_medecin()
-        serializer = MedecinSerializer(medecins, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return paginate_response(medecins, request, MedecinSerializer)
 
     if getattr(request.user, "role", None) != "ADMINISTRATEUR":
         return Response({"message": "Seul un administrateur peut enregistrer un médecin."}, status=status.HTTP_403_FORBIDDEN)
@@ -82,6 +82,7 @@ def create_medecin(request):
                           description="Filtre par service ou spécialité (alias : specialite)."),
         OpenApiParameter(name="specialite", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False,
                           description="Filtre par spécialité."),
+        *PAGINATION_PARAMS,
     ],
     responses={200: MedecinSerializer(many=True)},
 )
@@ -94,11 +95,7 @@ def get_all_medecin(request):
     else:
         medecins = medecin_service.get_all_medecin()
 
-    serializer = MedecinSerializer(medecins, many=True)
-    return Response(
-        serializer.data,
-        status=status.HTTP_200_OK
-    )
+    return paginate_response(medecins, request, MedecinSerializer)
 
 
 # Récupérer les médecins d'un service / spécialité
@@ -106,17 +103,14 @@ def get_all_medecin(request):
     tags=["Médecins"],
     summary="Lister les médecins d'une spécialité",
     description="Retourne les médecins rattachés à la spécialité/service donné(e).",
+    parameters=[*PAGINATION_PARAMS],
     responses={200: MedecinSerializer(many=True)},
 )
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_medecins_by_specialite(request, specialite):
     medecins = medecin_service.get_medecins_by_specialite(specialite)
-    serializer = MedecinSerializer(medecins, many=True)
-    return Response(
-        serializer.data,
-        status=status.HTTP_200_OK
-    )
+    return paginate_response(medecins, request, MedecinSerializer)
 
 
 # Récupérer, modifier ou supprimer un médecin grâce à son ID

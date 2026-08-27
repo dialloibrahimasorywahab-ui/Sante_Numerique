@@ -5,11 +5,13 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from config.pagination import paginate_response
 from config.permissions import IsStaffOrAdmin, deny_unless_owner_or_staff
 from config.schema_helpers import (
     ErrorResponseSerializer,
     HARD_DELETE_PARAM,
     MessageResponseSerializer,
+    PAGINATION_PARAMS,
     SEARCH_PARAM,
 )
 from .fraisSerializers import FraisConsultationSerializer
@@ -26,6 +28,7 @@ frais_service = FraisConsultationService()
         OpenApiParameter(name="statut", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False, description="Filtrer par statut (EN_ATTENTE, PAYE, ANNULE)."),
         OpenApiParameter(name="all", type=OpenApiTypes.BOOL, location=OpenApiParameter.QUERY, required=False, description="Inclure aussi les frais inactifs si true."),
         SEARCH_PARAM,
+        *PAGINATION_PARAMS,
     ],
     request=FraisConsultationSerializer,
     responses={
@@ -49,8 +52,7 @@ def frais_list_create_view(request):
         if search:
             qs = qs.filter(description__icontains=search)
 
-        serializer = FraisConsultationSerializer(qs, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return paginate_response(qs, request, FraisConsultationSerializer)
 
     elif request.method == "POST":
         serializer = FraisConsultationSerializer(data=request.data)

@@ -100,12 +100,16 @@ class BatimentAPITests(TestCase):
     def test_get_all_batiments_api(self):
         response = self.client.get("/batiments/all/")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 1)
+        self.assertIn("results", response.data)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(len(response.data["results"]), 1)
 
     def test_search_batiments_api(self):
         response = self.client.get("/batiments/all/?search=Aile")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 1)
+        self.assertIn("results", response.data)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(len(response.data["results"]), 1)
 
     def test_get_batiment_detail_api(self):
         response = self.client.get(f"/batiments/{self.batiment.idBatiment}/")

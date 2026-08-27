@@ -6,8 +6,9 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from config.pagination import paginate_response
 from config.permissions import IsAdmin, IsStaffOrAdmin, deny_unless_owner_or_staff
-from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer
+from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer, PAGINATION_PARAMS, SEARCH_PARAM
 from .personnelSerializers import PersonnelSerializer
 from .personnelServices import PersonnelService
 
@@ -23,8 +24,8 @@ personnel_service = PersonnelService()
     parameters=[
         OpenApiParameter(name="type", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False,
                           description="Filtre par type de personnel (ex : INFIRMIER, ADMINISTRATIF)."),
-        OpenApiParameter(name="search", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False,
-                          description="Recherche textuelle libre."),
+        SEARCH_PARAM,
+        *PAGINATION_PARAMS,
     ],
     request=PersonnelSerializer,
     responses={200: PersonnelSerializer(many=True), 201: PersonnelSerializer, 400: ErrorResponseSerializer},
@@ -41,8 +42,7 @@ def create_personnel(request):
             personnels = personnel_service.search_personnel(search_q)
         else:
             personnels = personnel_service.get_all_personnel()
-        serializer = PersonnelSerializer(personnels, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return paginate_response(personnels, request, PersonnelSerializer)
 
     if getattr(request.user, "role", None) != "ADMINISTRATEUR":
         return Response({"message": "Seul un administrateur peut enregistrer un membre du personnel."}, status=status.HTTP_403_FORBIDDEN)
@@ -78,6 +78,7 @@ def create_personnel(request):
     parameters=[
         OpenApiParameter(name="type", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False,
                           description="Filtre par type de personnel (ex : INFIRMIER, ADMINISTRATIF). Alias : category."),
+        *PAGINATION_PARAMS,
     ],
     responses={200: PersonnelSerializer(many=True)},
 )
@@ -90,11 +91,7 @@ def get_all_personnel(request):
     else:
         personnels = personnel_service.get_all_personnel()
 
-    serializer = PersonnelSerializer(personnels, many=True)
-    return Response(
-        serializer.data,
-        status=status.HTTP_200_OK
-    )
+    return paginate_response(personnels, request, PersonnelSerializer)
 
 
 # Récupérer le personnel par type (ex: INFIRMIER, ADMINISTRATIF)
@@ -102,17 +99,14 @@ def get_all_personnel(request):
     tags=["Personnel"],
     summary="Lister le personnel par type",
     description="Retourne le personnel appartenant au type donné (ex : INFIRMIER, ADMINISTRATIF).",
+    parameters=[*PAGINATION_PARAMS],
     responses={200: PersonnelSerializer(many=True)},
 )
 @api_view(["GET"])
 @permission_classes([IsStaffOrAdmin])
 def get_personnel_by_type(request, type_personnel):
     personnels = personnel_service.get_personnel_by_type(type_personnel)
-    serializer = PersonnelSerializer(personnels, many=True)
-    return Response(
-        serializer.data,
-        status=status.HTTP_200_OK
-    )
+    return paginate_response(personnels, request, PersonnelSerializer)
 
 
 # Récupérer, modifier ou supprimer un membre du personnel grâce à son ID

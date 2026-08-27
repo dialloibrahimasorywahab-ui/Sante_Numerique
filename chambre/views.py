@@ -6,8 +6,9 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from config.pagination import paginate_response
 from config.permissions import IsAdmin
-from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer, SEARCH_PARAM
+from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer, PAGINATION_PARAMS, SEARCH_PARAM
 from .chambreSerializers import ChambreSerializer
 from .chambreServices import ChambreService
 
@@ -27,6 +28,7 @@ chambre_service = ChambreService()
         OpenApiParameter(name="statut", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False,
                           description="Filtre par statut de la chambre."),
         SEARCH_PARAM,
+        *PAGINATION_PARAMS,
     ],
     request=ChambreSerializer,
     responses={200: ChambreSerializer(many=True), 201: ChambreSerializer, 400: ErrorResponseSerializer},
@@ -51,8 +53,7 @@ def create_chambre(request):
         else:
             chambres = chambre_service.get_all_chambres()
 
-        serializer = ChambreSerializer(chambres, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return paginate_response(chambres, request, ChambreSerializer)
 
     if getattr(request.user, "role", None) not in ["ADMINISTRATEUR"]:
         return Response({"error": "Seul un administrateur peut créer une chambre."}, status=status.HTTP_403_FORBIDDEN)
@@ -81,6 +82,7 @@ def create_chambre(request):
         OpenApiParameter(name="statut", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False,
                           description="Filtre par statut de la chambre."),
         SEARCH_PARAM,
+        *PAGINATION_PARAMS,
     ],
     responses={200: ChambreSerializer(many=True)},
 )
@@ -103,36 +105,35 @@ def get_all_chambres(request):
     else:
         chambres = chambre_service.get_all_chambres()
 
-    serializer = ChambreSerializer(chambres, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    return paginate_response(chambres, request, ChambreSerializer)
 
 
 @extend_schema(
     tags=["Chambres"],
     summary="Lister les chambres par type",
     description="Retourne les chambres correspondant au type donné.",
+    parameters=[*PAGINATION_PARAMS],
     responses={200: ChambreSerializer(many=True)},
 )
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_chambres_by_type(request, type_chambre):
     chambres = chambre_service.get_chambres_by_type(type_chambre)
-    serializer = ChambreSerializer(chambres, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    return paginate_response(chambres, request, ChambreSerializer)
 
 
 @extend_schema(
     tags=["Chambres"],
     summary="Lister les chambres par statut",
     description="Retourne les chambres correspondant au statut donné.",
+    parameters=[*PAGINATION_PARAMS],
     responses={200: ChambreSerializer(many=True)},
 )
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_chambres_by_statut(request, statut):
     chambres = chambre_service.get_chambres_by_statut(statut)
-    serializer = ChambreSerializer(chambres, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    return paginate_response(chambres, request, ChambreSerializer)
 
 
 # Récupérer, modifier ou supprimer une chambre grâce à son ID

@@ -5,8 +5,9 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from config.pagination import paginate_response
 from config.permissions import IsMedecinOuAdmin, IsStaffOrAdmin, deny_unless_owner_or_staff
-from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer, SEARCH_PARAM
+from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer, PAGINATION_PARAMS, SEARCH_PARAM
 from .nataliteSerializers import NataliteSerializer
 from .nataliteServices import NataliteService
 
@@ -56,6 +57,7 @@ def create_naissance(request):
         OpenApiParameter(name="date", type=OpenApiTypes.DATE, location=OpenApiParameter.QUERY, required=False,
                           description="Filtre par date de naissance (alias : date_naissance)."),
         SEARCH_PARAM,
+        *PAGINATION_PARAMS,
     ],
     responses={200: NataliteSerializer(many=True)},
 )
@@ -81,8 +83,7 @@ def get_all_natality(request):
     else:
         natalities = natalite_service.get_all_nouveau_ne()
 
-    serializer = NataliteSerializer(natalities, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    return paginate_response(natalities, request, NataliteSerializer)
 
 
 # Récupérer les nouveaux-nés par leur sexe
@@ -90,14 +91,14 @@ def get_all_natality(request):
     tags=["Natalité"],
     summary="Lister les naissances par sexe",
     description="Retourne les naissances correspondant au sexe donné.",
+    parameters=[*PAGINATION_PARAMS],
     responses={200: NataliteSerializer(many=True)},
 )
 @api_view(["GET"])
 @permission_classes([IsStaffOrAdmin])
 def get_natalities_by_sexe(request, sexe):
     natalities = natalite_service.get_natalities_by_sexe(sexe)
-    serializer = NataliteSerializer(natalities, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    return paginate_response(natalities, request, NataliteSerializer)
 
 
 # Afficher les nouveaux-nés d'une patiente (mère)
@@ -105,14 +106,14 @@ def get_natalities_by_sexe(request, sexe):
     tags=["Natalité"],
     summary="Lister les naissances d'une patiente",
     description="Retourne les naissances rattachées à la patiente (mère) donnée.",
+    parameters=[*PAGINATION_PARAMS],
     responses={200: NataliteSerializer(many=True)},
 )
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_natalities_by_patient(request, patient_id):
     natalities = natalite_service.get_nouveaux_nes_by_patient(patient_id)
-    serializer = NataliteSerializer(natalities, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    return paginate_response(natalities, request, NataliteSerializer)
 
 
 # Afficher les nouveaux-nés d'un médecin superviseur
@@ -120,14 +121,14 @@ def get_natalities_by_patient(request, patient_id):
     tags=["Natalité"],
     summary="Lister les naissances supervisées par un médecin",
     description="Retourne les naissances rattachées au médecin superviseur donné.",
+    parameters=[*PAGINATION_PARAMS],
     responses={200: NataliteSerializer(many=True)},
 )
 @api_view(["GET"])
 @permission_classes([IsStaffOrAdmin])
 def get_natalities_by_medecin(request, medecin_id):
     natalities = natalite_service.get_nouveaux_nes_by_medecin(medecin_id)
-    serializer = NataliteSerializer(natalities, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    return paginate_response(natalities, request, NataliteSerializer)
 
 
 # Afficher un nouveau-né par son ID

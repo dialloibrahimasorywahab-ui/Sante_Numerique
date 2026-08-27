@@ -96,13 +96,15 @@ class MedecinRepositoryTests(TestCase):
 
         response = self.client.get("/medecins/service/CARDIOLOGIE/")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]["specialite"], "CARDIOLOGIE")
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["specialite"], "CARDIOLOGIE")
 
         response_param = self.client.get("/medecins/all/?service=PEDIATRIE")
         self.assertEqual(response_param.status_code, 200)
-        self.assertEqual(len(response_param.data), 1)
-        self.assertEqual(response_param.data[0]["specialite"], "PEDIATRIE")
+        self.assertEqual(response_param.data["count"], 1)
+        self.assertEqual(len(response_param.data["results"]), 1)
+        self.assertEqual(response_param.data["results"][0]["specialite"], "PEDIATRIE")
 
     def test_update_medecin_nested_user_fields(self):
         user = User.objects.create(

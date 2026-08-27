@@ -5,8 +5,9 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from config.pagination import paginate_response
 from config.permissions import IsAdmin
-from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer, SEARCH_PARAM
+from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer, PAGINATION_PARAMS, SEARCH_PARAM
 from .serviceSerializers import ServiceSerializer
 from .serviceServices import ServiceService
 
@@ -19,7 +20,7 @@ service_service = ServiceService()
     tags=["Services"],
     summary="Lister ou créer un service",
     description="Retourne la liste des services hospitaliers (GET avec ?search= optionnel) ou enregistre un nouveau service (POST).",
-    parameters=[SEARCH_PARAM],
+    parameters=[SEARCH_PARAM, *PAGINATION_PARAMS],
     request=ServiceSerializer,
     responses={200: ServiceSerializer(many=True), 201: ServiceSerializer, 400: ErrorResponseSerializer},
 )
@@ -32,8 +33,7 @@ def create_service(request):
             services = service_service.search_services(query)
         else:
             services = service_service.get_all_services()
-        serializer = ServiceSerializer(services, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return paginate_response(services, request, ServiceSerializer)
 
     if getattr(request.user, "role", None) not in ["ADMINISTRATEUR"]:
         return Response({"error": "Seul un administrateur peut créer un service hospitalier."}, status=status.HTTP_403_FORBIDDEN)
@@ -66,17 +66,14 @@ def create_service(request):
     tags=["Services"],
     summary="Lister les services",
     description="Retourne la liste de tous les services hospitaliers.",
+    parameters=[*PAGINATION_PARAMS],
     responses={200: ServiceSerializer(many=True)},
 )
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_all_services(request):
     services = service_service.get_all_services()
-    serializer = ServiceSerializer(services, many=True)
-    return Response(
-        serializer.data,
-        status=status.HTTP_200_OK
-    )
+    return paginate_response(services, request, ServiceSerializer)
 
 
 # Récupérer, modifier ou supprimer un service grâce à son ID

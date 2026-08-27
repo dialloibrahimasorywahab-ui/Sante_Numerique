@@ -99,7 +99,9 @@ class LitAPITests(TestCase):
     def test_get_all_lits_api(self):
         response = self.client.get("/lits/all/")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 1)
+        self.assertIn("results", response.data)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(len(response.data["results"]), 1)
 
     def test_get_lit_detail_api(self):
         response = self.client.get(f"/lits/{self.lit.id}/")

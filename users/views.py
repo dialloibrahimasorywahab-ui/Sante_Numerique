@@ -11,8 +11,9 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 
+from config.pagination import paginate_response
 from config.permissions import IsAdmin, IsOwnerOrStaff, deny_unless_owner_or_staff
-from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer
+from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer, PAGINATION_PARAMS, SEARCH_PARAM
 from .authentication import RoleTokenObtainPairSerializer
 from .usersSerializers import UserSerializers
 from .usersServices import UserService
@@ -60,8 +61,8 @@ def delete_jwt_cookies(response):
     parameters=[
         OpenApiParameter(name="role", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False,
                           description="Filtre les utilisateurs par rôle."),
-        OpenApiParameter(name="search", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False,
-                          description="Recherche libre (alias : q)."),
+        SEARCH_PARAM,
+        *PAGINATION_PARAMS,
     ],
     request=UserSerializers,
     responses={200: UserSerializers(many=True), 201: UserSerializers, 400: ErrorResponseSerializer},
@@ -70,6 +71,11 @@ def delete_jwt_cookies(response):
 @permission_classes([AllowAny])
 def create_user(request):
     if request.method == "GET":
+        if not request.user.is_authenticated:
+            return Response({"detail": "Informations d'authentification non fournies."}, status=status.HTTP_401_UNAUTHORIZED)
+        if getattr(request.user, "role", None) not in ["ADMINISTRATEUR", "MEDECIN", "INFIRMIER"]:
+            return Response({"error": "Accès refusé. Réservé au personnel et administrateurs."}, status=status.HTTP_403_FORBIDDEN)
+
         role = request.query_params.get("role")
         search_q = request.query_params.get("search") or request.query_params.get("q")
 
@@ -80,14 +86,26 @@ def create_user(request):
         else:
             users = user_service.getAllUser()
 
-        serializer = UserSerializers(users, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return paginate_response(users, request, UserSerializers)
 
-    serializer = UserSerializers(data=request.data)
+    serializer = UserSerializers(data=request.data, context={"request": request})
 
     if serializer.is_valid():
+        validated_data = serializer.validated_data.copy()
+        requested_role = validated_data.get("role", "PATIENT")
+
+        # Si l'utilisateur n'est pas un administrateur connecté, seuls les comptes PATIENT sont autorisés
+        is_admin = request.user.is_authenticated and getattr(request.user, "role", None) == "ADMINISTRATEUR"
+        if not is_admin:
+            if requested_role and requested_role != "PATIENT":
+                return Response(
+                    {"error": "Seul un administrateur peut créer un compte avec le rôle Médecin, Infirmier ou Administrateur."},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            validated_data["role"] = "PATIENT"
+
         try:
-            user = user_service.createUser(**serializer.validated_data)
+            user = user_service.createUser(**validated_data)
             serializer = UserSerializers(user)
 
             return Response(
@@ -148,8 +166,8 @@ def get_user(request, user_id):
     parameters=[
         OpenApiParameter(name="role", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False,
                           description="Filtre les utilisateurs par rôle."),
-        OpenApiParameter(name="search", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False,
-                          description="Recherche libre (alias : q)."),
+        SEARCH_PARAM,
+        *PAGINATION_PARAMS,
     ],
     responses={200: UserSerializers(many=True)},
 )
@@ -166,11 +184,7 @@ def get_all_user(request):
     else:
         users = user_service.getAllUser()
 
-    serializer = UserSerializers(users, many=True)
-    return Response(
-        serializer.data,
-        status=status.HTTP_200_OK
-    )
+    return paginate_response(users, request, UserSerializers)
 
 
 # Connexion / Authentification d'un utilisateur (par login ou email) avec tokens HttpOnly

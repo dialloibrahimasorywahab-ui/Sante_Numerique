@@ -96,3 +96,67 @@ class ConsultationTests(TestCase):
                 rdv=rdv_other,
                 diagnostic="Erreur patient"
             )
+
+    def test_role_based_consultation_access(self):
+        # Création d'un second médecin et d'une autre consultation
+        user_m2 = User.objects.create(
+            nom="Ndiaye", prenom="Abdou", email="abdou.ndiaye@example.com",
+            telephone="+221770005544", login="dr_abdou", motDePasseHash="pass456", role=User.Role.MEDECIN
+        )
+        medecin2 = Medecin.objects.create(
+            idUtilisateur=user_m2,
+            specialite=Medecin.Specialite.CARDIOLOGIE,
+            numeroOrdre="ORD-MED-CONS-02",
+            dateEmbauche="2021-01-01"
+        )
+
+        cons_m1 = self.service.creer_consultation(patient=self.patient, medecin=self.medecin, diagnostic="Cons Dr Mamadou")
+        cons_m2 = self.service.creer_consultation(patient=self.patient, medecin=medecin2, diagnostic="Cons Dr Abdou")
+
+        # 1. MEDECIN (dr_mamadou) ne voit que sa propre consultation
+        self.client.force_authenticate(user=self.user_m)
+        res_list = self.client.get("/consultations/")
+        self.assertEqual(res_list.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_list.data["count"], 1)
+        self.assertEqual(res_list.data["results"][0]["id"], cons_m1.id)
+
+        # GET detail sur sa propre consultation -> 200
+        self.assertEqual(self.client.get(f"/consultations/{cons_m1.id}/").status_code, status.HTTP_200_OK)
+        # GET detail sur la consultation d'un autre médecin -> 403
+        self.assertEqual(self.client.get(f"/consultations/{cons_m2.id}/").status_code, status.HTTP_403_FORBIDDEN)
+
+        # 2. INFIRMIER
+        user_inf = User.objects.create(
+            nom="Ba", prenom="Fatou", email="fatou.ba@example.com",
+            telephone="+221770003322", login="inf_fatou", motDePasseHash="pass123", role=User.Role.INFIRMIER
+        )
+        self.client.force_authenticate(user=user_inf)
+        # GET liste globale -> 403 Forbidden
+        self.assertEqual(self.client.get("/consultations/").status_code, status.HTTP_403_FORBIDDEN)
+        # GET detail unitaire -> 200 OK
+        self.assertEqual(self.client.get(f"/consultations/{cons_m1.id}/").status_code, status.HTTP_200_OK)
+        # POST/DELETE -> 403 Forbidden
+        self.assertEqual(self.client.post("/consultations/", {}, format="json").status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(self.client.delete(f"/consultations/{cons_m1.id}/delete/").status_code, status.HTTP_403_FORBIDDEN)
+
+        # 3. PATIENT
+        self.client.force_authenticate(user=self.user_p)
+        res_pat = self.client.get("/consultations/")
+        self.assertEqual(res_pat.status_code, status.HTTP_200_OK)
+        # Voit ses 2 consultations (faites par Dr 1 et Dr 2)
+        self.assertEqual(res_pat.data["count"], 2)
+        self.assertEqual(self.client.get(f"/consultations/{cons_m1.id}/").status_code, status.HTTP_200_OK)
+        # Patient ne peut pas créer ni supprimer
+        self.assertEqual(self.client.post("/consultations/", {}, format="json").status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(self.client.delete(f"/consultations/{cons_m1.id}/delete/").status_code, status.HTTP_403_FORBIDDEN)
+
+        # 4. ADMINISTRATEUR
+        user_admin = User.objects.create(
+            nom="Admin", prenom="Super", email="admin@example.com",
+            telephone="+221770001100", login="admin_boss", motDePasseHash="pass123", role=User.Role.ADMINISTRATEUR
+        )
+        self.client.force_authenticate(user=user_admin)
+        res_adm = self.client.get("/consultations/")
+        self.assertEqual(res_adm.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_adm.data["count"], 2)
+

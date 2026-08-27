@@ -81,8 +81,10 @@ class ChambreAPITests(TestCase):
     def test_get_all_chambres_api(self):
         response = self.client.get("/chambres/all/")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]["id"], self.chambre.id)
+        self.assertIn("results", response.data)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["id"], self.chambre.id)
 
     def test_get_chambre_detail_api(self):
         response = self.client.get(f"/chambres/{self.chambre.id}/")
@@ -104,12 +106,14 @@ class ChambreAPITests(TestCase):
         )
         response = self.client.get("/chambres/all/?type_chambre=COMMUNE")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]["type_chambre"], "COMMUNE")
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["type_chambre"], "COMMUNE")
 
         response_route = self.client.get("/chambres/type/COMMUNE/")
         self.assertEqual(response_route.status_code, 200)
-        self.assertEqual(len(response_route.data), 1)
+        self.assertEqual(response_route.data["count"], 1)
+        self.assertEqual(len(response_route.data["results"]), 1)
 
     def test_get_chambres_by_statut_api(self):
         response = self.client.get("/chambres/all/?statut=DISPONIBLE")

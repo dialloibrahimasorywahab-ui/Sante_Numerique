@@ -45,3 +45,21 @@ SEARCH_PARAM = OpenApiParameter(
     required=False,
     description="Recherche textuelle libre (alias : q).",
 )
+
+PAGE_PARAM = OpenApiParameter(
+    name="page",
+    type=OpenApiTypes.INT,
+    location=OpenApiParameter.QUERY,
+    required=False,
+    description="Numéro de la page à afficher (par défaut : 1).",
+)
+
+PAGE_SIZE_PARAM = OpenApiParameter(
+    name="page_size",
+    type=OpenApiTypes.INT,
+    location=OpenApiParameter.QUERY,
+    required=False,
+    description="Nombre d'éléments par page (par défaut : 20, max : 100).",
+)
+
+PAGINATION_PARAMS = [PAGE_PARAM, PAGE_SIZE_PARAM]

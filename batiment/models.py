@@ -26,3 +26,6 @@ class Batiment(models.Model):
         self.save(update_fields=["nombre_chambre"])
         return self.nombre_chambre
 
+    class Meta:
+        ordering = ["idBatiment"]
+

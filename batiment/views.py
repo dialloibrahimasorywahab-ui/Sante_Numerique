@@ -5,8 +5,9 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from config.pagination import paginate_response
 from config.permissions import IsAdmin, IsStaffOrAdmin
-from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer, SEARCH_PARAM
+from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer, PAGINATION_PARAMS, SEARCH_PARAM
 from .batimentSerializers import BatimentSerializer
 from .batimentServices import BatimentService
 from chambre.chambreSerializers import ChambreSerializer
@@ -19,7 +20,7 @@ batiment_service = BatimentService()
     tags=["Bâtiments"],
     summary="Lister ou créer un bâtiment",
     description="Retourne la liste des bâtiments (GET avec ?search= optionnel) ou enregistre un nouveau bâtiment (POST).",
-    parameters=[SEARCH_PARAM],
+    parameters=[SEARCH_PARAM, *PAGINATION_PARAMS],
     request=BatimentSerializer,
     responses={200: BatimentSerializer(many=True), 201: BatimentSerializer, 400: ErrorResponseSerializer},
 )
@@ -32,8 +33,7 @@ def create_batiment(request):
             batiments = batiment_service.search_batiments(query)
         else:
             batiments = batiment_service.get_all_batiments()
-        serializer = BatimentSerializer(batiments, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return paginate_response(batiments, request, BatimentSerializer)
 
     if getattr(request.user, "role", None) not in ["ADMINISTRATEUR"]:
         return Response({"error": "Seul un administrateur peut créer un bâtiment."}, status=status.HTTP_403_FORBIDDEN)
@@ -52,7 +52,7 @@ def create_batiment(request):
     tags=["Bâtiments"],
     summary="Lister les bâtiments",
     description="Retourne la liste des bâtiments, avec recherche libre optionnelle.",
-    parameters=[SEARCH_PARAM],
+    parameters=[SEARCH_PARAM, *PAGINATION_PARAMS],
     responses={200: BatimentSerializer(many=True)},
 )
 @api_view(["GET"])
@@ -63,8 +63,7 @@ def get_all_batiments(request):
         batiments = batiment_service.search_batiments(query)
     else:
         batiments = batiment_service.get_all_batiments()
-    serializer = BatimentSerializer(batiments, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    return paginate_response(batiments, request, BatimentSerializer)
 
 
 # Récupérer, modifier ou supprimer un bâtiment grâce à son ID

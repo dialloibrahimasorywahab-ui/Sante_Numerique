@@ -6,8 +6,9 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from config.pagination import paginate_response
 from config.permissions import IsStaffOrAdmin, deny_unless_owner_or_staff
-from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer, SEARCH_PARAM
+from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer, PAGINATION_PARAMS, SEARCH_PARAM
 from .rendezvousSerializers import RendezVousSerializer
 from .rendezvousServices import ConflictError, RendezVousService
 
@@ -65,6 +66,7 @@ def create_rendezvous(request):
         OpenApiParameter(name="date", type=OpenApiTypes.DATE, location=OpenApiParameter.QUERY, required=False,
                           description="Filtre par date du rendez-vous (alias : date_rdv)."),
         SEARCH_PARAM,
+        *PAGINATION_PARAMS,
     ],
     responses={200: RendezVousSerializer(many=True)},
 )
@@ -90,22 +92,21 @@ def get_all_rendezvous(request):
     else:
         rdvs = rendezvous_service.get_all_rendezvous()
 
-    serializer = RendezVousSerializer(rdvs, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    return paginate_response(rdvs, request, RendezVousSerializer)
 
 # recuperer un rendez-vous par son statut
 @extend_schema(
     tags=["Rendez-vous"],
     summary="Lister les rendez-vous par statut",
     description="Retourne les rendez-vous correspondant au statut donné.",
+    parameters=[*PAGINATION_PARAMS],
     responses={200: RendezVousSerializer(many=True)},
 )
 @api_view(["GET"])
 @permission_classes([IsStaffOrAdmin])
 def get_rendezvous_by_statut(request, statut):
     rdvs = rendezvous_service.get_rendezvous_by_statut(statut)
-    serializer = RendezVousSerializer(rdvs, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    return paginate_response(rdvs, request, RendezVousSerializer)
 
 # recuperer un rendez-vous par patient
 
@@ -113,28 +114,28 @@ def get_rendezvous_by_statut(request, statut):
     tags=["Rendez-vous"],
     summary="Lister les rendez-vous d'un patient",
     description="Retourne les rendez-vous rattachés au patient donné.",
+    parameters=[*PAGINATION_PARAMS],
     responses={200: RendezVousSerializer(many=True)},
 )
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_rendezvous_by_patient(request, patient_id):
     rdvs = rendezvous_service.get_rendezvous_by_patient(patient_id)
-    serializer = RendezVousSerializer(rdvs, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    return paginate_response(rdvs, request, RendezVousSerializer)
 
 # recuperer les rendez-vous d'un medecin
 @extend_schema(
     tags=["Rendez-vous"],
     summary="Lister les rendez-vous d'un médecin",
     description="Retourne les rendez-vous rattachés au médecin donné.",
+    parameters=[*PAGINATION_PARAMS],
     responses={200: RendezVousSerializer(many=True)},
 )
 @api_view(["GET"])
 @permission_classes([IsStaffOrAdmin])
 def get_rendezvous_by_medecin(request, medecin_id):
     rdvs = rendezvous_service.get_rendezvous_by_medecin(medecin_id)
-    serializer = RendezVousSerializer(rdvs, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    return paginate_response(rdvs, request, RendezVousSerializer)
 
 # recuperer un rendez-vous par son id
 

@@ -5,11 +5,13 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from config.pagination import paginate_response
 from config.permissions import IsMedecinOuAdmin, IsStaffOrAdmin, deny_unless_owner_or_staff
 from config.schema_helpers import (
     ErrorResponseSerializer,
     HARD_DELETE_PARAM,
     MessageResponseSerializer,
+    PAGINATION_PARAMS,
     SEARCH_PARAM,
 )
 from .hospitalisationSerializers import HospitalisationReadSerializer, HospitalisationSerializer
@@ -29,6 +31,7 @@ hospitalisation_service = HospitalisationService()
         OpenApiParameter(name="statut", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False, description="Filtrer par statut (PROGRAMMEE, EN_COURS, TERMINEE, ANNULEE)."),
         OpenApiParameter(name="all", type=OpenApiTypes.BOOL, location=OpenApiParameter.QUERY, required=False, description="Inclure aussi les hospitalisations inactives/archivées si true."),
         SEARCH_PARAM,
+        *PAGINATION_PARAMS,
     ],
     request=HospitalisationSerializer,
     responses={
@@ -73,8 +76,7 @@ def hospitalisation_list_create_view(request):
                 motif__icontains=search_query
             )
 
-        serializer = HospitalisationReadSerializer(qs, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return paginate_response(qs, request, HospitalisationReadSerializer)
 
     elif request.method == "POST":
         if getattr(request.user, "role", None) not in ["MEDECIN", "ADMINISTRATEUR"]:

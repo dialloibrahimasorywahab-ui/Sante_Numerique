@@ -48,6 +48,7 @@ class Chambre(models.Model):
         unique_together = ('batiment', 'numero_chambre')
         verbose_name = "Chambre"
         verbose_name_plural = "Chambres"
+        ordering = ["id"]
 
     def __str__(self):
         return f"Chambre {self.numero_chambre} - {self.batiment.nom} ({self.get_type_chambre_display()}, {self.get_statut_display()})"

@@ -110,12 +110,16 @@ class RendezVousAPITests(TestCase):
     def test_get_all_rendezvous_api(self):
         response = self.client.get("/rendezvous/all/")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 1)
+        self.assertIn("results", response.data)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(len(response.data["results"]), 1)
 
     def test_get_rendezvous_by_statut_api(self):
         response = self.client.get("/rendezvous/statut/PROGRAMME/")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 1)
+        self.assertIn("results", response.data)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(len(response.data["results"]), 1)
 
     def test_update_rendezvous_api(self):
         payload = {"statut": "CONFIRME"}

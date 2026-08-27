@@ -5,8 +5,9 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from config.pagination import paginate_response
 from config.permissions import IsMedecinOuAdmin, IsStaffOrAdmin, deny_unless_owner_or_staff
-from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer, SEARCH_PARAM
+from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer, PAGINATION_PARAMS, SEARCH_PARAM
 from .mortaliteSerializers import MortaliteSerializer
 from .mortaliteServices import MortaliteService
 
@@ -51,6 +52,7 @@ def create_deces(request):
         OpenApiParameter(name="date", type=OpenApiTypes.DATE, location=OpenApiParameter.QUERY, required=False,
                           description="Filtre par date de décès (alias : date_deces)."),
         SEARCH_PARAM,
+        *PAGINATION_PARAMS,
     ],
     responses={200: MortaliteSerializer(many=True)},
 )
@@ -73,8 +75,7 @@ def get_all_mortalite(request):
     else:
         mortalites = mortalite_service.get_all_mortalites()
 
-    serializer = MortaliteSerializer(mortalites, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    return paginate_response(mortalites, request, MortaliteSerializer)
 
 
 @extend_schema(

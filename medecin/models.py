@@ -61,5 +61,8 @@ class Medecin(models.Model):
 
     dateEmbauche = models.DateField()
 
+    class Meta:
+        ordering = ["idMedecin"]
+
     def __str__(self):
         return f"Dr. {self.idUtilisateur.prenom} {self.idUtilisateur.nom} - {self.get_specialite_display()}"

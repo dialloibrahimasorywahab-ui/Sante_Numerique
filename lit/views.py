@@ -5,8 +5,9 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from config.pagination import paginate_response
 from config.permissions import IsAdmin
-from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer, SEARCH_PARAM
+from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer, PAGINATION_PARAMS, SEARCH_PARAM
 from .litSerializers import LitSerializer
 from .litServices import LitService
 
@@ -24,6 +25,7 @@ lit_service = LitService()
         OpenApiParameter(name="etat", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False,
                           description="Filtre par état du lit."),
         SEARCH_PARAM,
+        *PAGINATION_PARAMS,
     ],
     request=LitSerializer,
     responses={200: LitSerializer(many=True), 201: LitSerializer, 400: ErrorResponseSerializer},
@@ -45,8 +47,7 @@ def create_lit(request):
         else:
             lits = lit_service.get_all_lits()
 
-        serializer = LitSerializer(lits, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return paginate_response(lits, request, LitSerializer)
 
     if getattr(request.user, "role", None) not in ["ADMINISTRATEUR"]:
         return Response({"error": "Seul un administrateur peut créer un lit."}, status=status.HTTP_403_FORBIDDEN)
@@ -71,6 +72,7 @@ def create_lit(request):
         OpenApiParameter(name="etat", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False,
                           description="Filtre par état du lit."),
         SEARCH_PARAM,
+        *PAGINATION_PARAMS,
     ],
     responses={200: LitSerializer(many=True)},
 )
@@ -90,22 +92,21 @@ def get_all_lits(request):
     else:
         lits = lit_service.get_all_lits()
 
-    serializer = LitSerializer(lits, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    return paginate_response(lits, request, LitSerializer)
 
 
 @extend_schema(
     tags=["Lits"],
     summary="Lister les lits par état",
     description="Retourne les lits correspondant à l'état donné.",
+    parameters=[*PAGINATION_PARAMS],
     responses={200: LitSerializer(many=True)},
 )
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_lits_by_etat(request, etat):
     lits = lit_service.get_lits_by_etat(etat)
-    serializer = LitSerializer(lits, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    return paginate_response(lits, request, LitSerializer)
 
 
 # Récupérer, modifier ou supprimer un lit grâce à son ID
