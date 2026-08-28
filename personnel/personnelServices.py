@@ -101,16 +101,16 @@ class PersonnelService:
         return self.repository.get_personnel(personnel_id)
 
     # Récupérer tout le personnel
-    def get_all_personnel(self):
-        return self.repository.get_all_personnel()
+    def get_all_personnel(self, actif_only: bool = True):
+        return self.repository.get_all_personnel(actif_only=actif_only)
 
     # Récupérer le personnel par type
-    def get_personnel_by_type(self, type_personnel):
-        return self.repository.get_personnel_by_type(type_personnel)
+    def get_personnel_by_type(self, type_personnel, actif_only: bool = True):
+        return self.repository.get_personnel_by_type(type_personnel, actif_only=actif_only)
 
     # Rechercher des membres du personnel
-    def search_personnel(self, query):
-        return self.repository.search_personnel(query)
+    def search_personnel(self, query, actif_only: bool = True):
+        return self.repository.search_personnel(query, actif_only=actif_only)
 
     # Mettre à jour les données d'un membre du personnel
     def update_personnel(self, personnel, **data):

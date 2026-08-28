@@ -18,8 +18,10 @@ lit_service = LitService()
 @extend_schema(
     tags=["Lits"],
     summary="Lister ou créer un lit",
-    description="Retourne la liste des lits (GET avec filtres ?chambre_id=, ?etat=, ?search=) ou enregistre un nouveau lit (POST).",
+    description="Retourne la liste des lits (GET avec filtres ?chambre_id=, ?etat=, ?search=, ?all=) ou enregistre un nouveau lit (POST).",
     parameters=[
+        OpenApiParameter(name="all", type=OpenApiTypes.BOOL, location=OpenApiParameter.QUERY, required=False,
+                          description="Inclure aussi les lits hors service / inactifs si true."),
         OpenApiParameter(name="chambre_id", type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=False,
                           description="Filtre par identifiant de chambre."),
         OpenApiParameter(name="etat", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False,
@@ -34,18 +36,19 @@ lit_service = LitService()
 @permission_classes([IsAuthenticated])
 def create_lit(request):
     if request.method == "GET":
+        actif_only = request.query_params.get("all", "false").lower() != "true"
         chambre_id = request.query_params.get('chambre_id') or request.query_params.get('id_chambre')
         etat = request.query_params.get('etat')
         search_q = request.query_params.get('search') or request.query_params.get('q')
 
         if chambre_id:
-            lits = lit_service.get_lits_by_chambre(chambre_id)
+            lits = lit_service.get_lits_by_chambre(chambre_id, actif_only=actif_only)
         elif etat:
-            lits = lit_service.get_lits_by_etat(etat)
+            lits = lit_service.get_lits_by_etat(etat, actif_only=actif_only)
         elif search_q:
-            lits = lit_service.search_lits(search_q)
+            lits = lit_service.search_lits(search_q, actif_only=actif_only)
         else:
-            lits = lit_service.get_all_lits()
+            lits = lit_service.get_all_lits(actif_only=actif_only)
 
         return paginate_response(lits, request, LitSerializer)
 
@@ -65,8 +68,10 @@ def create_lit(request):
 @extend_schema(
     tags=["Lits"],
     summary="Lister les lits",
-    description="Retourne la liste des lits, avec filtres optionnels (chambre, état, recherche).",
+    description="Retourne la liste des lits, avec filtres optionnels (chambre, état, recherche ou inclusion inactifs ?all=true).",
     parameters=[
+        OpenApiParameter(name="all", type=OpenApiTypes.BOOL, location=OpenApiParameter.QUERY, required=False,
+                          description="Inclure aussi les lits hors service / inactifs si true."),
         OpenApiParameter(name="chambre_id", type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=False,
                           description="Filtre par identifiant de chambre (alias : id_chambre)."),
         OpenApiParameter(name="etat", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False,
@@ -79,18 +84,19 @@ def create_lit(request):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_all_lits(request):
+    actif_only = request.query_params.get("all", "false").lower() != "true"
     chambre_id = request.query_params.get('chambre_id') or request.query_params.get('id_chambre')
     etat = request.query_params.get('etat')
     search_q = request.query_params.get('search') or request.query_params.get('q')
 
     if chambre_id:
-        lits = lit_service.get_lits_by_chambre(chambre_id)
+        lits = lit_service.get_lits_by_chambre(chambre_id, actif_only=actif_only)
     elif etat:
-        lits = lit_service.get_lits_by_etat(etat)
+        lits = lit_service.get_lits_by_etat(etat, actif_only=actif_only)
     elif search_q:
-        lits = lit_service.search_lits(search_q)
+        lits = lit_service.search_lits(search_q, actif_only=actif_only)
     else:
-        lits = lit_service.get_all_lits()
+        lits = lit_service.get_all_lits(actif_only=actif_only)
 
     return paginate_response(lits, request, LitSerializer)
 

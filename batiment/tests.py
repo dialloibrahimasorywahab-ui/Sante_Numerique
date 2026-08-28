@@ -145,4 +145,24 @@ class BatimentAPITests(TestCase):
         self.assertEqual(response_hard.status_code, 200)
         self.assertFalse(Batiment.objects.filter(idBatiment=self.batiment.idBatiment).exists())
 
+    def test_batiment_soft_deleted_hidden_by_default_and_visible_with_all(self):
+        """Un bâtiment désactivé n'apparaît pas par défaut mais réapparaît avec ?all=true."""
+        bat = Batiment.objects.create(
+            nom="Bâtiment Inactif", description="Fermé", actif=False
+        )
+        # Liste par défaut -> exclu
+        res_default = self.client.get("/batiments/")
+        self.assertEqual(res_default.status_code, 200)
+        items = res_default.data.get("results", res_default.data)
+        ids = [b["idBatiment"] for b in items]
+        self.assertNotIn(bat.idBatiment, ids)
+
+        # Liste avec ?all=true -> inclus
+        res_all = self.client.get("/batiments/?all=true")
+        self.assertEqual(res_all.status_code, 200)
+        items_all = res_all.data.get("results", res_all.data)
+        ids_all = [b["idBatiment"] for b in items_all]
+        self.assertIn(bat.idBatiment, ids_all)
+
+
 

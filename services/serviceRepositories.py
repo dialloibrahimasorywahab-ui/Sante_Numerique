@@ -22,8 +22,24 @@ class ServiceRepository:
             return None
 
     # Récupérer tous les services
-    def get_all_services(self):
-        return Service.objects.all()
+    def get_all_services(self, actif_only: bool = True):
+        qs = Service.objects.all()
+        if actif_only:
+            qs = qs.filter(actif=True)
+        return qs
+
+    # Rechercher des services par mot-clé
+    def search_services(self, query, actif_only: bool = True):
+        if not query:
+            return self.get_all_services(actif_only=actif_only)
+        from django.db.models import Q
+        clean_q = str(query).strip()
+        qs = Service.objects.filter(
+            Q(nomService__icontains=clean_q) | Q(description__icontains=clean_q)
+        )
+        if actif_only:
+            qs = qs.filter(actif=True)
+        return qs
 
     # Mettre à jour les données d'un service
     def update_service(self, service, **data):

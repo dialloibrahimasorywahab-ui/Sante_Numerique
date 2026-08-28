@@ -1,5 +1,6 @@
 from django.db import IntegrityError
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -20,8 +21,12 @@ patient_service = PatientService()
 @extend_schema(
     tags=["Patients"],
     summary="Lister ou créer un patient",
-    description="Retourne la liste des patients (GET avec ?search= optionnel) ou enregistre un nouveau patient (POST).",
-    parameters=[SEARCH_PARAM, *PAGINATION_PARAMS],
+    description="Retourne la liste des patients (GET avec ?search= ou ?all= optionnels) ou enregistre un nouveau patient (POST).",
+    parameters=[
+        OpenApiParameter(name="all", type=OpenApiTypes.BOOL, location=OpenApiParameter.QUERY, required=False, description="Inclure aussi les patients inactifs si true."),
+        SEARCH_PARAM,
+        *PAGINATION_PARAMS
+    ],
     request=PatientSerializer,
     responses={200: PatientSerializer(many=True), 201: PatientSerializer, 400: ErrorResponseSerializer},
 )
@@ -29,11 +34,12 @@ patient_service = PatientService()
 @permission_classes([IsStaffOrAdmin])
 def create_patient(request):
     if request.method == "GET":
+        actif_only = request.query_params.get("all", "false").lower() != "true"
         query = request.query_params.get("search") or request.query_params.get("q")
         if query:
-            patients = patient_service.search_patients(query)
+            patients = patient_service.search_patients(query, actif_only=actif_only)
         else:
-            patients = patient_service.get_all_patient()
+            patients = patient_service.get_all_patient(actif_only=actif_only)
         return paginate_response(patients, request, PatientSerializer)
 
     if request.method == "POST":
@@ -71,13 +77,17 @@ def create_patient(request):
     tags=["Patients"],
     summary="Lister les patients",
     description="Retourne la liste de tous les patients enregistrés.",
-    parameters=[*PAGINATION_PARAMS],
+    parameters=[
+        OpenApiParameter(name="all", type=OpenApiTypes.BOOL, location=OpenApiParameter.QUERY, required=False, description="Inclure aussi les patients inactifs si true."),
+        *PAGINATION_PARAMS
+    ],
     responses={200: PatientSerializer(many=True)},
 )
 @api_view(["GET"])
 @permission_classes([IsStaffOrAdmin])
 def get_all_patient(request):
-    patients = patient_service.get_all_patient()
+    actif_only = request.query_params.get("all", "false").lower() != "true"
+    patients = patient_service.get_all_patient(actif_only=actif_only)
     return paginate_response(patients, request, PatientSerializer)
 
 

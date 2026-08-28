@@ -61,4 +61,26 @@ class ServiceRepositoryTests(TestCase):
         self.assertEqual(response.data["nomService"], "CHIRURGIE")
         self.assertEqual(response.data["nomServiceDisplay"], "Chirurgie Générale")
 
+    def test_service_soft_deleted_hidden_by_default_and_visible_with_all(self):
+        """Un service désactivé n'apparaît pas par défaut mais réapparaît avec ?all=true."""
+        srv = Service.objects.create(
+            nomService=Service.NomService.OPHTALMOLOGIE,
+            description="Soins oculaires",
+            actif=False
+        )
+        # Liste par défaut -> exclu
+        res_default = self.client.get("/services/")
+        self.assertEqual(res_default.status_code, 200)
+        items = res_default.data.get("results", res_default.data)
+        ids = [s["idService"] for s in items]
+        self.assertNotIn(srv.idService, ids)
+
+        # Liste avec ?all=true -> inclus
+        res_all = self.client.get("/services/?all=true")
+        self.assertEqual(res_all.status_code, 200)
+        items_all = res_all.data.get("results", res_all.data)
+        ids_all = [s["idService"] for s in items_all]
+        self.assertIn(srv.idService, ids_all)
+
+
 

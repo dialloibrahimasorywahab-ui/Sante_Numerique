@@ -20,8 +20,10 @@ medecin_service = MedecinService()
 @extend_schema(
     tags=["Médecins"],
     summary="Lister ou créer un médecin",
-    description="Retourne la liste des médecins (GET avec filtres ?service=, ?specialite=, ?search=) ou enregistre un nouveau médecin (POST).",
+    description="Retourne la liste des médecins (GET avec filtres ?service=, ?specialite=, ?search=, ?all=) ou enregistre un nouveau médecin (POST).",
     parameters=[
+        OpenApiParameter(name="all", type=OpenApiTypes.BOOL, location=OpenApiParameter.QUERY, required=False,
+                          description="Inclure aussi les médecins inactifs si true."),
         OpenApiParameter(name="service", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False,
                           description="Filtre par service ou spécialité (alias : specialite)."),
         OpenApiParameter(name="specialite", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False,
@@ -36,14 +38,15 @@ medecin_service = MedecinService()
 @permission_classes([IsAuthenticated])
 def create_medecin(request):
     if request.method == "GET":
+        actif_only = request.query_params.get("all", "false").lower() != "true"
         specialite = request.query_params.get("service") or request.query_params.get("specialite")
         search_q = request.query_params.get("search") or request.query_params.get("q")
         if specialite:
-            medecins = medecin_service.get_medecins_by_specialite(specialite)
+            medecins = medecin_service.get_medecins_by_specialite(specialite, actif_only=actif_only)
         elif search_q:
-            medecins = medecin_service.search_medecins(search_q)
+            medecins = medecin_service.search_medecins(search_q, actif_only=actif_only)
         else:
-            medecins = medecin_service.get_all_medecin()
+            medecins = medecin_service.get_all_medecin(actif_only=actif_only)
         return paginate_response(medecins, request, MedecinSerializer)
 
     if getattr(request.user, "role", None) != "ADMINISTRATEUR":
@@ -76,8 +79,10 @@ def create_medecin(request):
 @extend_schema(
     tags=["Médecins"],
     summary="Lister les médecins",
-    description="Retourne la liste des médecins, avec filtre optionnel par service/spécialité.",
+    description="Retourne la liste des médecins, avec filtre optionnel par service/spécialité ou inclusion des inactifs (?all=true).",
     parameters=[
+        OpenApiParameter(name="all", type=OpenApiTypes.BOOL, location=OpenApiParameter.QUERY, required=False,
+                          description="Inclure aussi les médecins inactifs si true."),
         OpenApiParameter(name="service", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False,
                           description="Filtre par service ou spécialité (alias : specialite)."),
         OpenApiParameter(name="specialite", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False,
@@ -89,11 +94,12 @@ def create_medecin(request):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_all_medecin(request):
+    actif_only = request.query_params.get("all", "false").lower() != "true"
     specialite = request.query_params.get("service") or request.query_params.get("specialite")
     if specialite:
-        medecins = medecin_service.get_medecins_by_specialite(specialite)
+        medecins = medecin_service.get_medecins_by_specialite(specialite, actif_only=actif_only)
     else:
-        medecins = medecin_service.get_all_medecin()
+        medecins = medecin_service.get_all_medecin(actif_only=actif_only)
 
     return paginate_response(medecins, request, MedecinSerializer)
 

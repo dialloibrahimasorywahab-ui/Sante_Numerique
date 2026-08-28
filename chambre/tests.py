@@ -132,5 +132,25 @@ class ChambreAPITests(TestCase):
         self.assertEqual(response_hard.status_code, 200)
         self.assertFalse(Chambre.objects.filter(id=self.chambre.id).exists())
 
+    def test_chambre_soft_deleted_hidden_by_default_and_visible_with_all(self):
+        """Une chambre hors service n'apparaît pas par défaut mais réapparaît avec ?all=true."""
+        chm = Chambre.objects.create(
+            batiment=self.batiment, numero_chambre=888, statut="HORS_SERVICE", capacite=1
+        )
+        # Liste par défaut -> exclu
+        res_default = self.client.get("/chambres/")
+        self.assertEqual(res_default.status_code, 200)
+        items = res_default.data.get("results", res_default.data)
+        ids = [c["id"] for c in items]
+        self.assertNotIn(chm.id, ids)
+
+        # Liste avec ?all=true -> inclus
+        res_all = self.client.get("/chambres/?all=true")
+        self.assertEqual(res_all.status_code, 200)
+        items_all = res_all.data.get("results", res_all.data)
+        ids_all = [c["id"] for c in items_all]
+        self.assertIn(chm.id, ids_all)
+
+
 
 

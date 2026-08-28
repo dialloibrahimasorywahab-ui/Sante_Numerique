@@ -19,45 +19,60 @@ class NataliteRepository:
             return None
 
     # Afficher tous les nouveaux-nés
-    def get_all_nouveaux_nes(self):
-        return Natalite.objects.select_related(
+    def get_all_nouveaux_nes(self, actif_only: bool = True):
+        qs = Natalite.objects.select_related(
             'id_patient__idUtilisateur',
             'id_medecin__idUtilisateur'
         ).all()
+        if actif_only:
+            qs = qs.filter(actif=True)
+        return qs
 
     # Afficher les nouveaux-nés d'une patiente (mère)
-    def get_nouveaux_nes_by_patient(self, patient_id):
-        return Natalite.objects.filter(id_patient_id=patient_id).select_related(
+    def get_nouveaux_nes_by_patient(self, patient_id, actif_only: bool = True):
+        qs = Natalite.objects.filter(id_patient_id=patient_id).select_related(
             'id_patient__idUtilisateur',
             'id_medecin__idUtilisateur'
         )
+        if actif_only:
+            qs = qs.filter(actif=True)
+        return qs
 
     # Afficher les nouveaux-nés venus au monde sous la supervision d'un médecin
-    def get_nouveaux_nes_by_medecin(self, medecin_id):
-        return Natalite.objects.filter(id_medecin_id=medecin_id).select_related(
+    def get_nouveaux_nes_by_medecin(self, medecin_id, actif_only: bool = True):
+        qs = Natalite.objects.filter(id_medecin_id=medecin_id).select_related(
             'id_patient__idUtilisateur',
             'id_medecin__idUtilisateur'
         )
+        if actif_only:
+            qs = qs.filter(actif=True)
+        return qs
 
     # Afficher les nouveaux-nés par leur sexe
-    def get_natalities_by_sexe(self, sexe):
-        return Natalite.objects.filter(sexe=sexe).select_related(
+    def get_natalities_by_sexe(self, sexe, actif_only: bool = True):
+        qs = Natalite.objects.filter(sexe=sexe).select_related(
             'id_patient__idUtilisateur',
             'id_medecin__idUtilisateur'
         )
+        if actif_only:
+            qs = qs.filter(actif=True)
+        return qs
 
     # Afficher les nouveaux-nés d'une date spécifique
-    def get_nouveaux_nes_by_date(self, date_naissance):
-        return Natalite.objects.filter(date_naissance=date_naissance).select_related(
+    def get_nouveaux_nes_by_date(self, date_naissance, actif_only: bool = True):
+        qs = Natalite.objects.filter(date_naissance=date_naissance).select_related(
             'id_patient__idUtilisateur',
             'id_medecin__idUtilisateur'
         )
+        if actif_only:
+            qs = qs.filter(actif=True)
+        return qs
 
     # Recherche textuelle
-    def search_nouveaux_nes(self, query):
+    def search_nouveaux_nes(self, query, actif_only: bool = True):
         if not query:
-            return self.get_all_nouveaux_nes()
-        return Natalite.objects.filter(
+            return self.get_all_nouveaux_nes(actif_only=actif_only)
+        qs = Natalite.objects.filter(
             Q(prenom_nouveau_ne__icontains=query) |
             Q(nom_nouveau_ne__icontains=query) |
             Q(lieu_naissance__icontains=query) |
@@ -66,6 +81,9 @@ class NataliteRepository:
             'id_patient__idUtilisateur',
             'id_medecin__idUtilisateur'
         )
+        if actif_only:
+            qs = qs.filter(actif=True)
+        return qs
 
     # Mettre à jour les informations d'un nouveau-né
     def update_data_nouveau_ne(self, nouveau_ne, **data):

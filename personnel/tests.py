@@ -105,4 +105,29 @@ class PersonnelRepositoryTests(TestCase):
         self.assertIn("prenom", response.data)
         self.assertIn("login", response.data)
 
+    def test_personnel_soft_deleted_hidden_by_default_and_visible_with_all(self):
+        """Un membre du personnel désactivé n'apparaît pas par défaut mais réapparaît avec ?all=true."""
+        user = User.objects.create(
+            nom="Inactif", prenom="Inf", email="inactif.inf@hospital.com",
+            telephone="+224600777888", login="inf_inactif", role=User.Role.INFIRMIER, actif=False
+        )
+        pers = Personnel.objects.create(
+            idUtilisateur=user, typePersonnel=Personnel.TypePersonnel.INFIRMIER,
+            poste="Infirmier", serviceHopital="Urgences", dateEmbauche="2024-01-01"
+        )
+        # Liste par défaut -> exclu
+        res_default = self.client.get("/personnel/")
+        self.assertEqual(res_default.status_code, 200)
+        items = res_default.data.get("results", res_default.data)
+        ids = [p["idPersonnel"] for p in items]
+        self.assertNotIn(pers.idPersonnel, ids)
+
+        # Liste avec ?all=true -> inclus
+        res_all = self.client.get("/personnel/?all=true")
+        self.assertEqual(res_all.status_code, 200)
+        items_all = res_all.data.get("results", res_all.data)
+        ids_all = [p["idPersonnel"] for p in items_all]
+        self.assertIn(pers.idPersonnel, ids_all)
+
+
 

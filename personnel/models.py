@@ -64,5 +64,8 @@ class Personnel(models.Model):
 
     dateEmbauche = models.DateField()
 
+    class Meta:
+        ordering = ['idPersonnel']
+
     def __str__(self):
         return f"{self.get_typePersonnel_display()} - {self.idUtilisateur.prenom} {self.idUtilisateur.nom}"

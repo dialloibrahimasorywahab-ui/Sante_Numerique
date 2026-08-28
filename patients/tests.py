@@ -310,3 +310,25 @@ class PatientAPIPermissionsAndCreationTests(TestCase):
         self.client.force_authenticate(user=self.infirmier)
         res_inf = self.client.delete(f"/patients/{self.patient_record.idPatient}/")
         self.assertEqual(res_inf.status_code, 403)
+
+    def test_patient_soft_deleted_hidden_by_default_and_visible_with_all(self):
+        """Un patient désactivé (actif=False) n'apparaît pas par défaut mais apparaît avec ?all=true."""
+        self.client.force_authenticate(user=self.admin)
+        # Soft delete
+        self.user_patient.actif = False
+        self.user_patient.save()
+
+        # Liste par défaut -> vide (ou ne contient pas le patient désactivé)
+        res_default = self.client.get("/patients/")
+        self.assertEqual(res_default.status_code, 200)
+        items = res_default.data.get("results", res_default.data)
+        ids = [p["idPatient"] for p in items]
+        self.assertNotIn(self.patient_record.idPatient, ids)
+
+        # Liste avec ?all=true -> contient le patient désactivé
+        res_all = self.client.get("/patients/?all=true")
+        self.assertEqual(res_all.status_code, 200)
+        items_all = res_all.data.get("results", res_all.data)
+        ids_all = [p["idPatient"] for p in items_all]
+        self.assertIn(self.patient_record.idPatient, ids_all)
+

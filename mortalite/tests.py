@@ -83,3 +83,24 @@ class MortaliteAPITests(TestCase):
         deces_id = response.data["id_deces"]
         get_resp = self.client.get(f"/mortalite/{deces_id}/")
         self.assertEqual(get_resp.status_code, status.HTTP_200_OK)
+
+    def test_mortalite_soft_deleted_hidden_by_default_and_visible_with_all(self):
+        """Une fiche de décès désactivée n'apparaît pas par défaut mais réapparaît avec ?all=true."""
+        dec = Mortalite.objects.create(
+            id_patient=self.patient, date_deces="2024-01-01", cause_deces="Test",
+            lieu_deces="Test lieu", actif=False
+        )
+        # Liste par défaut -> exclu
+        res_default = self.client.get("/mortalite/")
+        self.assertEqual(res_default.status_code, 200)
+        items = res_default.data.get("results", res_default.data)
+        ids = [m["id_deces"] for m in items]
+        self.assertNotIn(dec.id_deces, ids)
+
+        # Liste avec ?all=true -> inclus
+        res_all = self.client.get("/mortalite/?all=true")
+        self.assertEqual(res_all.status_code, 200)
+        items_all = res_all.data.get("results", res_all.data)
+        ids_all = [m["id_deces"] for m in items_all]
+        self.assertIn(dec.id_deces, ids_all)
+

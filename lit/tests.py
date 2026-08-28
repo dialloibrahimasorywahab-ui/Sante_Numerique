@@ -124,3 +124,23 @@ class LitAPITests(TestCase):
         self.assertEqual(response_hard.status_code, 200)
         self.assertFalse(Lit.objects.filter(id=self.lit.id).exists())
 
+    def test_lit_soft_deleted_hidden_by_default_and_visible_with_all(self):
+        """Un lit hors service n'apparaît pas par défaut mais réapparaît avec ?all=true."""
+        l = Lit.objects.create(
+            chambre=self.chambre, numero_lit="Lit HS", etat="HORS_SERVICE"
+        )
+        # Liste par défaut -> exclu
+        res_default = self.client.get("/lits/")
+        self.assertEqual(res_default.status_code, 200)
+        items = res_default.data.get("results", res_default.data)
+        ids = [x["id"] for x in items]
+        self.assertNotIn(l.id, ids)
+
+        # Liste avec ?all=true -> inclus
+        res_all = self.client.get("/lits/?all=true")
+        self.assertEqual(res_all.status_code, 200)
+        items_all = res_all.data.get("results", res_all.data)
+        ids_all = [x["id"] for x in items_all]
+        self.assertIn(l.id, ids_all)
+
+

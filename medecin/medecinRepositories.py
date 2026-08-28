@@ -15,26 +15,35 @@ class MedecinRepository:
             return None
 
     # Afficher tous les médecins
-    def get_all_medecin(self):
-        return Medecin.objects.select_related('idUtilisateur').all()
+    def get_all_medecin(self, actif_only: bool = True):
+        qs = Medecin.objects.select_related('idUtilisateur').all()
+        if actif_only:
+            qs = qs.filter(idUtilisateur__actif=True)
+        return qs
 
     # Rechercher les médecins par spécialité / service
-    def get_medecins_by_specialite(self, specialite):
-        return Medecin.objects.filter(specialite__iexact=specialite).select_related('idUtilisateur')
+    def get_medecins_by_specialite(self, specialite, actif_only: bool = True):
+        qs = Medecin.objects.filter(specialite__iexact=specialite).select_related('idUtilisateur')
+        if actif_only:
+            qs = qs.filter(idUtilisateur__actif=True)
+        return qs
 
     # Rechercher des médecins par mot-clé
-    def search_medecins(self, query):
+    def search_medecins(self, query, actif_only: bool = True):
         if not query:
-            return self.get_all_medecin()
+            return self.get_all_medecin(actif_only=actif_only)
         from django.db.models import Q
         clean_q = str(query).strip()
-        return Medecin.objects.filter(
+        qs = Medecin.objects.filter(
             Q(idUtilisateur__nom__icontains=clean_q) |
             Q(idUtilisateur__prenom__icontains=clean_q) |
             Q(idUtilisateur__email__icontains=clean_q) |
             Q(matricule__icontains=clean_q) |
             Q(specialite__icontains=clean_q)
         ).select_related('idUtilisateur')
+        if actif_only:
+            qs = qs.filter(idUtilisateur__actif=True)
+        return qs
 
     # Mettre à jour les informations d'un médecin
     def update_Medecin(self, medecin, **data):

@@ -14,24 +14,38 @@ class LitRepository:
         except Lit.DoesNotExist:
             return None
 
-    def get_all_lits(self):
-        return Lit.objects.select_related('chambre', 'chambre__batiment').all()
+    def get_all_lits(self, actif_only: bool = True):
+        qs = Lit.objects.select_related('chambre', 'chambre__batiment').all()
+        if actif_only:
+            qs = qs.exclude(etat=Lit.EtatLit.HORS_SERVICE)
+        return qs
 
-    def get_lits_by_chambre(self, chambre_id):
-        return Lit.objects.filter(chambre_id=chambre_id).select_related('chambre', 'chambre__batiment')
+    def get_lits_by_chambre(self, chambre_id, actif_only: bool = True):
+        qs = Lit.objects.filter(chambre_id=chambre_id).select_related('chambre', 'chambre__batiment')
+        if actif_only:
+            qs = qs.exclude(etat=Lit.EtatLit.HORS_SERVICE)
+        return qs
 
-    def get_lits_by_etat(self, etat):
-        return Lit.objects.filter(etat=etat).select_related('chambre', 'chambre__batiment')
+    def get_lits_by_etat(self, etat, actif_only: bool = True):
+        qs = Lit.objects.select_related('chambre', 'chambre__batiment').all()
+        if etat:
+            qs = qs.filter(etat=etat)
+        elif actif_only:
+            qs = qs.exclude(etat=Lit.EtatLit.HORS_SERVICE)
+        return qs
 
-    def search_lits(self, query):
+    def search_lits(self, query, actif_only: bool = True):
         if not query:
-            return self.get_all_lits()
+            return self.get_all_lits(actif_only=actif_only)
         q_clean = str(query).strip()
-        return Lit.objects.filter(
+        qs = Lit.objects.filter(
             models.Q(numero_lit__icontains=q_clean) |
             models.Q(etat__icontains=q_clean) |
             models.Q(chambre__batiment__nom__icontains=q_clean)
         ).select_related('chambre', 'chambre__batiment')
+        if actif_only:
+            qs = qs.exclude(etat=Lit.EtatLit.HORS_SERVICE)
+        return qs
 
     def update_lit(self, lit, **data):
         for field, value in data.items():

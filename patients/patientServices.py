@@ -67,12 +67,12 @@ class PatientService:
         return self.repository.get_patient(patient_id)
 
     # recuperer tous les patients et les affichers
-    def get_all_patient(self):
-        return self.repository.get_all_patient()
+    def get_all_patient(self, actif_only: bool = True):
+        return self.repository.get_all_patient(actif_only=actif_only)
 
     # rechercher des patients
-    def search_patients(self, query):
-        return self.repository.search_patients(query)
+    def search_patients(self, query, actif_only: bool = True):
+        return self.repository.search_patients(query, actif_only=actif_only)
 
     # mettre à jour les données d'un patient
     def update_patient(self, patient, **data):

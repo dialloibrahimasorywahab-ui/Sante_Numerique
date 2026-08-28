@@ -126,3 +126,28 @@ class MedecinRepositoryTests(TestCase):
         user.refresh_from_db()
         self.assertEqual(user.nom, "Diallo-Bah")
 
+    def test_medecin_soft_deleted_hidden_by_default_and_visible_with_all(self):
+        """Un médecin désactivé n'apparaît pas par défaut mais réapparaît avec ?all=true."""
+        user = User.objects.create(
+            nom="Inactif", prenom="Doc", email="inactif.doc@hospital.com",
+            telephone="+224600999888", login="doc_inactif", role=User.Role.MEDECIN, actif=False
+        )
+        med = Medecin.objects.create(
+            idUtilisateur=user, specialite=Medecin.Specialite.PEDIATRIE,
+            numeroOrdre="CNOM-98765", dateEmbauche="2025-01-01"
+        )
+        # Liste par défaut -> exclu
+        res_default = self.client.get("/medecins/")
+        self.assertEqual(res_default.status_code, 200)
+        items = res_default.data.get("results", res_default.data)
+        ids = [m["idMedecin"] for m in items]
+        self.assertNotIn(med.idMedecin, ids)
+
+        # Liste avec ?all=true -> inclus
+        res_all = self.client.get("/medecins/?all=true")
+        self.assertEqual(res_all.status_code, 200)
+        items_all = res_all.data.get("results", res_all.data)
+        ids_all = [m["idMedecin"] for m in items_all]
+        self.assertIn(med.idMedecin, ids_all)
+
+

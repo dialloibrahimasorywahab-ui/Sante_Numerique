@@ -46,8 +46,10 @@ def create_naissance(request):
 @extend_schema(
     tags=["Natalité"],
     summary="Lister les naissances",
-    description="Retourne la liste des naissances, avec filtres optionnels (patient, médecin, sexe, date, recherche).",
+    description="Retourne la liste des naissances, avec filtres optionnels (patient, médecin, sexe, date, recherche ou inclusion inactifs ?all=true).",
     parameters=[
+        OpenApiParameter(name="all", type=OpenApiTypes.BOOL, location=OpenApiParameter.QUERY, required=False,
+                          description="Inclure aussi les fiches de naissance inactives si true."),
         OpenApiParameter(name="patient_id", type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=False,
                           description="Filtre par identifiant de la patiente/mère (alias : id_patient)."),
         OpenApiParameter(name="medecin_id", type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=False,
@@ -64,6 +66,7 @@ def create_naissance(request):
 @api_view(["GET"])
 @permission_classes([IsStaffOrAdmin])
 def get_all_natality(request):
+    actif_only = request.query_params.get("all", "false").lower() != "true"
     patient_id = request.query_params.get('patient_id') or request.query_params.get('id_patient')
     medecin_id = request.query_params.get('medecin_id') or request.query_params.get('id_medecin')
     sexe = request.query_params.get('sexe')
@@ -71,17 +74,17 @@ def get_all_natality(request):
     search_q = request.query_params.get('search') or request.query_params.get('q')
 
     if patient_id:
-        natalities = natalite_service.get_nouveaux_nes_by_patient(patient_id)
+        natalities = natalite_service.get_nouveaux_nes_by_patient(patient_id, actif_only=actif_only)
     elif medecin_id:
-        natalities = natalite_service.get_nouveaux_nes_by_medecin(medecin_id)
+        natalities = natalite_service.get_nouveaux_nes_by_medecin(medecin_id, actif_only=actif_only)
     elif sexe:
-        natalities = natalite_service.get_natalities_by_sexe(sexe)
+        natalities = natalite_service.get_natalities_by_sexe(sexe, actif_only=actif_only)
     elif date_naissance:
-        natalities = natalite_service.get_nouveaux_nes_by_date(date_naissance)
+        natalities = natalite_service.get_nouveaux_nes_by_date(date_naissance, actif_only=actif_only)
     elif search_q:
-        natalities = natalite_service.search_nouveaux_nes(search_q)
+        natalities = natalite_service.search_nouveaux_nes(search_q, actif_only=actif_only)
     else:
-        natalities = natalite_service.get_all_nouveau_ne()
+        natalities = natalite_service.get_all_nouveau_ne(actif_only=actif_only)
 
     return paginate_response(natalities, request, NataliteSerializer)
 

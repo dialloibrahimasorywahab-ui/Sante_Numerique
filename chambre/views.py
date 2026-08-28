@@ -19,8 +19,10 @@ chambre_service = ChambreService()
 @extend_schema(
     tags=["Chambres"],
     summary="Lister ou créer une chambre",
-    description="Retourne la liste des chambres (GET avec filtres ?batiment_id=, ?type_chambre=, ?statut=, ?search=) ou enregistre une nouvelle chambre (POST).",
+    description="Retourne la liste des chambres (GET avec filtres ?batiment_id=, ?type_chambre=, ?statut=, ?search=, ?all=) ou enregistre une nouvelle chambre (POST).",
     parameters=[
+        OpenApiParameter(name="all", type=OpenApiTypes.BOOL, location=OpenApiParameter.QUERY, required=False,
+                          description="Inclure aussi les chambres hors service / inactives si true."),
         OpenApiParameter(name="batiment_id", type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=False,
                           description="Filtre par identifiant de bâtiment."),
         OpenApiParameter(name="type_chambre", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False,
@@ -37,21 +39,22 @@ chambre_service = ChambreService()
 @permission_classes([IsAuthenticated])
 def create_chambre(request):
     if request.method == "GET":
+        actif_only = request.query_params.get("all", "false").lower() != "true"
         batiment_id = request.query_params.get('batiment_id') or request.query_params.get('id_batiment')
         type_chambre = request.query_params.get('type_chambre') or request.query_params.get('type')
         statut = request.query_params.get('statut')
         search_q = request.query_params.get('search') or request.query_params.get('q')
 
         if batiment_id:
-            chambres = chambre_service.get_chambres_by_batiment(batiment_id)
+            chambres = chambre_service.get_chambres_by_batiment(batiment_id, actif_only=actif_only)
         elif type_chambre:
-            chambres = chambre_service.get_chambres_by_type(type_chambre)
+            chambres = chambre_service.get_chambres_by_type(type_chambre, actif_only=actif_only)
         elif statut:
-            chambres = chambre_service.get_chambres_by_statut(statut)
+            chambres = chambre_service.get_chambres_by_statut(statut, actif_only=actif_only)
         elif search_q:
-            chambres = chambre_service.search_chambres(search_q)
+            chambres = chambre_service.search_chambres(search_q, actif_only=actif_only)
         else:
-            chambres = chambre_service.get_all_chambres()
+            chambres = chambre_service.get_all_chambres(actif_only=actif_only)
 
         return paginate_response(chambres, request, ChambreSerializer)
 
@@ -73,8 +76,10 @@ def create_chambre(request):
 @extend_schema(
     tags=["Chambres"],
     summary="Lister les chambres",
-    description="Retourne la liste des chambres, avec filtres optionnels (bâtiment, type, statut, recherche).",
+    description="Retourne la liste des chambres, avec filtres optionnels (bâtiment, type, statut, recherche ou inclusion inactifs ?all=true).",
     parameters=[
+        OpenApiParameter(name="all", type=OpenApiTypes.BOOL, location=OpenApiParameter.QUERY, required=False,
+                          description="Inclure aussi les chambres hors service / inactives si true."),
         OpenApiParameter(name="batiment_id", type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=False,
                           description="Filtre par identifiant de bâtiment (alias : id_batiment)."),
         OpenApiParameter(name="type_chambre", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False,
@@ -89,21 +94,22 @@ def create_chambre(request):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_all_chambres(request):
+    actif_only = request.query_params.get("all", "false").lower() != "true"
     batiment_id = request.query_params.get('batiment_id') or request.query_params.get('id_batiment')
     type_chambre = request.query_params.get('type_chambre') or request.query_params.get('type')
     statut = request.query_params.get('statut')
     search_q = request.query_params.get('search') or request.query_params.get('q')
 
     if batiment_id:
-        chambres = chambre_service.get_chambres_by_batiment(batiment_id)
+        chambres = chambre_service.get_chambres_by_batiment(batiment_id, actif_only=actif_only)
     elif type_chambre:
-        chambres = chambre_service.get_chambres_by_type(type_chambre)
+        chambres = chambre_service.get_chambres_by_type(type_chambre, actif_only=actif_only)
     elif statut:
-        chambres = chambre_service.get_chambres_by_statut(statut)
+        chambres = chambre_service.get_chambres_by_statut(statut, actif_only=actif_only)
     elif search_q:
-        chambres = chambre_service.search_chambres(search_q)
+        chambres = chambre_service.search_chambres(search_q, actif_only=actif_only)
     else:
-        chambres = chambre_service.get_all_chambres()
+        chambres = chambre_service.get_all_chambres(actif_only=actif_only)
 
     return paginate_response(chambres, request, ChambreSerializer)
 

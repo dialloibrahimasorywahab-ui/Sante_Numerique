@@ -16,11 +16,11 @@ class BatimentService:
     def get_batiment_by_nom(self, nom):
         return self.repository.get_batiment_by_nom(nom)
 
-    def get_all_batiments(self):
-        return self.repository.get_all_batiments()
+    def get_all_batiments(self, actif_only: bool = True):
+        return self.repository.get_all_batiments(actif_only=actif_only)
 
-    def search_batiments(self, query):
-        return self.repository.search_batiments(query)
+    def search_batiments(self, query, actif_only: bool = True):
+        return self.repository.search_batiments(query, actif_only=actif_only)
 
     def get_or_create_batiment(self, nom, nombre_chambre=None, description=""):
         if not nom:

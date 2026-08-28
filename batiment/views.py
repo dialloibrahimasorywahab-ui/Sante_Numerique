@@ -1,5 +1,6 @@
 from django.db import IntegrityError
-from drf_spectacular.utils import OpenApiExample, extend_schema, inline_serializer
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiExample, OpenApiParameter, extend_schema, inline_serializer
 from rest_framework import serializers, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -19,8 +20,12 @@ batiment_service = BatimentService()
 @extend_schema(
     tags=["Bâtiments"],
     summary="Lister ou créer un bâtiment",
-    description="Retourne la liste des bâtiments (GET avec ?search= optionnel) ou enregistre un nouveau bâtiment (POST).",
-    parameters=[SEARCH_PARAM, *PAGINATION_PARAMS],
+    description="Retourne la liste des bâtiments (GET avec ?search= ou ?all= optionnels) ou enregistre un nouveau bâtiment (POST).",
+    parameters=[
+        OpenApiParameter(name="all", type=OpenApiTypes.BOOL, location=OpenApiParameter.QUERY, required=False, description="Inclure aussi les bâtiments inactifs si true."),
+        SEARCH_PARAM,
+        *PAGINATION_PARAMS
+    ],
     request=BatimentSerializer,
     responses={200: BatimentSerializer(many=True), 201: BatimentSerializer, 400: ErrorResponseSerializer},
 )
@@ -28,11 +33,12 @@ batiment_service = BatimentService()
 @permission_classes([IsAuthenticated])
 def create_batiment(request):
     if request.method == "GET":
+        actif_only = request.query_params.get("all", "false").lower() != "true"
         query = request.query_params.get("search") or request.query_params.get("q")
         if query:
-            batiments = batiment_service.search_batiments(query)
+            batiments = batiment_service.search_batiments(query, actif_only=actif_only)
         else:
-            batiments = batiment_service.get_all_batiments()
+            batiments = batiment_service.get_all_batiments(actif_only=actif_only)
         return paginate_response(batiments, request, BatimentSerializer)
 
     if getattr(request.user, "role", None) not in ["ADMINISTRATEUR"]:
@@ -51,18 +57,23 @@ def create_batiment(request):
 @extend_schema(
     tags=["Bâtiments"],
     summary="Lister les bâtiments",
-    description="Retourne la liste des bâtiments, avec recherche libre optionnelle.",
-    parameters=[SEARCH_PARAM, *PAGINATION_PARAMS],
+    description="Retourne la liste des bâtiments, avec recherche libre optionnelle ou inclusion des inactifs (?all=true).",
+    parameters=[
+        OpenApiParameter(name="all", type=OpenApiTypes.BOOL, location=OpenApiParameter.QUERY, required=False, description="Inclure aussi les bâtiments inactifs si true."),
+        SEARCH_PARAM,
+        *PAGINATION_PARAMS
+    ],
     responses={200: BatimentSerializer(many=True)},
 )
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_all_batiments(request):
+    actif_only = request.query_params.get("all", "false").lower() != "true"
     query = request.query_params.get("search") or request.query_params.get("q")
     if query:
-        batiments = batiment_service.search_batiments(query)
+        batiments = batiment_service.search_batiments(query, actif_only=actif_only)
     else:
-        batiments = batiment_service.get_all_batiments()
+        batiments = batiment_service.get_all_batiments(actif_only=actif_only)
     return paginate_response(batiments, request, BatimentSerializer)
 
 

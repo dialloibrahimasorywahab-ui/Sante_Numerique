@@ -43,5 +43,8 @@ class Service(models.Model):
 
     actif = models.BooleanField(default=True)
 
+    class Meta:
+        ordering = ['idService']
+
     def __str__(self):
         return self.get_nomService_display()

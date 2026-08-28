@@ -77,16 +77,16 @@ class MedecinService:
         return self.repository.get_medecin(medecin_id)
 
     # Récupérer tous les médecins
-    def get_all_medecin(self):
-        return self.repository.get_all_medecin()
+    def get_all_medecin(self, actif_only: bool = True):
+        return self.repository.get_all_medecin(actif_only=actif_only)
 
     # Récupérer les médecins par spécialité / service
-    def get_medecins_by_specialite(self, specialite):
-        return self.repository.get_medecins_by_specialite(specialite)
+    def get_medecins_by_specialite(self, specialite, actif_only: bool = True):
+        return self.repository.get_medecins_by_specialite(specialite, actif_only=actif_only)
 
     # Rechercher des médecins
-    def search_medecins(self, query):
-        return self.repository.search_medecins(query)
+    def search_medecins(self, query, actif_only: bool = True):
+        return self.repository.search_medecins(query, actif_only=actif_only)
 
     # Mettre à jour les données d'un médecin
     def update_medecin(self, medecin, **data):

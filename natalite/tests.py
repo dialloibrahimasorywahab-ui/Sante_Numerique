@@ -153,3 +153,24 @@ class NataliteAPITests(TestCase):
         response = self.client.post("/natalite/create/", payload, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("date_naissance", response.data)
+
+    def test_natalite_soft_deleted_hidden_by_default_and_visible_with_all(self):
+        """Une fiche de naissance désactivée n'apparaît pas par défaut mais réapparaît avec ?all=true."""
+        nat = Natalite.objects.create(
+            id_patient=self.patient, prenom_nouveau_ne="Bébé", nom_nouveau_ne="Inactif",
+            date_naissance="2024-01-01", sexe="M", actif=False
+        )
+        # Liste par défaut -> exclu
+        res_default = self.client.get("/natalite/")
+        self.assertEqual(res_default.status_code, 200)
+        items = res_default.data.get("results", res_default.data)
+        ids = [n["id_nouveau_ne"] for n in items]
+        self.assertNotIn(nat.id_nouveau_ne, ids)
+
+        # Liste avec ?all=true -> inclus
+        res_all = self.client.get("/natalite/?all=true")
+        self.assertEqual(res_all.status_code, 200)
+        items_all = res_all.data.get("results", res_all.data)
+        ids_all = [n["id_nouveau_ne"] for n in items_all]
+        self.assertIn(nat.id_nouveau_ne, ids_all)
+

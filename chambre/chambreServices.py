@@ -12,20 +12,20 @@ class ChambreService:
     def get_chambre(self, chambre_id):
         return self.repository.get_chambre(chambre_id)
 
-    def get_all_chambres(self):
-        return self.repository.get_all_chambres()
+    def get_all_chambres(self, actif_only: bool = True):
+        return self.repository.get_all_chambres(actif_only=actif_only)
 
-    def get_chambres_by_batiment(self, batiment_id):
-        return self.repository.get_chambres_by_batiment(batiment_id)
+    def get_chambres_by_batiment(self, batiment_id, actif_only: bool = True):
+        return self.repository.get_chambres_by_batiment(batiment_id, actif_only=actif_only)
 
-    def get_chambres_by_type(self, type_chambre):
-        return self.repository.get_chambres_by_type(type_chambre)
+    def get_chambres_by_type(self, type_chambre, actif_only: bool = True):
+        return self.repository.get_chambres_by_type(type_chambre, actif_only=actif_only)
 
-    def get_chambres_by_statut(self, statut):
-        return self.repository.get_chambres_by_statut(statut)
+    def get_chambres_by_statut(self, statut, actif_only: bool = True):
+        return self.repository.get_chambres_by_statut(statut, actif_only=actif_only)
 
-    def search_chambres(self, query):
-        return self.repository.search_chambres(query)
+    def search_chambres(self, query, actif_only: bool = True):
+        return self.repository.search_chambres(query, actif_only=actif_only)
 
     def sync_statut_chambre(self, chambre_id):
         chambre = self.get_chambre(chambre_id)

@@ -22,16 +22,22 @@ class BatimentRepository:
         except Batiment.DoesNotExist:
             return None
 
-    def get_all_batiments(self):
-        return Batiment.objects.all()
+    def get_all_batiments(self, actif_only: bool = True):
+        qs = Batiment.objects.all()
+        if actif_only:
+            qs = qs.filter(actif=True)
+        return qs
 
-    def search_batiments(self, query):
+    def search_batiments(self, query, actif_only: bool = True):
         if not query:
-            return self.get_all_batiments()
+            return self.get_all_batiments(actif_only=actif_only)
         clean_query = query.strip()
-        return Batiment.objects.filter(
+        qs = Batiment.objects.filter(
             Q(nom__icontains=clean_query) | Q(description__icontains=clean_query)
         )
+        if actif_only:
+            qs = qs.filter(actif=True)
+        return qs
 
     def update_batiment(self, batiment, **data):
         for field, value in data.items():

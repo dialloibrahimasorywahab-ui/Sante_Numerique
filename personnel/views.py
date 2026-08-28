@@ -20,8 +20,10 @@ personnel_service = PersonnelService()
 @extend_schema(
     tags=["Personnel"],
     summary="Lister ou créer un membre du personnel",
-    description="Retourne la liste du personnel (GET avec filtres ?type=, ?search=) ou enregistre un nouveau membre du personnel (POST).",
+    description="Retourne la liste du personnel (GET avec filtres ?type=, ?search=, ?all=) ou enregistre un nouveau membre du personnel (POST).",
     parameters=[
+        OpenApiParameter(name="all", type=OpenApiTypes.BOOL, location=OpenApiParameter.QUERY, required=False,
+                          description="Inclure aussi le personnel inactif si true."),
         OpenApiParameter(name="type", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False,
                           description="Filtre par type de personnel (ex : INFIRMIER, ADMINISTRATIF)."),
         SEARCH_PARAM,
@@ -34,14 +36,15 @@ personnel_service = PersonnelService()
 @permission_classes([IsStaffOrAdmin])
 def create_personnel(request):
     if request.method == "GET":
+        actif_only = request.query_params.get("all", "false").lower() != "true"
         type_personnel = request.query_params.get("type") or request.query_params.get("category")
         search_q = request.query_params.get("search") or request.query_params.get("q")
         if type_personnel:
-            personnels = personnel_service.get_personnel_by_type(type_personnel)
+            personnels = personnel_service.get_personnel_by_type(type_personnel, actif_only=actif_only)
         elif search_q:
-            personnels = personnel_service.search_personnel(search_q)
+            personnels = personnel_service.search_personnel(search_q, actif_only=actif_only)
         else:
-            personnels = personnel_service.get_all_personnel()
+            personnels = personnel_service.get_all_personnel(actif_only=actif_only)
         return paginate_response(personnels, request, PersonnelSerializer)
 
     if getattr(request.user, "role", None) != "ADMINISTRATEUR":
@@ -74,8 +77,10 @@ def create_personnel(request):
 @extend_schema(
     tags=["Personnel"],
     summary="Lister le personnel",
-    description="Retourne la liste du personnel, avec filtre optionnel par type/catégorie.",
+    description="Retourne la liste du personnel, avec filtre optionnel par type/catégorie ou inclusion des inactifs (?all=true).",
     parameters=[
+        OpenApiParameter(name="all", type=OpenApiTypes.BOOL, location=OpenApiParameter.QUERY, required=False,
+                          description="Inclure aussi le personnel inactif si true."),
         OpenApiParameter(name="type", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False,
                           description="Filtre par type de personnel (ex : INFIRMIER, ADMINISTRATIF). Alias : category."),
         *PAGINATION_PARAMS,
@@ -85,11 +90,12 @@ def create_personnel(request):
 @api_view(["GET"])
 @permission_classes([IsStaffOrAdmin])
 def get_all_personnel(request):
+    actif_only = request.query_params.get("all", "false").lower() != "true"
     type_personnel = request.query_params.get("type") or request.query_params.get("category")
     if type_personnel:
-        personnels = personnel_service.get_personnel_by_type(type_personnel)
+        personnels = personnel_service.get_personnel_by_type(type_personnel, actif_only=actif_only)
     else:
-        personnels = personnel_service.get_all_personnel()
+        personnels = personnel_service.get_all_personnel(actif_only=actif_only)
 
     return paginate_response(personnels, request, PersonnelSerializer)
 

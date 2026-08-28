@@ -1,5 +1,6 @@
 from django.db import IntegrityError
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -19,8 +20,12 @@ service_service = ServiceService()
 @extend_schema(
     tags=["Services"],
     summary="Lister ou créer un service",
-    description="Retourne la liste des services hospitaliers (GET avec ?search= optionnel) ou enregistre un nouveau service (POST).",
-    parameters=[SEARCH_PARAM, *PAGINATION_PARAMS],
+    description="Retourne la liste des services hospitaliers (GET avec ?search= ou ?all= optionnels) ou enregistre un nouveau service (POST).",
+    parameters=[
+        OpenApiParameter(name="all", type=OpenApiTypes.BOOL, location=OpenApiParameter.QUERY, required=False, description="Inclure aussi les services inactifs si true."),
+        SEARCH_PARAM,
+        *PAGINATION_PARAMS
+    ],
     request=ServiceSerializer,
     responses={200: ServiceSerializer(many=True), 201: ServiceSerializer, 400: ErrorResponseSerializer},
 )
@@ -28,11 +33,12 @@ service_service = ServiceService()
 @permission_classes([IsAuthenticated])
 def create_service(request):
     if request.method == "GET":
+        actif_only = request.query_params.get("all", "false").lower() != "true"
         query = request.query_params.get("search") or request.query_params.get("q")
         if query:
-            services = service_service.search_services(query)
+            services = service_service.search_services(query, actif_only=actif_only)
         else:
-            services = service_service.get_all_services()
+            services = service_service.get_all_services(actif_only=actif_only)
         return paginate_response(services, request, ServiceSerializer)
 
     if getattr(request.user, "role", None) not in ["ADMINISTRATEUR"]:
@@ -65,14 +71,18 @@ def create_service(request):
 @extend_schema(
     tags=["Services"],
     summary="Lister les services",
-    description="Retourne la liste de tous les services hospitaliers.",
-    parameters=[*PAGINATION_PARAMS],
+    description="Retourne la liste de tous les services hospitaliers ou inclut les inactifs avec ?all=true.",
+    parameters=[
+        OpenApiParameter(name="all", type=OpenApiTypes.BOOL, location=OpenApiParameter.QUERY, required=False, description="Inclure aussi les services inactifs si true."),
+        *PAGINATION_PARAMS
+    ],
     responses={200: ServiceSerializer(many=True)},
 )
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_all_services(request):
-    services = service_service.get_all_services()
+    actif_only = request.query_params.get("all", "false").lower() != "true"
+    services = service_service.get_all_services(actif_only=actif_only)
     return paginate_response(services, request, ServiceSerializer)
 
 

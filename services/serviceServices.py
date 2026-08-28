@@ -33,8 +33,12 @@ class ServiceService:
             return self.repository.get_service_by_nom(matched_choice)
 
     # Récupérer tous les services
-    def get_all_services(self):
-        return self.repository.get_all_services()
+    def get_all_services(self, actif_only: bool = True):
+        return self.repository.get_all_services(actif_only=actif_only)
+
+    # Rechercher des services
+    def search_services(self, query, actif_only: bool = True):
+        return self.repository.search_services(query, actif_only=actif_only)
 
     # Mettre à jour un service
     def update_service(self, service, **data):

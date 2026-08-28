@@ -16,17 +16,17 @@ class LitService:
     def get_lit(self, lit_id):
         return self.repository.get_lit(lit_id)
 
-    def get_all_lits(self):
-        return self.repository.get_all_lits()
+    def get_all_lits(self, actif_only: bool = True):
+        return self.repository.get_all_lits(actif_only=actif_only)
 
-    def get_lits_by_chambre(self, chambre_id):
-        return self.repository.get_lits_by_chambre(chambre_id)
+    def get_lits_by_chambre(self, chambre_id, actif_only: bool = True):
+        return self.repository.get_lits_by_chambre(chambre_id, actif_only=actif_only)
 
-    def get_lits_by_etat(self, etat):
-        return self.repository.get_lits_by_etat(etat)
+    def get_lits_by_etat(self, etat, actif_only: bool = True):
+        return self.repository.get_lits_by_etat(etat, actif_only=actif_only)
 
-    def search_lits(self, query):
-        return self.repository.search_lits(query)
+    def search_lits(self, query, actif_only: bool = True):
+        return self.repository.search_lits(query, actif_only=actif_only)
 
     def update_lit(self, lit, **data):
         updated_lit = self.repository.update_lit(lit, **data)
