@@ -82,6 +82,16 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'config.pagination.StandardResultsSetPagination',
     'PAGE_SIZE': 20,
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+        'rest_framework.throttling.ScopedRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': env('THROTTLE_ANON_RATE', default='100/day'),
+        'user': env('THROTTLE_USER_RATE', default='1000/day'),
+        'login': env('THROTTLE_LOGIN_RATE', default='5/minute'),
+    },
 }
 
 SIMPLE_JWT = {

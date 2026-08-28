@@ -3,9 +3,19 @@ from django.db import IntegrityError
 from drf_spectacular.utils import extend_schema, inline_serializer, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
 from rest_framework import serializers, status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import AnonRateThrottle
+
+
+class LoginRateThrottle(AnonRateThrottle):
+    scope = 'login'
+
+    def get_rate(self):
+        from django.conf import settings
+        rates = getattr(settings, 'REST_FRAMEWORK', {}).get('DEFAULT_THROTTLE_RATES', {})
+        return rates.get(self.scope, '5/minute')
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
@@ -212,6 +222,7 @@ def get_all_user(request):
 )
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@throttle_classes([LoginRateThrottle])
 def login_user(request):
     login = request.data.get("login") or request.data.get("email") or request.data.get("username")
     password = request.data.get("motDePasse") or request.data.get("password") or request.data.get("motDePasseHash")

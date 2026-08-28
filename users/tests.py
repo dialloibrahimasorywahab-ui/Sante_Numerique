@@ -1,4 +1,5 @@
 from django.contrib.auth.hashers import check_password
+from django.core.cache import cache
 from django.test import TestCase
 from rest_framework.test import APIClient
 
@@ -8,6 +9,12 @@ from users.usersServices import UserService
 
 
 class UserServiceTests(TestCase):
+    def setUp(self):
+        cache.clear()
+
+    def tearDown(self):
+        cache.clear()
+
     def test_create_user_hashes_password(self):
         service = UserService()
         user = service.createUser(
@@ -184,6 +191,22 @@ class UserServiceTests(TestCase):
         client = APIClient()
         res = client.get("/users/")
         self.assertEqual(res.status_code, 401)
+
+    def test_login_rate_limiting_applies(self):
+        """Vérifie que le throttle bloque après dépassement de la limite de tentatives de connexion."""
+        from django.core.cache import cache
+        cache.clear()
+        client = APIClient()
+
+        # Envoi de 5 tentatives rapides de login
+        for _ in range(5):
+            client.post("/users/login/", {"login": "wrong_user", "motDePasse": "wrong_pass"}, format="json")
+
+        # La 6ème tentative doit être bloquée par le throttling (HTTP 429 Too Many Requests)
+        res = client.post("/users/login/", {"login": "wrong_user", "motDePasse": "wrong_pass"}, format="json")
+        self.assertEqual(res.status_code, 429)
+        cache.clear()
+
 
 
 
