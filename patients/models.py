@@ -56,5 +56,8 @@ class Patient(models.Model):
 
     dateInscription = models.DateField()
 
+    class Meta:
+        ordering = ['idPatient']
+
     def __str__(self):
         return f"Patient: {self.idUtilisateur.prenom} {self.idUtilisateur.nom}"

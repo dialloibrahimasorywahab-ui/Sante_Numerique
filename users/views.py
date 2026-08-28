@@ -15,6 +15,7 @@ from config.pagination import paginate_response
 from config.permissions import IsAdmin, IsOwnerOrStaff, deny_unless_owner_or_staff
 from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer, PAGINATION_PARAMS, SEARCH_PARAM
 from .authentication import RoleTokenObtainPairSerializer
+from .models import User
 from .usersSerializers import UserSerializers
 from .usersServices import UserService
 
@@ -73,8 +74,8 @@ def create_user(request):
     if request.method == "GET":
         if not request.user.is_authenticated:
             return Response({"detail": "Informations d'authentification non fournies."}, status=status.HTTP_401_UNAUTHORIZED)
-        if getattr(request.user, "role", None) not in ["ADMINISTRATEUR", "MEDECIN", "INFIRMIER"]:
-            return Response({"error": "Accès refusé. Réservé au personnel et administrateurs."}, status=status.HTTP_403_FORBIDDEN)
+        if getattr(request.user, "role", None) != "ADMINISTRATEUR":
+            return Response({"error": "Accès refusé. Réservé aux administrateurs."}, status=status.HTTP_403_FORBIDDEN)
 
         role = request.query_params.get("role")
         search_q = request.query_params.get("search") or request.query_params.get("q")
@@ -88,21 +89,22 @@ def create_user(request):
 
         return paginate_response(users, request, UserSerializers)
 
+    # POST /users/
+    if request.user.is_authenticated and getattr(request.user, "role", None) != "ADMINISTRATEUR":
+        return Response(
+            {"error": "Accès refusé. Seul un administrateur peut créer des utilisateurs lorsqu'un compte est connecté."},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
     serializer = UserSerializers(data=request.data, context={"request": request})
 
     if serializer.is_valid():
         validated_data = serializer.validated_data.copy()
-        requested_role = validated_data.get("role", "PATIENT")
 
-        # Si l'utilisateur n'est pas un administrateur connecté, seuls les comptes PATIENT sont autorisés
+        # Si l'utilisateur n'est pas un administrateur connecté, forcer systématiquement le rôle PATIENT
         is_admin = request.user.is_authenticated and getattr(request.user, "role", None) == "ADMINISTRATEUR"
         if not is_admin:
-            if requested_role and requested_role != "PATIENT":
-                return Response(
-                    {"error": "Seul un administrateur peut créer un compte avec le rôle Médecin, Infirmier ou Administrateur."},
-                    status=status.HTTP_403_FORBIDDEN
-                )
-            validated_data["role"] = "PATIENT"
+            validated_data["role"] = User.Role.PATIENT
 
         try:
             user = user_service.createUser(**validated_data)

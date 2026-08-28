@@ -33,6 +33,11 @@ class UserSerializers(serializers.ModelSerializer):
         return super().to_internal_value(data)
 
     def validate(self, attrs):
+        request = self.context.get("request")
+        is_admin = request and getattr(request, "user", None) and request.user.is_authenticated and getattr(request.user, "role", None) == "ADMINISTRATEUR"
+        if not is_admin:
+            attrs["role"] = User.Role.PATIENT
+
         if not self.instance:
             errors = {}
             for field in ["nom", "prenom", "email", "telephone", "login"]:

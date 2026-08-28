@@ -124,4 +124,67 @@ class UserServiceTests(TestCase):
         self.assertEqual(refresh_res.status_code, 200)
         self.assertIn("access_token", refresh_res.cookies)
 
+    def test_infirmier_and_patient_cannot_create_users(self):
+        user_inf = User.objects.create(nom="Inf", prenom="Test", email="inf_u@test.com", telephone="0101010199", login="inf_u", motDePasseHash="hash", role=User.Role.INFIRMIER)
+        user_pat = User.objects.create(nom="Pat", prenom="Test", email="pat_u@test.com", telephone="0101010198", login="pat_u", motDePasseHash="hash", role=User.Role.PATIENT)
+
+        client = APIClient()
+        payload = {
+            "nom": "Diallo",
+            "prenom": "Oumar",
+            "email": "oumar.diallo@example.com",
+            "telephone": "0700112233",
+            "login": "oumar_d",
+            "motDePasse": "Pass12345!",
+            "role": "PATIENT"
+        }
+
+        # 1. INFIRMIER -> 403 Forbidden
+        client.force_authenticate(user=user_inf)
+        res_inf = client.post("/users/", payload, format="json")
+        self.assertEqual(res_inf.status_code, 403)
+
+        # 2. PATIENT -> 403 Forbidden
+        client.force_authenticate(user=user_pat)
+        res_pat = client.post("/users/", payload, format="json")
+        self.assertEqual(res_pat.status_code, 403)
+
+    def test_unauthenticated_cannot_escalate_role_to_admin(self):
+        """Vérifie qu'un utilisateur anonyme ne peut jamais créer de compte ADMINISTRATEUR ou MEDECIN (forcé PATIENT)."""
+        client = APIClient()
+        payload = {
+            "nom": "Hacker",
+            "prenom": "Attacker",
+            "email": "hacker@example.com",
+            "telephone": "0700998877",
+            "login": "fake_admin",
+            "motDePasse": "HackedPass123!",
+            "role": "ADMINISTRATEUR"  # Tentative d'injection de rôle
+        }
+
+        # POST /users/ anonyme
+        res = client.post("/users/", payload, format="json")
+        self.assertEqual(res.status_code, 201)
+        self.assertEqual(res.data["role"], "PATIENT")
+
+        # Vérification en base de données : le compte créé est bien PATIENT
+        created_user = User.objects.get(login="fake_admin")
+        self.assertEqual(created_user.role, User.Role.PATIENT)
+
+        # Connexion avec ce compte
+        login_res = client.post("/users/login/", {"login": "fake_admin", "motDePasse": "HackedPass123!"}, format="json")
+        self.assertEqual(login_res.status_code, 200)
+
+        # Tentative d'accéder aux endpoints d'administration -> 403 Forbidden
+        get_all_res = client.get("/users/all/")
+        self.assertEqual(get_all_res.status_code, 403)
+
+    def test_unauthenticated_get_users_is_protected(self):
+        """GET /users/ sans authentification renvoie 401 Unauthorized."""
+        client = APIClient()
+        res = client.get("/users/")
+        self.assertEqual(res.status_code, 401)
+
+
+
 

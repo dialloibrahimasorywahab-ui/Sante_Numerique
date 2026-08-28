@@ -36,6 +36,13 @@ def create_patient(request):
             patients = patient_service.get_all_patient()
         return paginate_response(patients, request, PatientSerializer)
 
+    if request.method == "POST":
+        if getattr(request.user, "role", None) not in ["ADMINISTRATEUR", "MEDECIN"]:
+            return Response(
+                {"error": "Accès refusé. Seul un médecin ou un administrateur peut enregistrer un patient."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
     serializer = PatientSerializer(data=request.data)
 
     if serializer.is_valid():
@@ -81,16 +88,11 @@ def get_all_patient(request):
     description="Retourne, modifie ou supprime un patient à partir de son identifiant.",
     parameters=[HARD_DELETE_PARAM],
     request=PatientSerializer,
-    responses={200: PatientSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
+    responses={200: PatientSerializer, 400: ErrorResponseSerializer, 403: ErrorResponseSerializer, 404: MessageResponseSerializer},
 )
 @api_view(["GET", "PUT", "PATCH", "DELETE"])
 @permission_classes([IsAuthenticated])
 def get_patient(request, patient_id):
-    if request.method in ["PUT", "PATCH"]:
-        return update_patient(request, patient_id)
-    elif request.method == "DELETE":
-        return delete_patient(request, patient_id)
-
     patient = patient_service.get_Patient(patient_id)
 
     if patient is None:
@@ -99,7 +101,45 @@ def get_patient(request, patient_id):
             status=status.HTTP_404_NOT_FOUND
         )
 
+    if request.method == "DELETE":
+        if getattr(request.user, "role", None) != "ADMINISTRATEUR":
+            return Response(
+                {"error": "Accès refusé. Seul un administrateur peut supprimer un patient."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        hard = str(request.query_params.get("hard", "")).lower() in ["true", "1"]
+        patient_service.delete_patient(patient, hard=hard)
+        if hard:
+            return Response(
+                {"message": "Dossier patient supprimé définitivement avec succès."},
+                status=status.HTTP_200_OK
+            )
+        return Response(
+            {"message": "Compte patient désactivé (archivé) avec succès. L'historique médical a été préservé."},
+            status=status.HTTP_200_OK
+        )
+
     deny_unless_owner_or_staff(request, patient)
+
+    if request.method in ["PUT", "PATCH"]:
+        partial = request.method == "PATCH" or request.data.get("partial", False)
+        serializer = PatientSerializer(patient, data=request.data, partial=partial, context={"request": request})
+        if serializer.is_valid():
+            try:
+                updated = serializer.save()
+                return Response(
+                    PatientSerializer(updated).data,
+                    status=status.HTTP_200_OK
+                )
+            except IntegrityError as e:
+                return Response(
+                    {"error": "Un patient ou utilisateur avec cet identifiant, email, téléphone existe déjà.", "detail": str(e)},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
     serializer = PatientSerializer(patient)
     return Response(

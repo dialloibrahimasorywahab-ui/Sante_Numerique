@@ -64,7 +64,8 @@ class PatientSerializer(serializers.ModelSerializer):
         }
 
     def validate(self, attrs):
-        if not self.instance and not attrs.get("idUtilisateur"):
+        id_user = attrs.get("idUtilisateur")
+        if not self.instance and (not id_user or isinstance(id_user, dict)):
             errors = {}
             for field in ["nom", "prenom", "email", "telephone", "login", "motDePasse"]:
                 if not self.initial_data.get(field):
