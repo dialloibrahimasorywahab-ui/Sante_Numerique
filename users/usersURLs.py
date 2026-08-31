@@ -39,6 +39,20 @@ urlpatterns = [
         name="token_refresh"
     ),
 
+    # profil de l'utilisateur actuellement connecte (Angular session restore)
+    path(
+        "me/",
+        views.me_user,
+        name="me_user"
+    ),
+
+    # changement de mot de passe securise
+    path(
+        "change-password/",
+        views.change_password,
+        name="change_password"
+    ),
+
     # recuperation d'un utilisateur par son id
     path(
         "<int:user_id>/",

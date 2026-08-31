@@ -29,7 +29,7 @@ from config.permissions import IsAdmin, IsOwnerOrStaff, deny_unless_owner_or_sta
 from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer, PAGINATION_PARAMS, SEARCH_PARAM
 from .authentication import RoleTokenObtainPairSerializer
 from .models import User
-from .usersSerializers import UserSerializers
+from .usersSerializers import ChangePasswordSerializer, UserSerializers
 from .usersServices import UserService
 
 
@@ -462,3 +462,69 @@ def delete_user(request, user_id):
         {"message": "Compte utilisateur désactivé (archivé) avec succès.", "actif": False},
         status=status.HTTP_200_OK
     )
+
+
+# Récupérer le profil de l'utilisateur actuellement authentifié (GET /users/me/)
+@extend_schema(
+    tags=["Utilisateurs"],
+    summary="Profil de l'utilisateur connecté",
+    description="Retourne les informations de l'utilisateur actuellement authentifié via JWT (utilisé par Angular pour restaurer la session).",
+    responses={
+        200: UserSerializers,
+        401: MessageResponseSerializer,
+    },
+)
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def me_user(request):
+    serializer = UserSerializers(request.user)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+# Changer le mot de passe de l'utilisateur connecté (POST /users/change-password/)
+@extend_schema(
+    tags=["Utilisateurs"],
+    summary="Changer le mot de passe",
+    description="Permet à l'utilisateur connecté de modifier son mot de passe de manière sécurisée.",
+    request=ChangePasswordSerializer,
+    responses={
+        200: MessageResponseSerializer,
+        400: ErrorResponseSerializer,
+        401: MessageResponseSerializer,
+    },
+)
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def change_password(request):
+    serializer = ChangePasswordSerializer(data=request.data, context={"request": request})
+    if serializer.is_valid():
+        try:
+            nouveau_mdp = serializer.validated_data["nouveauMotDePasse"]
+            request.user.set_password(nouveau_mdp)
+            request.user.save(update_fields=["password"])
+
+            # Invalidation des anciens refresh tokens si supporté
+            try:
+                tokens = OutstandingToken.objects.filter(user=request.user)
+                for t in tokens:
+                    BlacklistedToken.objects.get_or_create(token=t)
+            except Exception as e:
+                logger.warning("Blacklistage des anciens tokens ignoré ou échoué: %s", str(e))
+
+            response = Response(
+                {"message": "Mot de passe modifié avec succès."},
+                status=status.HTTP_200_OK
+            )
+            # Re-génération des cookies JWT HttpOnly pour maintenir la session
+            new_refresh = RoleTokenObtainPairSerializer.get_token(request.user)
+            set_jwt_cookies(response, new_refresh)
+            return response
+        except Exception as e:
+            logger.exception("Erreur inattendue lors du changement de mot de passe: %s", str(e))
+            return Response(
+                {"error": "Erreur interne lors du changement de mot de passe."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+

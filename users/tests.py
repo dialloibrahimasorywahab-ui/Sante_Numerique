@@ -207,6 +207,152 @@ class UserServiceTests(TestCase):
         self.assertEqual(res.status_code, 429)
         cache.clear()
 
+    def test_get_me_authenticated_success(self):
+        """GET /users/me/ retourne le profil complet de l'utilisateur connecté sans exposer le mot de passe."""
+        user = User.objects.create(
+            nom="Bah",
+            prenom="Mariam",
+            email="mariam.bah@example.com",
+            telephone="0611223344",
+            login="mariam_b",
+            motDePasseHash="SuperSecurePass123!",
+            role=User.Role.PATIENT,
+        )
+        client = APIClient()
+        client.force_authenticate(user=user)
+
+        response = client.get("/users/me/")
+        self.assertEqual(response.status_code, 200)
+        data = response.data
+        self.assertEqual(data["idUser"], user.idUser)
+        self.assertEqual(data["nom"], "Bah")
+        self.assertEqual(data["prenom"], "Mariam")
+        self.assertEqual(data["email"], "mariam.bah@example.com")
+        self.assertEqual(data["telephone"], "0611223344")
+        self.assertEqual(data["login"], "mariam_b")
+        self.assertEqual(data["role"], "PATIENT")
+        self.assertTrue(data["actif"])
+        self.assertIn("derniereConnexion", data)
+        self.assertIn("dateNaissance", data)
+        # Vérification qu'aucun hash de mot de passe n'est renvoyé
+        self.assertNotIn("motDePasseHash", data)
+        self.assertNotIn("password", data)
+
+    def test_get_me_unauthenticated_returns_401(self):
+        """GET /users/me/ sans JWT renvoie 401 Unauthorized."""
+        client = APIClient()
+        response = client.get("/users/me/")
+        self.assertEqual(response.status_code, 401)
+
+    def test_password_validation_rejects_weak_password_on_create(self):
+        """La création d'un utilisateur avec un mot de passe trop court ou simple est rejetée."""
+        client = APIClient()
+        payload = {
+            "nom": "Test",
+            "prenom": "User",
+            "email": "weak@example.com",
+            "telephone": "0699887766",
+            "login": "weak_user",
+            "motDePasse": "123",  # Trop court et numérique
+        }
+        response = client.post("/users/", payload, format="json")
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("motDePasse", response.data)
+
+    def test_change_password_success(self):
+        """Changement de mot de passe réussi avec validation et connexion avec le nouveau mot de passe."""
+        service = UserService()
+        user = service.createUser(
+            nom="Sow",
+            prenom="Alpha",
+            email="alpha.sow@example.com",
+            telephone="0655443322",
+            login="alpha_sow",
+            motDePasseHash="AncienPassSecurise123!",
+            role=User.Role.MEDECIN,
+        )
+
+        client = APIClient()
+        client.force_authenticate(user=user)
+
+        payload = {
+            "ancienMotDePasse": "AncienPassSecurise123!",
+            "nouveauMotDePasse": "NouveauPassSecurise456!",
+            "confirmationMotDePasse": "NouveauPassSecurise456!",
+        }
+        response = client.post("/users/change-password/", payload, format="json")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["message"], "Mot de passe modifié avec succès.")
+
+        # Vérification que le nouveau mot de passe fonctionne
+        user.refresh_from_db()
+        self.assertTrue(user.check_password("NouveauPassSecurise456!"))
+
+        # Vérification login avec le nouveau mot de passe
+        client.logout()
+        login_res = client.post("/users/login/", {"login": "alpha_sow", "motDePasse": "NouveauPassSecurise456!"}, format="json")
+        self.assertEqual(login_res.status_code, 200)
+
+    def test_change_password_wrong_old_password_rejected(self):
+        """Échec si l'ancien mot de passe fourni est incorrect."""
+        service = UserService()
+        user = service.createUser(
+            nom="Diallo",
+            prenom="Mamadou",
+            email="mamadou.d@example.com",
+            telephone="0677889900",
+            login="mamadou_d",
+            motDePasseHash="BonMotDePasse123!",
+            role=User.Role.PATIENT,
+        )
+        client = APIClient()
+        client.force_authenticate(user=user)
+
+        payload = {
+            "ancienMotDePasse": "MauvaisMotDePasse123!",
+            "nouveauMotDePasse": "NouveauSuperPass123!",
+            "confirmationMotDePasse": "NouveauSuperPass123!",
+        }
+        response = client.post("/users/change-password/", payload, format="json")
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("ancienMotDePasse", response.data)
+
+    def test_change_password_mismatched_confirmation_rejected(self):
+        """Échec si les deux nouveaux mots de passe ne correspondent pas."""
+        service = UserService()
+        user = service.createUser(
+            nom="Barry",
+            prenom="Aissatou",
+            email="aissatou.b@example.com",
+            telephone="0633445566",
+            login="aissatou_b",
+            motDePasseHash="BonPassInitial123!",
+            role=User.Role.PATIENT,
+        )
+        client = APIClient()
+        client.force_authenticate(user=user)
+
+        payload = {
+            "ancienMotDePasse": "BonPassInitial123!",
+            "nouveauMotDePasse": "NouveauPassValide123!",
+            "confirmationMotDePasse": "AutrePassDifferent123!",
+        }
+        response = client.post("/users/change-password/", payload, format="json")
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("confirmationMotDePasse", response.data)
+
+    def test_change_password_unauthenticated_rejected(self):
+        """POST /users/change-password/ sans authentification renvoie 401 Unauthorized."""
+        client = APIClient()
+        payload = {
+            "ancienMotDePasse": "Pass123!",
+            "nouveauMotDePasse": "Pass456!",
+            "confirmationMotDePasse": "Pass456!",
+        }
+        response = client.post("/users/change-password/", payload, format="json")
+        self.assertEqual(response.status_code, 401)
+
+
 
 
 
