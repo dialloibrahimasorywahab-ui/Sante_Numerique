@@ -1,4 +1,7 @@
+import logging
 from django.db import IntegrityError
+
+logger = logging.getLogger(__name__)
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema, inline_serializer
 from rest_framework import serializers, status
@@ -48,7 +51,8 @@ def create_rendezvous(request):
         except IntegrityError as e:
             return Response({"error": "Conflit de rendez-vous.", "detail": "Un rendez-vous existe déjà pour ce médecin à cette date et heure."}, status=status.HTTP_409_CONFLICT)
         except Exception as e:
-            return Response({"error": "Erreur lors de la création du rendez-vous.", "detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            logger.exception("Erreur inattendue lors de la création du rendez-vous: %s", str(e))
+            return Response({"error": "Erreur interne lors de la création du rendez-vous."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # recuperation de tous les rendez-vous
@@ -178,8 +182,13 @@ def update_rendezvous(request, rdv_id):
         try:
             updated = rendezvous_service.update_rendezvous(rdv, **serializer.validated_data)
             return Response(RendezVousSerializer(updated).data, status=status.HTTP_200_OK)
+        except (ConflictError, ValueError) as e:
+            return Response({"error": "Données de modification invalides.", "detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except IntegrityError as e:
+            return Response({"error": "Conflit lors de la modification.", "detail": "Un rendez-vous existe déjà avec ces paramètres."}, status=status.HTTP_409_CONFLICT)
         except Exception as e:
-            return Response({"error": "Erreur lors de la modification.", "detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            logger.exception("Erreur inattendue lors de la modification du rendez-vous: %s", str(e))
+            return Response({"error": "Erreur interne lors de la modification du rendez-vous."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

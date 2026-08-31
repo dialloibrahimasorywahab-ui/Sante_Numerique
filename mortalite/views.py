@@ -1,4 +1,8 @@
+import logging
+from django.db import IntegrityError
 from drf_spectacular.types import OpenApiTypes
+
+logger = logging.getLogger(__name__)
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -32,10 +36,16 @@ def create_deces(request):
                 MortaliteSerializer(deces).data,
                 status=status.HTTP_201_CREATED
             )
-        except Exception as e:
+        except (ValueError, IntegrityError) as e:
             return Response(
-                {"error": "Erreur lors de la création de la fiche de décès", "detail": str(e)},
+                {"error": "Données d'enregistrement invalides.", "detail": str(e)},
                 status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            logger.exception("Erreur inattendue lors de la création de la fiche de décès: %s", str(e))
+            return Response(
+                {"error": "Erreur interne lors de la création de la fiche de décès."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -118,10 +128,16 @@ def update_mortalite(request, deces_id):
         try:
             updated = mortalite_service.update_deces(deces, **serializer.validated_data)
             return Response(MortaliteSerializer(updated).data, status=status.HTTP_200_OK)
-        except Exception as e:
+        except (ValueError, IntegrityError) as e:
             return Response(
-                {"error": "Erreur lors de la modification", "detail": str(e)},
+                {"error": "Données de modification invalides.", "detail": str(e)},
                 status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            logger.exception("Erreur inattendue lors de la modification de la fiche de décès: %s", str(e))
+            return Response(
+                {"error": "Erreur interne lors de la modification de la fiche de décès."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

@@ -1,4 +1,8 @@
+import logging
+from django.db import IntegrityError
 from drf_spectacular.types import OpenApiTypes
+
+logger = logging.getLogger(__name__)
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -34,10 +38,16 @@ def create_naissance(request):
                 NataliteSerializer(natality).data,
                 status=status.HTTP_201_CREATED
             )
-        except Exception as e:
+        except (ValueError, IntegrityError) as e:
             return Response(
-                {"error": "Erreur lors de l'enregistrement du nouveau-né", "detail": str(e)},
+                {"error": "Données d'enregistrement invalides.", "detail": str(e)},
                 status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            logger.exception("Erreur inattendue lors de l'enregistrement du nouveau-né: %s", str(e))
+            return Response(
+                {"error": "Erreur interne lors de l'enregistrement du nouveau-né."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -173,10 +183,16 @@ def update_natality(request, natality_id):
         try:
             updated = natalite_service.update_data_nouveau_ne(natality, **serializer.validated_data)
             return Response(NataliteSerializer(updated).data, status=status.HTTP_200_OK)
-        except Exception as e:
+        except (ValueError, IntegrityError) as e:
             return Response(
-                {"error": "Erreur lors de la modification de la natalité", "detail": str(e)},
+                {"error": "Données de modification invalides.", "detail": str(e)},
                 status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            logger.exception("Erreur inattendue lors de la modification de la natalité: %s", str(e))
+            return Response(
+                {"error": "Erreur interne lors de la modification de la natalité."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

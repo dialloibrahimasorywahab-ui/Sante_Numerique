@@ -1,4 +1,9 @@
+import logging
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 from drf_spectacular.types import OpenApiTypes
+
+logger = logging.getLogger(__name__)
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -88,8 +93,11 @@ def hospitalisation_list_create_view(request):
                 hospitalisation = hospitalisation_service.admettre_patient(**serializer.validated_data)
                 read_serializer = HospitalisationReadSerializer(hospitalisation)
                 return Response(read_serializer.data, status=status.HTTP_201_CREATED)
+            except (ValueError, ValidationError, IntegrityError) as e:
+                return Response({"error": "Données d'hospitalisation invalides.", "detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
             except Exception as e:
-                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                logger.exception("Erreur inattendue lors de l'admission en hospitalisation: %s", str(e))
+                return Response({"error": "Erreur interne lors de l'admission."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -126,8 +134,11 @@ def hospitalisation_detail_view(request, pk):
         try:
             updated = hospitalisation_service.mettre_a_jour_hospitalisation(pk, **serializer.validated_data)
             return Response(HospitalisationReadSerializer(updated).data, status=status.HTTP_200_OK)
+        except (ValueError, ValidationError, IntegrityError) as e:
+            return Response({"error": "Données de modification invalides.", "detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            logger.exception("Erreur inattendue lors de la mise à jour d'hospitalisation: %s", str(e))
+            return Response({"error": "Erreur interne lors de la mise à jour."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -151,8 +162,11 @@ def hospitalisation_cloturer_view(request, pk):
         if not hospitalisation:
             return Response({"error": f"Hospitalisation #{pk} introuvable."}, status=status.HTTP_404_NOT_FOUND)
         return Response(HospitalisationReadSerializer(hospitalisation).data, status=status.HTTP_200_OK)
+    except (ValueError, ValidationError) as e:
+        return Response({"error": "Impossible de clôturer l'hospitalisation.", "detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        logger.exception("Erreur inattendue lors de la clôture d'hospitalisation: %s", str(e))
+        return Response({"error": "Erreur interne lors de la clôture."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @extend_schema(

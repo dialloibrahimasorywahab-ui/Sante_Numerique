@@ -1,4 +1,8 @@
+import logging
+from django.db import IntegrityError
 from drf_spectacular.types import OpenApiTypes
+
+logger = logging.getLogger(__name__)
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -60,8 +64,11 @@ def create_lit(request):
         try:
             lit = lit_service.create_lit(**serializer.validated_data)
             return Response(LitSerializer(lit).data, status=status.HTTP_201_CREATED)
+        except (ValueError, IntegrityError) as e:
+            return Response({"error": "Données du lit invalides.", "detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response({"error": "Erreur lors de la création du lit.", "detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            logger.exception("Erreur inattendue lors de la création du lit: %s", str(e))
+            return Response({"error": "Erreur interne lors de la création du lit."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -159,8 +166,11 @@ def update_lit(request, lit_id):
         try:
             updated = lit_service.update_lit(lit, **serializer.validated_data)
             return Response(LitSerializer(updated).data, status=status.HTTP_200_OK)
+        except (ValueError, IntegrityError) as e:
+            return Response({"error": "Données de modification invalides.", "detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response({"error": "Erreur lors de la modification.", "detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            logger.exception("Erreur inattendue lors de la modification du lit: %s", str(e))
+            return Response({"error": "Erreur interne lors de la modification du lit."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

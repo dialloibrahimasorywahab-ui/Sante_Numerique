@@ -1,5 +1,8 @@
+import logging
 from django.conf import settings
 from django.db import IntegrityError
+
+logger = logging.getLogger(__name__)
 from drf_spectacular.utils import extend_schema, inline_serializer, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
 from rest_framework import serializers, status
@@ -333,15 +336,17 @@ class CookieTokenRefreshView(TokenRefreshView):
         try:
             serializer.is_valid(raise_exception=True)
         except TokenError as e:
+            logger.warning("TokenError during cookie refresh: %s", str(e))
             response = Response(
-                {"message": "Refresh token invalide ou expiré.", "detail": str(e)},
+                {"message": "Refresh token invalide ou expiré."},
                 status=status.HTTP_401_UNAUTHORIZED
             )
             delete_jwt_cookies(response)
             return response
         except Exception as e:
+            logger.exception("Erreur inattendue lors du rafraîchissement du token: %s", str(e))
             response = Response(
-                {"message": "Erreur lors du rafraîchissement du token.", "detail": str(e)},
+                {"message": "Erreur lors du rafraîchissement du token."},
                 status=status.HTTP_401_UNAUTHORIZED
             )
             delete_jwt_cookies(response)

@@ -1,4 +1,9 @@
+import logging
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 from drf_spectacular.types import OpenApiTypes
+
+logger = logging.getLogger(__name__)
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -99,8 +104,11 @@ def ordonnance_list_create_view(request):
             try:
                 ord_obj = ordonnance_service.prescrire_ordonnance(**serializer.validated_data)
                 return Response(OrdonnanceReadSerializer(ord_obj).data, status=status.HTTP_201_CREATED)
+            except (ValueError, ValidationError, IntegrityError) as e:
+                return Response({"error": "Données de prescription invalides.", "detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
             except Exception as e:
-                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                logger.exception("Erreur inattendue lors de la prescription d'ordonnance: %s", str(e))
+                return Response({"error": "Erreur interne lors de la prescription."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -166,8 +174,11 @@ def ordonnance_detail_view(request, pk):
         try:
             updated = ordonnance_service.mettre_a_jour_ordonnance(pk, **serializer.validated_data)
             return Response(OrdonnanceReadSerializer(updated).data, status=status.HTTP_200_OK)
+        except (ValueError, ValidationError, IntegrityError) as e:
+            return Response({"error": "Données de modification invalides.", "detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            logger.exception("Erreur inattendue lors de la mise à jour d'ordonnance: %s", str(e))
+            return Response({"error": "Erreur interne lors de la mise à jour."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
