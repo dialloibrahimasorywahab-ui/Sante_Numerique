@@ -10,7 +10,7 @@ class BatimentRepository:
 
     def get_batiment(self, batiment_id):
         try:
-            return Batiment.objects.get(idBatiment=batiment_id)
+            return Batiment.objects.get(pk=batiment_id)
         except Batiment.DoesNotExist:
             return None
 

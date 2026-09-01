@@ -16,9 +16,9 @@ class Medecin(models.Model):
         PSYCHIATRIE = "PSYCHIATRIE", "Psychiatrie"
         RADIOLOGIE = "RADIOLOGIE", "Radiologie"
 
-    idMedecin = models.AutoField(primary_key=True)
+    id_medecin = models.AutoField(primary_key=True)
 
-    idUtilisateur = models.OneToOneField(
+    id_utilisateur = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
         related_name="medecin"
@@ -37,18 +37,18 @@ class Medecin(models.Model):
         null=True
     )
 
-    numeroOrdre = models.CharField(
+    numero_ordre = models.CharField(
         max_length=50,
         unique=True
     )
 
-    telephonePro = models.CharField(
+    telephone_pro = models.CharField(
         max_length=20,
         blank=True,
         null=True
     )
 
-    emailPro = models.EmailField(
+    email_pro = models.EmailField(
         blank=True,
         null=True
     )
@@ -59,10 +59,59 @@ class Medecin(models.Model):
         null=True
     )
 
-    dateEmbauche = models.DateField()
+    date_embauche = models.DateField()
 
     class Meta:
-        ordering = ["idMedecin"]
+        ordering = ["id_medecin"]
+
+    # Propriétés de compatibilité camelCase
+    @property
+    def idMedecin(self):
+        return self.id_medecin
+
+    @idMedecin.setter
+    def idMedecin(self, val):
+        self.id_medecin = val
+
+    @property
+    def idUtilisateur(self):
+        return self.id_utilisateur
+
+    @idUtilisateur.setter
+    def idUtilisateur(self, val):
+        self.id_utilisateur = val
+
+    @property
+    def numeroOrdre(self):
+        return self.numero_ordre
+
+    @numeroOrdre.setter
+    def numeroOrdre(self, val):
+        self.numero_ordre = val
+
+    @property
+    def telephonePro(self):
+        return self.telephone_pro
+
+    @telephonePro.setter
+    def telephonePro(self, val):
+        self.telephone_pro = val
+
+    @property
+    def emailPro(self):
+        return self.email_pro
+
+    @emailPro.setter
+    def emailPro(self, val):
+        self.email_pro = val
+
+    @property
+    def dateEmbauche(self):
+        return self.date_embauche
+
+    @dateEmbauche.setter
+    def dateEmbauche(self, val):
+        self.date_embauche = val
 
     def __str__(self):
-        return f"Dr. {self.idUtilisateur.prenom} {self.idUtilisateur.nom} - {self.get_specialite_display()}"
+        return f"Dr. {self.id_utilisateur.prenom} {self.id_utilisateur.nom} - {self.get_specialite_display()}"

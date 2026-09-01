@@ -7,14 +7,14 @@ from .models import User
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
-    list_display = ('idUser', 'login', 'nom', 'prenom', 'email', 'telephone', 'role', 'actif', 'is_staff', 'is_superuser')
+    list_display = ('id_user', 'login', 'nom', 'prenom', 'email', 'telephone', 'role', 'actif', 'is_staff', 'is_superuser')
     list_filter = ('role', 'actif', 'is_staff', 'is_superuser')
     search_fields = ('nom', 'prenom', 'email', 'telephone', 'login')
-    ordering = ('-idUser',)
+    ordering = ('-id_user',)
 
     fieldsets = (
         (None, {'fields': ('login', 'password')}),
-        ('Informations personnelles', {'fields': ('nom', 'prenom', 'email', 'telephone', 'dateNaissance', 'role', 'actif')}),
+        ('Informations personnelles', {'fields': ('nom', 'prenom', 'email', 'telephone', 'date_naissance', 'role', 'actif')}),
         ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         ('Dates importantes', {'fields': ('last_login', 'date_joined')}),
     )

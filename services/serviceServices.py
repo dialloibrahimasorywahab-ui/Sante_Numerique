@@ -28,7 +28,7 @@ class ServiceService:
         matched_choice = valid_choices.get(str(nom_service).upper(), Service.NomService.MEDECINE_GENERALE)
         
         try:
-            return self.repository.createService(nomService=matched_choice)
+            return self.repository.createService(nom_service=matched_choice)
         except Exception:
             return self.repository.get_service_by_nom(matched_choice)
 
@@ -54,7 +54,7 @@ class ServiceService:
         created_services = []
         for choice_key, choice_label in Service.NomService.choices:
             service, _ = Service.objects.get_or_create(
-                nomService=choice_key,
+                nom_service=choice_key,
                 defaults={"description": f"Service de {choice_label}"}
             )
             created_services.append(service)

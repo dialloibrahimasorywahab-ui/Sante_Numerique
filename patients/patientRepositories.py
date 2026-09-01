@@ -9,15 +9,15 @@ class PatientRepository:
     # rechercher et afficher un patient
     def get_patient(self, patient_id):
         try:
-            return Patient.objects.select_related('idUtilisateur').get(idPatient=patient_id)
+            return Patient.objects.select_related('id_utilisateur').get(pk=patient_id)
         except Patient.DoesNotExist:
             return None
 
     # afficher tous les patients
     def get_all_patient(self, actif_only: bool = True):
-        qs = Patient.objects.select_related('idUtilisateur').all()
+        qs = Patient.objects.select_related('id_utilisateur').all()
         if actif_only:
-            qs = qs.filter(idUtilisateur__actif=True)
+            qs = qs.filter(id_utilisateur__actif=True)
         return qs
 
     # rechercher des patients par nom, prénom, email, téléphone ou n° sécu
@@ -27,14 +27,14 @@ class PatientRepository:
         from django.db.models import Q
         clean_q = str(query).strip()
         qs = Patient.objects.filter(
-            Q(idUtilisateur__nom__icontains=clean_q) |
-            Q(idUtilisateur__prenom__icontains=clean_q) |
-            Q(idUtilisateur__email__icontains=clean_q) |
-            Q(idUtilisateur__telephone__icontains=clean_q) |
-            Q(numeroSecuriteSociale__icontains=clean_q)
-        ).select_related('idUtilisateur')
+            Q(id_utilisateur__nom__icontains=clean_q) |
+            Q(id_utilisateur__prenom__icontains=clean_q) |
+            Q(id_utilisateur__email__icontains=clean_q) |
+            Q(id_utilisateur__telephone__icontains=clean_q) |
+            Q(numero_securite_sociale__icontains=clean_q)
+        ).select_related('id_utilisateur')
         if actif_only:
-            qs = qs.filter(idUtilisateur__actif=True)
+            qs = qs.filter(id_utilisateur__actif=True)
         return qs
 
     # mettre à jour les informations d'un patient
@@ -47,13 +47,13 @@ class PatientRepository:
     # desactiver (soft delete) ou supprimer un patient
     def delete_patient(self, patient, hard=False):
         if hard:
-            user = patient.idUtilisateur
+            user = patient.id_utilisateur
             patient.delete()
             if user:
                 user.delete()
             return True
 
-        if patient.idUtilisateur:
-            patient.idUtilisateur.actif = False
-            patient.idUtilisateur.save(update_fields=["actif"])
-        return True
+        if patient.id_utilisateur:
+            patient.id_utilisateur.actif = False
+            patient.id_utilisateur.save(update_fields=["actif"])
+        return True

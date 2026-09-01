@@ -4,6 +4,7 @@ from .models import Batiment
 
 
 class BatimentSerializer(serializers.ModelSerializer):
+    idBatiment = serializers.IntegerField(source="id_batiment", read_only=True)
     nombre_chambre = serializers.IntegerField(
         required=False,
         allow_null=True,
@@ -11,6 +12,11 @@ class BatimentSerializer(serializers.ModelSerializer):
         max_value=1000,
         default=0,
         help_text="Nombre prévisionnel de chambres (optionnel, 0 par défaut)."
+    )
+    total_chambres_effectif = serializers.IntegerField(
+        read_only=True,
+        allow_null=True,
+        help_text="Nombre total de chambres effectives."
     )
     totalChambresEffectif = serializers.IntegerField(
         source="total_chambres_effectif",
@@ -22,10 +28,12 @@ class BatimentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Batiment
         fields = [
+            'id_batiment',
             'idBatiment',
             'nom',
             'description',
             'nombre_chambre',
+            'total_chambres_effectif',
             'totalChambresEffectif',
             'actif',
         ]
@@ -39,4 +47,3 @@ class BatimentSerializer(serializers.ModelSerializer):
         if value is not None and value < 0:
             raise serializers.ValidationError("Le nombre de chambres ne peut pas être négatif.")
         return value
-

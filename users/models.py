@@ -48,7 +48,7 @@ class User(AbstractUser):
         MEDECIN = "MEDECIN", "Medecin"
         INFIRMIER = "INFIRMIER", "Infirmier"
 
-    idUser = models.AutoField(primary_key=True)
+    id_user = models.AutoField(primary_key=True)
     nom = models.CharField(max_length=150, blank=False)
     prenom = models.CharField(max_length=150, blank=False)
     email = models.EmailField(max_length=150, unique=True, blank=False)
@@ -61,7 +61,7 @@ class User(AbstractUser):
         default=Role.PATIENT
     )
 
-    dateNaissance = models.DateField(null=True, blank=True)
+    date_naissance = models.DateField(null=True, blank=True)
     actif = models.BooleanField(default=True)
 
     objects = CustomUserManager()
@@ -76,12 +76,13 @@ class User(AbstractUser):
         self.is_active = self.actif
         super().save(*args, **kwargs)
 
+    # Propriétés snake_case standard
     @property
-    def motDePasseHash(self):
+    def mot_de_passe_hash(self):
         return self.password
 
-    @motDePasseHash.setter
-    def motDePasseHash(self, raw_password):
+    @mot_de_passe_hash.setter
+    def mot_de_passe_hash(self, raw_password):
         if raw_password:
             if raw_password.startswith(("pbkdf2_", "bcrypt", "argon2", "scrypt")):
                 self.password = raw_password
@@ -89,12 +90,45 @@ class User(AbstractUser):
                 self.set_password(raw_password)
 
     @property
-    def derniereConnexion(self):
+    def derniere_connexion(self):
         return self.last_login
+
+    @derniere_connexion.setter
+    def derniere_connexion(self, val):
+        self.last_login = val
+
+    # Propriétés de compatibilité camelCase
+    @property
+    def idUser(self):
+        return self.id_user
+
+    @idUser.setter
+    def idUser(self, val):
+        self.id_user = val
+
+    @property
+    def dateNaissance(self):
+        return self.date_naissance
+
+    @dateNaissance.setter
+    def dateNaissance(self, val):
+        self.date_naissance = val
+
+    @property
+    def motDePasseHash(self):
+        return self.mot_de_passe_hash
+
+    @motDePasseHash.setter
+    def motDePasseHash(self, val):
+        self.mot_de_passe_hash = val
+
+    @property
+    def derniereConnexion(self):
+        return self.derniere_connexion
 
     @derniereConnexion.setter
     def derniereConnexion(self, val):
-        self.last_login = val
+        self.derniere_connexion = val
 
     def __str__(self):
         return f"{self.login} ({self.prenom} {self.nom})"

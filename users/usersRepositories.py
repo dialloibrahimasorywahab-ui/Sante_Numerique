@@ -10,7 +10,7 @@ class UserRepository:
     # rechercher un utilisateur par son id
     def getUser(self, user_id):
         try:
-            return User.objects.get(idUser=user_id)
+            return User.objects.get(pk=user_id)
         except User.DoesNotExist:
             return None
 

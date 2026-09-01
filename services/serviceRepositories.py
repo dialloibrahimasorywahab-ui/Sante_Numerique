@@ -10,14 +10,14 @@ class ServiceRepository:
     # Obtenir un service par son ID
     def get_service(self, service_id):
         try:
-            return Service.objects.get(idService=service_id)
+            return Service.objects.get(pk=service_id)
         except Service.DoesNotExist:
             return None
 
     # Obtenir un service par son nom
     def get_service_by_nom(self, nom_service):
         try:
-            return Service.objects.get(nomService__iexact=nom_service)
+            return Service.objects.get(nom_service__iexact=nom_service)
         except Service.DoesNotExist:
             return None
 
@@ -35,7 +35,7 @@ class ServiceRepository:
         from django.db.models import Q
         clean_q = str(query).strip()
         qs = Service.objects.filter(
-            Q(nomService__icontains=clean_q) | Q(description__icontains=clean_q)
+            Q(nom_service__icontains=clean_q) | Q(description__icontains=clean_q)
         )
         if actif_only:
             qs = qs.filter(actif=True)

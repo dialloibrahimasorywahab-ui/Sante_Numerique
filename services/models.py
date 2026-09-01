@@ -22,9 +22,9 @@ class Service(models.Model):
         REANIMATION = "REANIMATION", "Réanimation"
         AUTRE = "AUTRE", "Autre Service"
 
-    idService = models.AutoField(primary_key=True)
+    id_service = models.AutoField(primary_key=True)
 
-    nomService = models.CharField(
+    nom_service = models.CharField(
         max_length=100,
         choices=NomService.choices,
         unique=True
@@ -35,7 +35,7 @@ class Service(models.Model):
         null=True
     )
 
-    bureauLocalisation = models.CharField(
+    bureau_localisation = models.CharField(
         max_length=100,
         blank=True,
         null=True
@@ -44,7 +44,32 @@ class Service(models.Model):
     actif = models.BooleanField(default=True)
 
     class Meta:
-        ordering = ['idService']
+        ordering = ['id_service']
+
+    # Propriétés de compatibilité camelCase
+    @property
+    def idService(self):
+        return self.id_service
+
+    @idService.setter
+    def idService(self, val):
+        self.id_service = val
+
+    @property
+    def nomService(self):
+        return self.nom_service
+
+    @nomService.setter
+    def nomService(self, val):
+        self.nom_service = val
+
+    @property
+    def bureauLocalisation(self):
+        return self.bureau_localisation
+
+    @bureauLocalisation.setter
+    def bureauLocalisation(self, val):
+        self.bureau_localisation = val
 
     def __str__(self):
-        return self.get_nomService_display()
+        return self.get_nom_service_display()

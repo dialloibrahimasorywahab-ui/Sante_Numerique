@@ -3,7 +3,7 @@ from django.db import models
 
 
 class Batiment(models.Model):
-    idBatiment = models.AutoField(primary_key=True)
+    id_batiment = models.AutoField(primary_key=True)
     nom = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True, null=True)
     nombre_chambre = models.PositiveIntegerField(null=True, blank=True, default=None)
@@ -26,6 +26,14 @@ class Batiment(models.Model):
         self.save(update_fields=["nombre_chambre"])
         return self.nombre_chambre
 
-    class Meta:
-        ordering = ["idBatiment"]
+    # Propriété de compatibilité camelCase
+    @property
+    def idBatiment(self):
+        return self.id_batiment
 
+    @idBatiment.setter
+    def idBatiment(self, val):
+        self.id_batiment = val
+
+    class Meta:
+        ordering = ["id_batiment"]
