@@ -74,9 +74,9 @@ def hospitalisation_list_create_view(request):
         search_query = request.query_params.get("search")
         if search_query:
             qs = qs.filter(
-                patient__idUtilisateur__nom__icontains=search_query
+                patient__id_utilisateur__nom__icontains=search_query
             ) | qs.filter(
-                patient__idUtilisateur__prenom__icontains=search_query
+                patient__id_utilisateur__prenom__icontains=search_query
             ) | qs.filter(
                 motif__icontains=search_query
             )

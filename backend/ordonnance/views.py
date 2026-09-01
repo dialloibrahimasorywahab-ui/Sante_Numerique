@@ -64,9 +64,9 @@ def ordonnance_list_create_view(request):
         if user_role == "ADMINISTRATEUR":
             pass  # L'administrateur a accès à l'ensemble
         elif user_role == "MEDECIN":
-            qs = qs.filter(consultation__medecin__idUtilisateur=request.user)
+            qs = qs.filter(consultation__medecin__id_utilisateur=request.user)
         elif user_role == "PATIENT":
-            qs = qs.filter(consultation__patient__idUtilisateur=request.user)
+            qs = qs.filter(consultation__patient__id_utilisateur=request.user)
         else:
             return Response({"error": "Accès refusé."}, status=status.HTTP_403_FORBIDDEN)
 

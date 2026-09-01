@@ -1,0 +1,206 @@
+.hospital-footer {
+  background-color: #0f2537;
+  color: #9ab0bf;
+  font-size: 0.9rem;
+  padding-top: 4.5rem;
+  border-top: 1px solid #1a3346;
+
+  .footer-main {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr 1.2fr;
+    gap: 3rem;
+    padding-bottom: 3.5rem;
+  }
+}
+
+.footer-col {
+  display: flex;
+  flex-direction: column;
+
+  .footer-title {
+    color: #ffffff;
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 1.25rem;
+    position: relative;
+    padding-bottom: 0.5rem;
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 28px;
+      height: 2px;
+      background: #055a52;
+      border-radius: 2px;
+    }
+  }
+
+  .footer-links {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+
+    li a {
+      color: #9ab0bf;
+      cursor: pointer;
+      transition: color var(--transition-fast);
+      font-size: 0.88rem;
+
+      &:hover {
+        color: #38bdf8;
+        padding-left: 3px;
+      }
+    }
+  }
+}
+
+.footer-brand {
+  .brand-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+
+    .footer-logo-svg {
+      width: 36px;
+      height: 36px;
+      flex-shrink: 0;
+    }
+
+    .brand-name {
+      font-family: var(--font-heading);
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: #ffffff;
+
+      span {
+        color: #38bdf8;
+      }
+    }
+  }
+
+  .brand-desc {
+    color: #9ab0bf;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+  }
+
+  .footer-emergency-box {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: rgba(5, 90, 82, 0.25);
+    border: 1px solid rgba(5, 90, 82, 0.5);
+    padding: 0.85rem 1rem;
+    border-radius: var(--radius-md);
+
+    .emergency-icon-wrap {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #055a52;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+
+      svg {
+        width: 18px;
+        height: 18px;
+      }
+    }
+
+    .emergency-text {
+      display: flex;
+      flex-direction: column;
+
+      .emergency-label {
+        font-size: 0.72rem;
+        color: #7dd3fc;
+        font-weight: 600;
+      }
+
+      .emergency-phone {
+        font-size: 0.95rem;
+        color: #ffffff;
+        font-weight: 700;
+      }
+    }
+  }
+}
+
+.hospital-contact-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+
+  p {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    color: #9ab0bf;
+    font-size: 0.85rem;
+    line-height: 1.4;
+
+    .footer-icon {
+      width: 16px;
+      height: 16px;
+      color: #38bdf8;
+      flex-shrink: 0;
+      margin-top: 3px;
+    }
+  }
+}
+
+.footer-bottom {
+  background-color: #0b1a27;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 1.25rem 0;
+
+  .footer-bottom-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    font-size: 0.8rem;
+    color: #6b8293;
+
+    .footer-legal {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+
+      a {
+        color: #6b8293;
+
+        &:hover {
+          color: #9ab0bf;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 1024px) {
+  .hospital-footer .footer-main {
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .hospital-footer .footer-main {
+    grid-template-columns: 1fr;
+  }
+
+  .footer-bottom .footer-bottom-content {
+    flex-direction: column;
+    text-align: center;
+  }
+}

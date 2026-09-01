@@ -17,9 +17,9 @@ class HospitalisationAdmin(admin.ModelAdmin):
     )
     list_filter = ('statut', 'actif', 'date_entree')
     search_fields = (
-        'patient__idUtilisateur__nom',
-        'patient__idUtilisateur__prenom',
-        'medecin__idUtilisateur__nom',
+        'patient__id_utilisateur__nom',
+        'patient__id_utilisateur__prenom',
+        'medecin__id_utilisateur__nom',
         'motif',
     )
     ordering = ('-date_entree',)

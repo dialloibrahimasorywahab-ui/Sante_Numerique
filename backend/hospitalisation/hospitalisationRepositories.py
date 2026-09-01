@@ -32,8 +32,8 @@ class HospitalisationRepository:
     def get_hospitalisation_by_id(self, hospitalisation_id: int) -> Optional[Hospitalisation]:
         try:
             return Hospitalisation.objects.select_related(
-                'patient__idUtilisateur',
-                'medecin__idUtilisateur',
+                'patient__id_utilisateur',
+                'medecin__id_utilisateur',
                 'lit__chambre__batiment'
             ).get(pk=hospitalisation_id)
         except Hospitalisation.DoesNotExist:
@@ -41,8 +41,8 @@ class HospitalisationRepository:
 
     def get_all_hospitalisations(self, actif_only: bool = True):
         qs = Hospitalisation.objects.select_related(
-            'patient__idUtilisateur',
-            'medecin__idUtilisateur',
+            'patient__id_utilisateur',
+            'medecin__id_utilisateur',
             'lit__chambre__batiment'
         ).all()
         if actif_only:

@@ -1,0 +1,14 @@
+import { Routes } from '@angular/router';
+import { HomeComponent } from './views/home/home.component';
+
+export const routes: Routes = [
+  {
+    path: '',
+    component: HomeComponent,
+    title: 'Santé Numérique — Centre Hospitalier Universitaire'
+  },
+  {
+    path: '**',
+    redirectTo: ''
+  }
+];

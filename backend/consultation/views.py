@@ -60,9 +60,9 @@ def consultation_list_create_view(request):
         if user_role == "ADMINISTRATEUR":
             pass  # L'administrateur a accès à l'ensemble
         elif user_role == "MEDECIN":
-            qs = qs.filter(medecin__idUtilisateur=request.user)
+            qs = qs.filter(medecin__id_utilisateur=request.user)
         elif user_role == "PATIENT":
-            qs = qs.filter(patient__idUtilisateur=request.user)
+            qs = qs.filter(patient__id_utilisateur=request.user)
         else:
             return Response({"error": "Accès refusé."}, status=status.HTTP_403_FORBIDDEN)
 
@@ -78,9 +78,9 @@ def consultation_list_create_view(request):
         search = request.query_params.get("search")
         if search:
             qs = qs.filter(
-                patient__idUtilisateur__nom__icontains=search
+                patient__id_utilisateur__nom__icontains=search
             ) | qs.filter(
-                patient__idUtilisateur__prenom__icontains=search
+                patient__id_utilisateur__prenom__icontains=search
             ) | qs.filter(
                 diagnostic__icontains=search
             )

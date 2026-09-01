@@ -13,8 +13,8 @@ class RendezVousRepository:
     def get_rendezvous(self, rdv_id):
         try:
             return RendezVous.objects.select_related(
-                'patient', 'patient__idUtilisateur',
-                'medecin', 'medecin__idUtilisateur'
+                'patient', 'patient__id_utilisateur',
+                'medecin', 'medecin__id_utilisateur'
             ).get(id=rdv_id)
         except RendezVous.DoesNotExist:
             return None
@@ -23,8 +23,8 @@ class RendezVousRepository:
 
     def get_all_rendezvous(self):
         return RendezVous.objects.select_related(
-            'patient', 'patient__idUtilisateur',
-            'medecin', 'medecin__idUtilisateur'
+            'patient', 'patient__id_utilisateur',
+            'medecin', 'medecin__id_utilisateur'
         ).all()
 
     # afficher les rendez-vous d'un patient
@@ -35,17 +35,17 @@ class RendezVousRepository:
         try:
             p_id = int(patient_id)
             return RendezVous.objects.filter(patient_id=p_id).select_related(
-                'patient', 'patient__idUtilisateur',
-                'medecin', 'medecin__idUtilisateur'
+                'patient', 'patient__id_utilisateur',
+                'medecin', 'medecin__id_utilisateur'
             )
         except (ValueError, TypeError):
             clean_q = str(patient_id).strip()
             return RendezVous.objects.filter(
-                Q(patient__idUtilisateur__nom__icontains=clean_q) |
-                Q(patient__idUtilisateur__prenom__icontains=clean_q)
+                Q(patient__id_utilisateur__nom__icontains=clean_q) |
+                Q(patient__id_utilisateur__prenom__icontains=clean_q)
             ).select_related(
-                'patient', 'patient__idUtilisateur',
-                'medecin', 'medecin__idUtilisateur'
+                'patient', 'patient__id_utilisateur',
+                'medecin', 'medecin__id_utilisateur'
             )
 
     # afficher les rendez-vous d'un medecin 
@@ -56,18 +56,18 @@ class RendezVousRepository:
         try:
             m_id = int(medecin_id)
             return RendezVous.objects.filter(medecin_id=m_id).select_related(
-                'patient', 'patient__idUtilisateur',
-                'medecin', 'medecin__idUtilisateur'
+                'patient', 'patient__id_utilisateur',
+                'medecin', 'medecin__id_utilisateur'
             )
         except (ValueError, TypeError):
             clean_q = str(medecin_id).strip()
             return RendezVous.objects.filter(
-                Q(medecin__idUtilisateur__nom__icontains=clean_q) |
-                Q(medecin__idUtilisateur__prenom__icontains=clean_q) |
+                Q(medecin__id_utilisateur__nom__icontains=clean_q) |
+                Q(medecin__id_utilisateur__prenom__icontains=clean_q) |
                 Q(medecin__matricule__icontains=clean_q)
             ).select_related(
-                'patient', 'patient__idUtilisateur',
-                'medecin', 'medecin__idUtilisateur'
+                'patient', 'patient__id_utilisateur',
+                'medecin', 'medecin__id_utilisateur'
             )
 
     # afficher les rendez-vous par leurs statut
@@ -79,16 +79,16 @@ class RendezVousRepository:
         return RendezVous.objects.filter(
             Q(statut__iexact=clean_statut) | Q(statut__icontains=clean_statut)
         ).select_related(
-            'patient', 'patient__idUtilisateur',
-            'medecin', 'medecin__idUtilisateur'
+            'patient', 'patient__id_utilisateur',
+            'medecin', 'medecin__id_utilisateur'
         )
 
     # afficher les rendez-vous d'une date
 
     def get_rendezvous_by_date(self, date_rdv):
         return RendezVous.objects.filter(date_rdv=date_rdv).select_related(
-            'patient', 'patient__idUtilisateur',
-            'medecin', 'medecin__idUtilisateur'
+            'patient', 'patient__id_utilisateur',
+            'medecin', 'medecin__id_utilisateur'
         )
 
     # rechercher un rendez-vous par les query
@@ -99,13 +99,13 @@ class RendezVousRepository:
         clean_q = str(query).strip()
         return RendezVous.objects.filter(
             Q(motif__icontains=clean_q) |
-            Q(patient__idUtilisateur__nom__icontains=clean_q) |
-            Q(patient__idUtilisateur__prenom__icontains=clean_q) |
-            Q(medecin__idUtilisateur__nom__icontains=clean_q) |
-            Q(medecin__idUtilisateur__prenom__icontains=clean_q)
+            Q(patient__id_utilisateur__nom__icontains=clean_q) |
+            Q(patient__id_utilisateur__prenom__icontains=clean_q) |
+            Q(medecin__id_utilisateur__nom__icontains=clean_q) |
+            Q(medecin__id_utilisateur__prenom__icontains=clean_q)
         ).select_related(
-            'patient', 'patient__idUtilisateur',
-            'medecin', 'medecin__idUtilisateur'
+            'patient', 'patient__id_utilisateur',
+            'medecin', 'medecin__id_utilisateur'
         )
 
     # mettre à jour les informations d'un rendez-vous

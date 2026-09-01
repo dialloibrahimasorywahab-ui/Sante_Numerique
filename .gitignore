@@ -19,6 +19,15 @@ ENV/
 media/
 staticfiles/
 
+# Node / Angular Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+node_modules/
+dist/
+.angular/
+.sass-cache/
+
 # VS Code
 .vscode/
 
@@ -31,7 +40,3 @@ Thumbs.db
 .env.local
 .env.*.local
 !.env.example
-
-# Migrations (si tu préfères ne pas les versionner)
-# */migrations/*.py
-# !*/migrations/__init__.py

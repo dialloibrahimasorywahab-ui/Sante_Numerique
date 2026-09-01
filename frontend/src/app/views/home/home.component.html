@@ -1,0 +1,645 @@
+<div class="homepage-root">
+
+  <!-- =========================================================================
+       HERO SECTION — Votre santé, notre priorité (Exact Reference Match)
+       ========================================================================= -->
+  <section id="hero" class="hero-section">
+    <div class="container hero-container">
+      
+      <!-- Left Hero Column -->
+      <div class="hero-left">
+        
+        <h1 class="hero-headline">
+          Votre santé,<br>
+          <span class="text-teal">notre priorité</span>
+        </h1>
+
+        <p class="hero-description">
+          Sante Numerique est un établissement hospitalier moderne qui met la technologie au service de votre bien-être et vous offre des soins de qualité, accessibles à tous.
+        </p>
+
+        <!-- CTA Buttons -->
+        <div class="hero-btn-row">
+          <button class="btn btn-teal btn-hero" (click)="openBooking()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <span>Prendre rendez-vous</span>
+          </button>
+
+          <button class="btn btn-outline-teal btn-hero" (click)="openDoctorSearch()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span>Trouver un médecin</span>
+          </button>
+        </div>
+
+        <!-- 3 Trust Points -->
+        <div class="hero-trust-grid">
+          
+          <div class="trust-item">
+            <div class="trust-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                <path d="m9 12 2 2 4-4"></path>
+              </svg>
+            </div>
+            <div class="trust-text">
+              <strong>Soins de qualité</strong>
+              <span>Équipe médicale expérimentée</span>
+            </div>
+          </div>
+
+          <div class="trust-item">
+            <div class="trust-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </div>
+            <div class="trust-text">
+              <strong>Disponibilité</strong>
+              <span>24h/24 et 7j/7 pour vous accompagner</span>
+            </div>
+          </div>
+
+          <div class="trust-item">
+            <div class="trust-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+            </div>
+            <div class="trust-text">
+              <strong>Données sécurisées</strong>
+              <span>Vos informations sont 100% protégées</span>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Right Hero Column (Medical Team Photo + Floating Urgence Card) -->
+      <div class="hero-right">
+        <div class="team-photo-container">
+          <img 
+            src="assets/medical_team.jpg" 
+            alt="Équipe médicale Santé Numérique" 
+            class="team-photo" />
+
+          <!-- Floating Emergency Card -->
+          <div class="floating-urgence-card shadow-lg">
+            <div class="urgence-header">
+              <div class="urgence-badge-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                  <path d="M12 8v4"></path>
+                  <path d="M12 16h.01"></path>
+                </svg>
+              </div>
+              <div class="urgence-titles">
+                <strong>Urgence 24h/24</strong>
+                <p>Une équipe d'urgence toujours prête à intervenir.</p>
+              </div>
+            </div>
+
+            <a href="tel:+224620000000" class="urgence-call-link">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="call-icon">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+              </svg>
+              <span>+224 620 00 00 00</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       SECTION 2: NOS SERVICES — Nos pôles de soins (6 Medical Cards)
+       ========================================================================= -->
+  <section id="services" class="section-poles">
+    <div class="container">
+      
+      <div class="section-top-label">NOS SERVICES</div>
+      <h2 class="section-main-title">Nos pôles de soins</h2>
+
+      <!-- 6 Care Cards Grid -->
+      <div class="poles-grid">
+        @for (pole of polesDeSoins; track pole.id) {
+          <div class="pole-card card" (click)="openServiceDetails(pole)" role="button">
+            
+            <div class="pole-icon-wrap">
+              @if (pole.id === 'cardio') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                </svg>
+              } @else if (pole.id === 'neuro') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-5.04z"></path>
+                  <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-5.04z"></path>
+                </svg>
+              } @else if (pole.id === 'dentiste') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2C8 2 5 5 5 9c0 3.5 1.5 6.5 2.5 10 .8 2.8 2 3 3.5 3 1.2 0 1.8-1 1-3-.7-1.8 0-4 0-4s.7 2.2 0 4c-.8 2-.2 3 1 3 1.5 0 2.7-.2 3.5-3 1-3.5 2.5-6.5 2.5-10 0-4-3-7-7-7z"></path>
+                </svg>
+              } @else if (pole.id === 'gyneco') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="8" r="5"></circle>
+                  <path d="M12 13v8"></path>
+                  <path d="M9 18h6"></path>
+                </svg>
+              } @else if (pole.id === 'pediatrie') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="6" r="4"></circle>
+                  <path d="M6 14a6 6 0 0 1 12 0v6a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-6z"></path>
+                </svg>
+              } @else {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                  <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                </svg>
+              }
+            </div>
+
+            <h3 class="pole-title">{{ pole.nom }}</h3>
+            <p class="pole-desc">{{ pole.description }}</p>
+
+            <span class="pole-link">
+              <span>En savoir plus</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="arrow-svg">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+            </span>
+          </div>
+        }
+      </div>
+
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       SECTION 3: STATS BANNER (Horizontal Key Metrics Bar)
+       ========================================================================= -->
+  <section class="section-stats-banner">
+    <div class="container">
+      
+      <div class="stats-banner-card">
+        
+        <div class="stat-banner-item">
+          <div class="stat-banner-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+          </div>
+          <div class="stat-banner-info">
+            <span class="stat-banner-number">15,000+</span>
+            <span class="stat-banner-label">Patients accompagnés</span>
+          </div>
+        </div>
+
+        <div class="stat-banner-sep"></div>
+
+        <div class="stat-banner-item">
+          <div class="stat-banner-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+          <div class="stat-banner-info">
+            <span class="stat-banner-number">60+</span>
+            <span class="stat-banner-label">Médecins spécialistes</span>
+          </div>
+        </div>
+
+        <div class="stat-banner-sep"></div>
+
+        <div class="stat-banner-item">
+          <div class="stat-banner-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+              <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+          </div>
+          <div class="stat-banner-info">
+            <span class="stat-banner-number">120+</span>
+            <span class="stat-banner-label">Lits disponibles</span>
+          </div>
+        </div>
+
+        <div class="stat-banner-sep"></div>
+
+        <div class="stat-banner-item">
+          <div class="stat-banner-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+              <line x1="9" y1="9" x2="9.01" y2="9"></line>
+              <line x1="15" y1="9" x2="15.01" y2="9"></line>
+            </svg>
+          </div>
+          <div class="stat-banner-info">
+            <span class="stat-banner-number">98%</span>
+            <span class="stat-banner-label">Patients satisfaits</span>
+          </div>
+        </div>
+
+        <div class="stat-banner-sep"></div>
+
+        <div class="stat-banner-item">
+          <div class="stat-banner-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+          </div>
+          <div class="stat-banner-info">
+            <span class="stat-banner-number">24/7</span>
+            <span class="stat-banner-label">Service d'urgence</span>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       SECTION 4: CALL TO ACTION BANNER (Dark Teal + Building Photo)
+       ========================================================================= -->
+  <section class="section-cta-banner">
+    <div class="container">
+      
+      <div class="cta-banner-wrapper">
+        <div class="cta-banner-left">
+          <div class="cta-calendar-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+              <polyline points="9 16 11 18 15 14"></polyline>
+            </svg>
+          </div>
+
+          <div class="cta-texts">
+            <h3 class="cta-title">Prenez rendez-vous en ligne</h3>
+            <p class="cta-sub">Choisissez la date et l'heure qui vous conviennent et évitez les files d'attente.</p>
+          </div>
+        </div>
+
+        <div class="cta-banner-right">
+          <button class="btn btn-outline-white btn-lg" (click)="openBooking()">
+            <span>Prendre rendez-vous</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon-arrow">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</div>
+
+<!-- =========================================================================
+     MODAL 1: ASSISTANT DE RÉSERVATION EN 3 ÉTAPES (Interactive Booking)
+     ========================================================================= -->
+@if (isBookingModalOpen) {
+  <div class="modal-backdrop" (click)="closeBooking()">
+    <div class="modal-dialog booking-modal shadow-2xl" (click)="$event.stopPropagation()">
+      
+      <div class="modal-header">
+        <div class="modal-header-text">
+          <span class="badge badge-teal-light">Prise de Rendez-vous en Ligne</span>
+          <h3 class="modal-title">
+            @if (bookingStep === 1) { 1. Choisissez votre Spécialité et votre Praticien }
+            @else if (bookingStep === 2) { 2. Sélectionnez la Date et le Créneau }
+            @else if (bookingStep === 3) { 3. Coordonnées du Patient }
+            @else { Rendez-vous Confirmé ! }
+          </h3>
+        </div>
+        <button class="modal-close" (click)="closeBooking()" aria-label="Fermer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        
+        <!-- STEP 1: Specialite & Doctor -->
+        @if (bookingStep === 1) {
+          <div class="step-content">
+            <div class="form-group mb-4">
+              <label class="form-label">Spécialité Médicale :</label>
+              <select class="form-control" [(ngModel)]="bookingForm.specialite">
+                <option value="">Toutes les spécialités</option>
+                @for (spec of hospitalService.specialites(); track spec.id) {
+                  <option [value]="spec.code">{{ spec.nom }}</option>
+                }
+              </select>
+            </div>
+
+            <label class="form-label">Sélectionnez votre Praticien :</label>
+            <div class="doc-selection-list">
+              @for (doc of filteredDoctorsForBooking; track doc.id) {
+                <div 
+                  class="doc-select-card" 
+                  [class.selected]="bookingForm.medecinId === doc.id"
+                  (click)="bookingForm.medecinId = doc.id">
+                  
+                  <div class="doc-select-avatar">
+                    {{ doc.prenom.charAt(0) }}{{ doc.nom.charAt(0) }}
+                  </div>
+
+                  <div class="doc-select-info">
+                    <strong>{{ doc.titre }} {{ doc.prenom }} {{ doc.nom }}</strong>
+                    <span class="spec">{{ doc.specialiteLabel }}</span>
+                    <span class="bureau">{{ doc.bureau }}</span>
+                  </div>
+
+                  <div class="radio-indicator">
+                    <div class="radio-inner" *ngIf="bookingForm.medecinId === doc.id"></div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- STEP 2: Date & Slot -->
+        @if (bookingStep === 2) {
+          <div class="step-content">
+            <div class="selected-doc-summary card p-3 mb-4">
+              <div class="doc-mini-avatar">{{ getSelectedDoctorForBooking()?.prenom?.charAt(0) }}{{ getSelectedDoctorForBooking()?.nom?.charAt(0) }}</div>
+              <div>
+                <strong>{{ getSelectedDoctorForBooking()?.titre }} {{ getSelectedDoctorForBooking()?.prenom }} {{ getSelectedDoctorForBooking()?.nom }}</strong>
+                <span>{{ getSelectedDoctorForBooking()?.specialiteLabel }} • {{ getSelectedDoctorForBooking()?.bureau }}</span>
+              </div>
+            </div>
+
+            <div class="form-group mb-4">
+              <label class="form-label">Date du rendez-vous :</label>
+              <input type="date" class="form-control" [(ngModel)]="bookingForm.date" />
+            </div>
+
+            <div class="form-group mb-4">
+              <label class="form-label">Créneaux horaires disponibles :</label>
+              <div class="slots-grid">
+                @for (slot of ['08:30', '09:00', '09:30', '10:15', '11:00', '14:00', '14:45', '15:30', '16:15']; track slot) {
+                  <button 
+                    type="button"
+                    class="slot-btn" 
+                    [class.selected]="bookingForm.heure === slot"
+                    (click)="bookingForm.heure = slot">
+                    {{ slot }}
+                  </button>
+                }
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Type de Consultation :</label>
+              <div class="type-cons-options">
+                <label class="option-pill" [class.active]="bookingForm.typeConsultation === 'SUR_PLACE'">
+                  <input type="radio" name="typeCons" value="SUR_PLACE" [(ngModel)]="bookingForm.typeConsultation" />
+                  <span>🏥 Consultation en Cabinet (Hôpital)</span>
+                </label>
+                <label class="option-pill" [class.active]="bookingForm.typeConsultation === 'TELECONSULTATION'">
+                  <input type="radio" name="typeCons" value="TELECONSULTATION" [(ngModel)]="bookingForm.typeConsultation" />
+                  <span>💻 Téléconsultation Vidéo Sécurisée</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- STEP 3: Patient Information -->
+        @if (bookingStep === 3) {
+          <div class="step-content">
+            <div class="form-row-2">
+              <div class="form-group mb-3">
+                <label class="form-label">Nom du Patient * :</label>
+                <input type="text" class="form-control" [(ngModel)]="bookingForm.patientNom" placeholder="Nom de famille" />
+              </div>
+              <div class="form-group mb-3">
+                <label class="form-label">Prénom du Patient * :</label>
+                <input type="text" class="form-control" [(ngModel)]="bookingForm.patientPrenom" placeholder="Prénom" />
+              </div>
+            </div>
+
+            <div class="form-row-2">
+              <div class="form-group mb-3">
+                <label class="form-label">Numéro de Téléphone * :</label>
+                <input type="tel" class="form-control" [(ngModel)]="bookingForm.patientTelephone" placeholder="+224 6..." />
+              </div>
+              <div class="form-group mb-3">
+                <label class="form-label">Adresse Email * :</label>
+                <input type="email" class="form-control" [(ngModel)]="bookingForm.patientEmail" placeholder="nom@exemple.com" />
+              </div>
+            </div>
+
+            <div class="form-group mb-3">
+              <label class="form-label">Motif de la consultation (optionnel) :</label>
+              <textarea class="form-control" rows="2" [(ngModel)]="bookingForm.motif" placeholder="Ex: Consultation cardiologie, bilan de santé..."></textarea>
+            </div>
+          </div>
+        }
+
+        <!-- STEP 4: Confirmation Ticket -->
+        @if (bookingStep === 4 && confirmedBooking) {
+          <div class="confirmation-ticket-view">
+            <div class="success-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            
+            <h4 class="conf-title">Rendez-vous Confirmé avec Succès !</h4>
+            <p class="conf-desc">Un SMS récapitulatif a été envoyé à votre numéro.</p>
+
+            <div class="printable-ticket card shadow-md">
+              <div class="ticket-header-band">
+                <span>RÉCÉPISSÉ OFFICIEL • CHU SANTÉ NUMÉRIQUE</span>
+                <strong>N° {{ confirmedBooking.idRdv }}</strong>
+              </div>
+
+              <div class="ticket-grid">
+                <div class="t-item">
+                  <span class="t-label">Praticien</span>
+                  <strong class="t-val">{{ confirmedBooking.medecin.titre }} {{ confirmedBooking.medecin.prenom }} {{ confirmedBooking.medecin.nom }}</strong>
+                  <span class="t-sub">{{ confirmedBooking.medecin.specialiteLabel }}</span>
+                </div>
+
+                <div class="t-item">
+                  <span class="t-label">Date & Heure</span>
+                  <strong class="t-val">{{ confirmedBooking.date }} à {{ confirmedBooking.heure }}</strong>
+                  <span class="t-sub">{{ confirmedBooking.bureau }}</span>
+                </div>
+
+                <div class="t-item">
+                  <span class="t-label">Patient</span>
+                  <strong class="t-val">{{ confirmedBooking.patientPrenom }} {{ confirmedBooking.patientNom }}</strong>
+                  <span class="t-sub">Motif : {{ confirmedBooking.motif }}</span>
+                </div>
+
+                <div class="t-item">
+                  <span class="t-label">Code Confirmation</span>
+                  <strong class="t-val text-teal">{{ confirmedBooking.codeConfirmation }}</strong>
+                  <span class="t-sub">À présenter à l'accueil</span>
+                </div>
+              </div>
+
+              <div class="ticket-bottom">
+                <div class="qr-sample">
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="2" y="2" width="6" height="6" rx="1"></rect>
+                    <rect x="16" y="2" width="6" height="6" rx="1"></rect>
+                    <rect x="2" y="16" width="6" height="6" rx="1"></rect>
+                    <rect x="10" y="10" width="4" height="4"></rect>
+                    <rect x="16" y="16" width="6" height="6" rx="1"></rect>
+                  </svg>
+                  <span>QR Code d'accès</span>
+                </div>
+                <span class="ticket-instructions">Présentez-vous 10 min avant au {{ confirmedBooking.bureau }}.</span>
+              </div>
+            </div>
+          </div>
+        }
+
+      </div>
+
+      <div class="modal-footer">
+        @if (bookingStep > 1 && bookingStep < 4) {
+          <button class="btn btn-outline-teal" (click)="prevBookingStep()">Précédent</button>
+        }
+
+        @if (bookingStep < 3) {
+          <button class="btn btn-teal" (click)="nextBookingStep()">Continuer</button>
+        } @else if (bookingStep === 3) {
+          <button class="btn btn-teal" (click)="submitBooking()">Confirmer le Rendez-vous</button>
+        } @else {
+          <button class="btn btn-outline-teal" (click)="printCurrentPage()">Imprimer le Ticket</button>
+          <button class="btn btn-teal" (click)="closeBooking()">Terminer</button>
+        }
+      </div>
+
+    </div>
+  </div>
+}
+
+<!-- =========================================================================
+     MODAL 2: RECHERCHE DE MÉDECINS (Trouver un médecin)
+     ========================================================================= -->
+@if (isDoctorModalOpen) {
+  <div class="modal-backdrop" (click)="closeDoctorSearch()">
+    <div class="modal-dialog doctor-search-modal shadow-2xl" (click)="$event.stopPropagation()">
+      
+      <div class="modal-header">
+        <div class="modal-header-text">
+          <span class="badge badge-teal-light">Annuaire Médical CHU</span>
+          <h3 class="modal-title">Trouver un Médecin Spécialiste</h3>
+        </div>
+        <button class="modal-close" (click)="closeDoctorSearch()" aria-label="Fermer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="search-input-box mb-4">
+          <input 
+            type="text" 
+            class="form-control search-input" 
+            [(ngModel)]="doctorSearchQuery" 
+            placeholder="Rechercher par nom, prénom ou spécialité (ex: Sow, Cardiologie)..." />
+        </div>
+
+        <div class="doctors-search-results">
+          @for (doc of searchFilteredDoctors; track doc.id) {
+            <div class="doc-search-item card">
+              <div class="doc-avatar-box">
+                {{ doc.prenom.charAt(0) }}{{ doc.nom.charAt(0) }}
+              </div>
+              <div class="doc-search-info">
+                <strong>{{ doc.titre }} {{ doc.prenom }} {{ doc.nom }}</strong>
+                <span class="spec-label">{{ doc.specialiteLabel }}</span>
+                <span class="service-label">{{ doc.service }} • {{ doc.bureau }}</span>
+                <span class="order-num">{{ doc.numeroOrdre }} • {{ doc.experience }}</span>
+              </div>
+              <div class="doc-search-action">
+                <button class="btn btn-teal btn-sm" (click)="openBooking(doc.specialite, doc.id)">
+                  Prendre RDV
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+    </div>
+  </div>
+}
+
+<!-- =========================================================================
+     MODAL 3: DÉTAILS D'UN PÔLE DE SOINS (En savoir plus)
+     ========================================================================= -->
+@if (isServiceModalOpen && selectedPole()) {
+  <div class="modal-backdrop" (click)="closeServiceDetails()">
+    <div class="modal-dialog service-modal shadow-2xl" (click)="$event.stopPropagation()">
+      
+      <div class="modal-header">
+        <div class="modal-header-text">
+          <span class="badge badge-teal-light">Pôle de Soins</span>
+          <h3 class="modal-title">{{ selectedPole()?.nom }}</h3>
+        </div>
+        <button class="modal-close" (click)="closeServiceDetails()" aria-label="Fermer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <p class="service-modal-desc">{{ selectedPole()?.description }}</p>
+        
+        <div class="service-highlights card p-3 mb-4">
+          <div class="sh-item">
+            <strong>Plateau Technique :</strong>
+            <span>Équipements de dernière génération et prise en charge 24/7.</span>
+          </div>
+          <div class="sh-item mt-2">
+            <strong>Délai de Consultation :</strong>
+            <span>Créneaux disponibles sous 24h à 48h.</span>
+          </div>
+        </div>
+
+        <div class="modal-actions-row">
+          <button class="btn btn-teal w-full" (click)="openBooking(selectedPole()?.code)">
+            Prendre Rendez-vous dans ce Pôle
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+}

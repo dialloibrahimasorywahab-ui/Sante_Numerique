@@ -31,8 +31,8 @@ class ConsultationRepository:
     def get_consultation_by_id(self, consultation_id: int) -> Optional[Consultation]:
         try:
             return Consultation.objects.select_related(
-                'patient__idUtilisateur',
-                'medecin__idUtilisateur',
+                'patient__id_utilisateur',
+                'medecin__id_utilisateur',
                 'rdv',
                 'frais'
             ).prefetch_related('ordonnances').get(pk=consultation_id)
@@ -41,8 +41,8 @@ class ConsultationRepository:
 
     def get_all_consultations(self, actif_only: bool = True):
         qs = Consultation.objects.select_related(
-            'patient__idUtilisateur',
-            'medecin__idUtilisateur',
+            'patient__id_utilisateur',
+            'medecin__id_utilisateur',
             'rdv',
             'frais'
         ).prefetch_related('ordonnances').all()

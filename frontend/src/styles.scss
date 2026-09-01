@@ -1,0 +1,210 @@
+/* ==========================================================================
+   SANTE NUMERIQUE — GLOBAL DESIGN SYSTEM & TOKENS
+   Aesthetic: Soft Soothing Medical Palette (Anti-Glare / Eye Comfort)
+   ========================================================================== */
+
+:root {
+  /* Primary Medical Teal Palette */
+  --primary-teal: #055a52;
+  --primary-teal-hover: #03443e;
+  --primary-teal-light: #0d796f;
+  --primary-teal-soft: #e5f2f0;
+  --primary-teal-border: #b8dcd7;
+  --teal-accent: #0f8a7e;
+  --teal-cyan: #0284c7;
+
+  /* Typography & Slate Colors */
+  --text-dark: #0f2537;
+  --text-navy: #132a3e;
+  --text-body: #334e68;
+  --text-muted: #536b7d;
+  --text-light: #7b93a4;
+
+  /* Soft, Soothing Eye-Friendly Backgrounds (No Blinding White) */
+  --bg-page: #f2f6f8;
+  --bg-section-alt: #e9f0f4;
+  --bg-hero: linear-gradient(135deg, #eaf3f2 0%, #edf3f7 50%, #e4eef4 100%);
+  --bg-card: #ffffff;
+  --bg-card-muted: #f7fafc;
+
+  /* Borders & Dividers */
+  --border-subtle: #d6e2eb;
+  --border-light: #e2ecf2;
+  --border-card: #d9e5ec;
+  --border-teal: #055a52;
+
+  /* Semantic status */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+
+  /* Typography */
+  --font-heading: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  /* Soft Ambient Shadows */
+  --shadow-xs: 0 1px 3px rgba(15, 37, 55, 0.05);
+  --shadow-sm: 0 2px 6px rgba(15, 37, 55, 0.07);
+  --shadow-md: 0 6px 18px rgba(15, 37, 55, 0.08);
+  --shadow-lg: 0 12px 28px rgba(15, 37, 55, 0.1);
+  --shadow-xl: 0 20px 40px rgba(15, 37, 55, 0.12);
+
+  /* Radii */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--bg-page);
+  color: var(--text-body);
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  color: var(--text-dark);
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+p {
+  color: var(--text-muted);
+}
+
+a {
+  color: var(--primary-teal);
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+
+img, svg {
+  display: block;
+  max-width: 100%;
+}
+
+.container {
+  width: 100%;
+  max-width: 1240px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+/* Base Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  white-space: nowrap;
+}
+
+.btn-teal {
+  background: var(--primary-teal);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(5, 90, 82, 0.25);
+}
+
+.btn-teal:hover {
+  background: var(--primary-teal-hover);
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(5, 90, 82, 0.35);
+}
+
+.btn-outline-teal {
+  background: #ffffff;
+  border: 1.5px solid var(--border-subtle);
+  color: var(--text-dark);
+}
+
+.btn-outline-teal:hover {
+  border-color: var(--primary-teal);
+  color: var(--primary-teal);
+  background: var(--primary-teal-soft);
+}
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: var(--radius-full);
+}
+
+.badge-teal-light {
+  background: var(--primary-teal-soft);
+  color: var(--primary-teal);
+  border: 1px solid var(--primary-teal-border);
+}
+
+/* Form Controls */
+.form-control {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  color: var(--text-dark);
+  background-color: #ffffff;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  outline: none;
+  transition: all var(--transition-fast);
+}
+
+.form-control:focus {
+  border-color: var(--primary-teal);
+  box-shadow: 0 0 0 3px rgba(5, 90, 82, 0.12);
+}
+
+.form-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-bottom: 0.35rem;
+}
+
+@media print {
+  body {
+    background: #ffffff !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+}

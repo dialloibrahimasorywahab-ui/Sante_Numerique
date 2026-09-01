@@ -23,7 +23,7 @@ class NataliteAdmin(admin.ModelAdmin):
         'nom_nouveau_ne',
         'lieu_naissance',
         'observation',
-        'id_patient__idUtilisateur__nom',
-        'id_patient__idUtilisateur__prenom',
+        'id_patient__id_utilisateur__nom',
+        'id_patient__id_utilisateur__prenom',
     )
     ordering = ('-date_naissance', '-id_nouveau_ne')

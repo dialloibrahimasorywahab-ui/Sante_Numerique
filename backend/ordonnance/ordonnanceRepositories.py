@@ -31,16 +31,16 @@ class OrdonnanceRepository:
     def get_ordonnance_by_id(self, ordonnance_id: int) -> Optional[Ordonnance]:
         try:
             return Ordonnance.objects.select_related(
-                'consultation__patient__idUtilisateur',
-                'consultation__medecin__idUtilisateur'
+                'consultation__patient__id_utilisateur',
+                'consultation__medecin__id_utilisateur'
             ).get(pk=ordonnance_id)
         except Ordonnance.DoesNotExist:
             return None
 
     def get_all_ordonnances(self, actif_only: bool = True):
         qs = Ordonnance.objects.select_related(
-            'consultation__patient__idUtilisateur',
-            'consultation__medecin__idUtilisateur'
+            'consultation__patient__id_utilisateur',
+            'consultation__medecin__id_utilisateur'
         ).all()
         if actif_only:
             qs = qs.filter(actif=True)

@@ -6,4 +6,4 @@ from .models import Consultation
 class ConsultationAdmin(admin.ModelAdmin):
     list_display = ('id', 'patient', 'medecin', 'date_cons', 'frais', 'actif')
     list_filter = ('actif', 'date_cons')
-    search_fields = ('patient__idUtilisateur__nom', 'medecin__idUtilisateur__nom', 'diagnostic')
+    search_fields = ('patient__id_utilisateur__nom', 'medecin__id_utilisateur__nom', 'diagnostic')
