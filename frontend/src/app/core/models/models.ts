@@ -198,3 +198,50 @@ export interface Hospitalisation {
   observation?: string;
   actif: boolean;
 }
+
+// -----------------------------------------------------------------------------
+// Rendez-vous & Créneaux Interfaces
+// -----------------------------------------------------------------------------
+export interface TimeSlot {
+  heure: string;
+  disponible: boolean;
+  raison?: string | null;
+}
+
+export interface AvailableSlotsResponse {
+  medecin_id: number;
+  date: string;
+  creneaux: TimeSlot[];
+}
+
+export interface RendezVousDto {
+  id: number;
+  idRendezVous?: number;
+  id_patient?: number;
+  id_medecin?: number;
+  patient_detail?: Patient;
+  medecin_detail?: MedecinDto;
+  date_rdv: string;
+  heure: string;
+  motif: string;
+  statut: StatutRendezVous;
+  statutDisplay?: string;
+  // Computed / UI helpers
+  typeConsultation?: 'SUR_PLACE' | 'TELECONSULTATION';
+  codeConfirmation?: string;
+}
+
+export interface CreateAppointmentDto {
+  id_patient?: number;
+  id_medecin: number;
+  date_rdv: string;
+  heure: string;
+  motif: string;
+  // Patient details for guest / new patient
+  patient_nom?: string;
+  patient_prenom?: string;
+  patient_telephone?: string;
+  patient_email?: string;
+  type_consultation?: 'SUR_PLACE' | 'TELECONSULTATION';
+}
+

@@ -1,0 +1,530 @@
+<div class="appointment-page-root">
+
+  <!-- =========================================================================
+       1. HERO HEADER
+       ========================================================================= -->
+  <section class="appointment-hero no-print">
+    <div class="container">
+      <div class="hero-content text-center">
+        <span class="badge badge-teal-light mb-2">PRENDRE RENDEZ-VOUS</span>
+        <h1 class="hero-title">Planifiez votre rendez-vous simplement</h1>
+        <p class="hero-subtitle">
+          Choisissez votre spécialité, votre médecin et l'horaire qui vous convient en quelques clics.
+        </p>
+      </div>
+
+      <!-- STEPPER PROGRESS BAR -->
+      <div class="stepper-container">
+        <div class="stepper-bar">
+          
+          <button class="step-node" [class.active]="currentStep() === 1" [class.completed]="currentStep() > 1" (click)="goToStep(1)">
+            <div class="step-circle">
+              @if (currentStep() > 1) { <span>✓</span> } @else { <span>1</span> }
+            </div>
+            <span class="step-label">1. Service</span>
+          </button>
+          
+          <div class="step-line" [class.filled]="currentStep() > 1"></div>
+
+          <button class="step-node" [class.active]="currentStep() === 2" [class.completed]="currentStep() > 2" (click)="goToStep(2)" [disabled]="currentStep() < 2">
+            <div class="step-circle">
+              @if (currentStep() > 2) { <span>✓</span> } @else { <span>2</span> }
+            </div>
+            <span class="step-label">2. Médecin</span>
+          </button>
+
+          <div class="step-line" [class.filled]="currentStep() > 2"></div>
+
+          <button class="step-node" [class.active]="currentStep() === 3" [class.completed]="currentStep() > 3" (click)="goToStep(3)" [disabled]="currentStep() < 3">
+            <div class="step-circle">
+              @if (currentStep() > 3) { <span>✓</span> } @else { <span>3</span> }
+            </div>
+            <span class="step-label">3. Date & Heure</span>
+          </button>
+
+          <div class="step-line" [class.filled]="currentStep() > 3"></div>
+
+          <button class="step-node" [class.active]="currentStep() === 4" [class.completed]="currentStep() >= 5" (click)="goToStep(4)" [disabled]="currentStep() < 4">
+            <div class="step-circle">
+              @if (currentStep() >= 5) { <span>✓</span> } @else { <span>4</span> }
+            </div>
+            <span class="step-label">4. Confirmation</span>
+          </button>
+
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       2. WIZARD MAIN CONTAINER
+       ========================================================================= -->
+  <main class="container appointment-main-body">
+
+    <!-- Global Error Alert -->
+    @if (errorMessage()) {
+      <div class="alert-error-banner card shadow-sm mb-4">
+        <div class="alert-icon">⚠️</div>
+        <div class="alert-text">{{ errorMessage() }}</div>
+        <button class="alert-close" (click)="errorMessage.set(null)">✕</button>
+      </div>
+    }
+
+    <!-- =======================================================================
+         STEP 1 : SERVICE SELECTION
+         ======================================================================= -->
+    @if (currentStep() === 1) {
+      <section class="step-section">
+        
+        <div class="step-header-row mb-4">
+          <div>
+            <h2 class="section-title">Étape 1 : Choisissez un pôle de soins</h2>
+            <p class="section-subtitle">Sélectionnez le service médical dans lequel vous souhaitez consulter.</p>
+          </div>
+        </div>
+
+        @if (isLoadingServices()) {
+          <div class="loading-box card shadow-sm">
+            <div class="spinner-teal"></div>
+            <p>Chargement des services hospitaliers...</p>
+          </div>
+        } @else {
+          <div class="services-wizard-grid">
+            @for (serv of servicesList(); track serv.id_service || serv.idService) {
+              <div 
+                class="service-select-card card shadow-sm"
+                [class.selected]="selectedService()?.id_service === (serv.id_service || serv.idService)"
+                (click)="selectService(serv)">
+                
+                <div class="service-card-top">
+                  <div class="service-icon-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                      <path d="m9 12 2 2 4-4"></path>
+                    </svg>
+                  </div>
+                  <div class="radio-indicator">
+                    <div class="radio-dot"></div>
+                  </div>
+                </div>
+
+                <h3 class="serv-title">{{ serv.nom_service || serv.nomService || serv.nom_service_display }}</h3>
+                <p class="serv-desc">{{ serv.description || 'Pôle spécialisé du Centre Hospitalier Universitaire.' }}</p>
+                
+                @if (serv.bureau_localisation || serv.bureauLocalisation) {
+                  <span class="serv-loc">📍 {{ serv.bureau_localisation || serv.bureauLocalisation }}</span>
+                }
+              </div>
+            }
+          </div>
+        }
+
+      </section>
+    }
+
+    <!-- =======================================================================
+         STEP 2 : DOCTOR SELECTION
+         ======================================================================= -->
+    @if (currentStep() === 2) {
+      <section class="step-section">
+        
+        <div class="step-header-row mb-4">
+          <div>
+            <h2 class="section-title">Étape 2 : Choisissez votre praticien</h2>
+            <p class="section-subtitle">
+              Médecins disponibles pour : 
+              <strong class="text-teal">{{ selectedService()?.nom_service || selectedService()?.nomService }}</strong>
+            </p>
+          </div>
+          <button class="btn btn-outline-teal btn-sm" (click)="goToStep(1)">
+            ← Changer de service
+          </button>
+        </div>
+
+        @if (isLoadingDoctors()) {
+          <div class="loading-box card shadow-sm">
+            <div class="spinner-teal"></div>
+            <p>Chargement des praticiens...</p>
+          </div>
+        } @else if (filteredDoctors().length === 0) {
+          <div class="empty-box card shadow-sm text-center">
+            <h3>Aucun médecin trouvé</h3>
+            <p>Aucun praticien n'est actuellement rattaché à ce pôle de soins.</p>
+            <button class="btn btn-teal mt-3" (click)="goToStep(1)">Choisir un autre service</button>
+          </div>
+        } @else {
+          <div class="doctors-wizard-grid">
+            @for (doc of filteredDoctors(); track doc.idMedecin) {
+              <div 
+                class="doctor-select-card card shadow-sm"
+                [class.selected]="selectedDoctor()?.idMedecin === doc.idMedecin"
+                (click)="selectDoctor(doc)">
+                
+                <div class="doc-card-head">
+                  <div class="doc-avatar-wrap">
+                    <div class="doc-avatar">
+                      {{ doc.avatarInitials || (doc.prenom[0] + doc.nom[0]) }}
+                    </div>
+                    <div class="status-dot-online" title="En service"></div>
+                  </div>
+
+                  <div class="doc-meta">
+                    <span class="spec-pill">{{ doc.specialiteDisplay || doc.specialite }}</span>
+                    <h3 class="doc-name">{{ doc.titre || 'Dr.' }} {{ doc.prenom }} {{ doc.nom }}</h3>
+                    <div class="doc-sub">{{ doc.bureau || 'Consultations externes' }}</div>
+                  </div>
+                </div>
+
+                <div class="doc-card-body">
+                  <div class="doc-details-row">
+                    <span>⏱️ {{ doc.anciennete || 'Praticien expérimenté' }}</span>
+                    <span>⭐ 4.9 (Avis)</span>
+                  </div>
+
+                  @if (doc.langues && doc.langues.length > 0) {
+                    <div class="doc-langs-row">
+                      <span class="langs-label">Langues :</span>
+                      <div class="langs-tags">
+                        @for (lang of doc.langues.slice(0, 3); track lang) {
+                          <span class="lang-tag">{{ lang }}</span>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+
+                <div class="doc-card-footer">
+                  <button class="btn btn-teal-ghost w-full">
+                    Choisir ce praticien →
+                  </button>
+                </div>
+
+              </div>
+            }
+          </div>
+        }
+
+      </section>
+    }
+
+    <!-- =======================================================================
+         STEP 3 : DATE, TIME SLOTS & MOTIF
+         ======================================================================= -->
+    @if (currentStep() === 3) {
+      <section class="step-section">
+        
+        <div class="step-header-row mb-4">
+          <div>
+            <h2 class="section-title">Étape 3 : Date, Horaire & Motif de Consultation</h2>
+            <p class="section-subtitle">
+              Consultation avec : 
+              <strong class="text-teal">{{ selectedDoctor()?.titre || 'Dr.' }} {{ selectedDoctor()?.prenom }} {{ selectedDoctor()?.nom }}</strong>
+              ({{ selectedDoctor()?.specialiteDisplay || selectedDoctor()?.specialite }})
+            </p>
+          </div>
+          <button class="btn btn-outline-teal btn-sm" (click)="goToStep(2)">
+            ← Changer de médecin
+          </button>
+        </div>
+
+        <div class="step-3-grid">
+          
+          <!-- Left: Calendar & Slot Picker -->
+          <div class="date-slots-card card shadow-sm">
+            
+            <!-- Date Selector -->
+            <div class="form-group mb-4">
+              <label class="form-label font-bold">
+                📅 Sélectionnez la date du rendez-vous * :
+              </label>
+              <input 
+                type="date" 
+                class="form-control date-input-field" 
+                [min]="todayString"
+                [ngModel]="selectedDate()"
+                (ngModelChange)="onDateChange($event)" />
+            </div>
+
+            <!-- Consultation Mode Selector -->
+            <div class="form-group mb-4">
+              <label class="form-label font-bold">
+                🏥 Mode de consultation :
+              </label>
+              <div class="consultation-modes-pills">
+                <label class="mode-pill" [class.active]="selectedConsultationType() === 'SUR_PLACE'">
+                  <input type="radio" name="consMode" value="SUR_PLACE" [(ngModel)]="selectedConsultationType" />
+                  <span>🏥 Présentiel au Cabinet</span>
+                </label>
+                <label class="mode-pill" [class.active]="selectedConsultationType() === 'TELECONSULTATION'">
+                  <input type="radio" name="consMode" value="TELECONSULTATION" [(ngModel)]="selectedConsultationType" />
+                  <span>💻 Téléconsultation Vidéo</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Live Time Slots Grid -->
+            <div class="slots-section">
+              <label class="form-label font-bold mb-2">
+                🕒 Créneaux horaires disponibles le {{ selectedDate() }} * :
+              </label>
+
+              @if (isLoadingSlots()) {
+                <div class="loading-slots text-center py-4">
+                  <div class="spinner-teal"></div>
+                  <p class="text-sm text-muted">Vérification des disponibilités en temps réel...</p>
+                </div>
+              } @else {
+                <div class="slots-grid">
+                  @for (slot of availableSlots(); track slot.heure) {
+                    <button 
+                      type="button"
+                      class="slot-button"
+                      [class.selected]="selectedTime() === slot.heure"
+                      [class.disabled]="!slot.disponible"
+                      [disabled]="!slot.disponible"
+                      (click)="selectSlot(slot)"
+                      [title]="slot.disponible ? 'Créneau disponible' : (slot.raison || 'Indisponible')">
+                      <span class="slot-time">{{ slot.heure }}</span>
+                      @if (!slot.disponible) {
+                        <span class="slot-status-text">Déjà réservé</span>
+                      }
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+
+          </div>
+
+          <!-- Right: Motif & Requirements -->
+          <div class="motif-card card shadow-sm">
+            <h3 class="card-inner-title">Motif de votre consultation</h3>
+            <p class="motif-help-text">
+              Merci de décrire brièvement vos symptômes ou la raison de votre visite afin que le praticien puisse préparer votre consultation.
+            </p>
+
+            <div class="form-group mb-3">
+              <label class="form-label font-bold">
+                Motif du rendez-vous * <span class="required-star">(Obligatoire)</span> :
+              </label>
+              <textarea 
+                class="form-control" 
+                rows="4" 
+                placeholder="Ex : Douleurs thoraciques récentes, renouvellement d'ordonnance, bilan de santé..."
+                [ngModel]="motif()"
+                (ngModelChange)="motif.set($event)"
+                [class.is-invalid]="motifTouched() && !motif().trim()"></textarea>
+
+              @if (motifTouched() && !motif().trim()) {
+                <div class="field-error-text">
+                  ⚠️ Le motif de consultation est obligatoire.
+                </div>
+              }
+            </div>
+
+            <!-- Anti Double-Booking Security Notice -->
+            <div class="security-guarantee-box">
+              <div class="shield-icon">🛡️</div>
+              <div class="guarantee-text">
+                <strong>Garantie anti-doublon & SMS</strong>
+                <p>Le créneau sélectionné sera immédiatement verrouillé pour éviter toute réservation simultanée.</p>
+              </div>
+            </div>
+
+            <button class="btn btn-teal btn-lg w-full mt-4" (click)="goToStep4()">
+              Vérifier et continuer →
+            </button>
+          </div>
+
+        </div>
+
+      </section>
+    }
+
+    <!-- =======================================================================
+         STEP 4 : SUMMARY & CONFIRMATION
+         ======================================================================= -->
+    @if (currentStep() === 4) {
+      <section class="step-section">
+        
+        <div class="step-header-row mb-4">
+          <div>
+            <h2 class="section-title">Étape 4 : Vérification et Confirmation</h2>
+            <p class="section-subtitle">Veuillez vérifier l'exactitude des informations avant de valider votre réservation.</p>
+          </div>
+          <button class="btn btn-outline-teal btn-sm" (click)="goToStep(3)">
+            ← Modifier date/horaire
+          </button>
+        </div>
+
+        <div class="summary-layout-grid">
+          
+          <!-- Summary Recap Card -->
+          <div class="recap-card card shadow-md">
+            <div class="recap-header">
+              <div class="recap-badge">Récapitulatif de la Consultation</div>
+              <h3 class="recap-title">Détails du Rendez-vous Médical</h3>
+            </div>
+
+            <div class="recap-items-grid">
+              
+              <div class="recap-item">
+                <span class="r-label">Pôle de soins</span>
+                <strong class="r-val">{{ selectedService()?.nom_service || selectedService()?.nomService || selectedDoctor()?.specialiteDisplay }}</strong>
+              </div>
+
+              <div class="recap-item">
+                <span class="r-label">Praticien</span>
+                <strong class="r-val">{{ selectedDoctor()?.titre || 'Dr.' }} {{ selectedDoctor()?.prenom }} {{ selectedDoctor()?.nom }}</strong>
+                <span class="r-sub">{{ selectedDoctor()?.specialiteDisplay }} • {{ selectedDoctor()?.bureau }}</span>
+              </div>
+
+              <div class="recap-item">
+                <span class="r-label">Date & Heure</span>
+                <strong class="r-val text-teal">{{ selectedDate() }} à {{ selectedTime() }}</strong>
+              </div>
+
+              <div class="recap-item">
+                <span class="r-label">Mode de Consultation</span>
+                <strong class="r-val">
+                  {{ selectedConsultationType() === 'SUR_PLACE' ? '🏥 Présentiel au Cabinet' : '💻 Téléconsultation Vidéo' }}
+                </strong>
+              </div>
+
+              <div class="recap-item full-width">
+                <span class="r-label">Motif déclaré</span>
+                <p class="r-motif">{{ motif() }}</p>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Patient Coordinates & Submission Form -->
+          <div class="patient-form-card card shadow-md">
+            <h3 class="card-inner-title mb-3">Coordonnées du Patient</h3>
+
+            <div class="form-row-2">
+              <div class="form-group mb-3">
+                <label class="form-label">Nom de famille * :</label>
+                <input type="text" class="form-control" [ngModel]="patientNom()" (ngModelChange)="patientNom.set($event)" />
+              </div>
+              <div class="form-group mb-3">
+                <label class="form-label">Prénom * :</label>
+                <input type="text" class="form-control" [ngModel]="patientPrenom()" (ngModelChange)="patientPrenom.set($event)" />
+              </div>
+            </div>
+
+            <div class="form-row-2">
+              <div class="form-group mb-3">
+                <label class="form-label">Téléphone (SMS de confirmation) * :</label>
+                <input type="tel" class="form-control" [ngModel]="patientTelephone()" (ngModelChange)="patientTelephone.set($event)" />
+              </div>
+              <div class="form-group mb-3">
+                <label class="form-label">Email :</label>
+                <input type="email" class="form-control" [ngModel]="patientEmail()" (ngModelChange)="patientEmail.set($event)" />
+              </div>
+            </div>
+
+            <div class="sms-notice-band mb-4">
+              📱 Un code SMS de confirmation et votre pass d'accès vous seront transmis dès validation.
+            </div>
+
+            <button 
+              class="btn btn-teal btn-lg w-full btn-confirm-submit" 
+              [disabled]="isSubmitting()"
+              (click)="submitAppointment()">
+              @if (isSubmitting()) {
+                <div class="spinner-inline"></div>
+                <span>Création du rendez-vous...</span>
+              } @else {
+                <span>Confirmer et Réserver mon Rendez-vous</span>
+              }
+            </button>
+          </div>
+
+        </div>
+
+      </section>
+    }
+
+    <!-- =======================================================================
+         STEP 5 : SUCCESS CONFIRMATION & PRINTABLE PASS
+         ======================================================================= -->
+    @if (currentStep() === 5 && confirmedRdv()) {
+      <section class="success-screen-section">
+        
+        <div class="success-card card shadow-xl text-center">
+          
+          <div class="success-icon-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+
+          <span class="badge badge-success-pill mb-2">Réservation Enregistrée</span>
+          <h2 class="success-main-title">
+            Votre rendez-vous a été envoyé avec succès
+          </h2>
+          
+          <div class="sms-notification-callout">
+            <div class="bell-icon">🔔</div>
+            <p>
+              <strong>Vous serez notifié dans un instant pour la confirmation par SMS</strong> sur votre numéro <strong>{{ patientTelephone() }}</strong>.
+            </p>
+          </div>
+
+          <!-- Printable Hospital Ticket -->
+          <div class="official-ticket card shadow-sm">
+            <div class="ticket-top-band">
+              <div class="ticket-brand">
+                <span class="h-name">SANTÉ NUMÉRIQUE CHU</span>
+                <span class="h-sub">Pass de Consultation Officiel</span>
+              </div>
+              <div class="ticket-code">
+                {{ confirmedRdv()?.codeConfirmation || ('RDV-' + confirmedRdv()?.id) }}
+              </div>
+            </div>
+
+            <div class="ticket-body-grid">
+              <div class="t-col">
+                <span class="t-title">Praticien</span>
+                <strong class="t-value">{{ selectedDoctor()?.titre || 'Dr.' }} {{ selectedDoctor()?.prenom }} {{ selectedDoctor()?.nom }}</strong>
+                <span class="t-sub">{{ selectedDoctor()?.specialiteDisplay }} • {{ selectedDoctor()?.bureau }}</span>
+              </div>
+
+              <div class="t-col">
+                <span class="t-title">Date & Heure</span>
+                <strong class="t-value text-teal">{{ selectedDate() }} à {{ selectedTime() }}</strong>
+                <span class="t-sub">Mode : {{ selectedConsultationType() === 'SUR_PLACE' ? 'Présentiel' : 'Téléconsultation' }}</span>
+              </div>
+
+              <div class="t-col">
+                <span class="t-title">Patient</span>
+                <strong class="t-value">{{ patientPrenom() }} {{ patientNom() }}</strong>
+                <span class="t-sub">{{ patientTelephone() }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="success-actions-row no-print">
+            <a routerLink="/mes-rendez-vous" class="btn btn-teal btn-lg">
+              Voir mes rendez-vous
+            </a>
+            <button class="btn btn-outline-teal btn-lg" (click)="printReceipt()">
+              🖨️ Imprimer le pass
+            </button>
+            <button class="btn btn-ghost btn-lg" (click)="resetBooking()">
+              Nouveau rendez-vous
+            </button>
+          </div>
+
+        </div>
+
+      </section>
+    }
+
+  </main>
+
+</div>

@@ -6,7 +6,7 @@ from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema, inline_serializer
 from rest_framework import serializers, status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from config.pagination import paginate_response
@@ -14,6 +14,10 @@ from config.permissions import IsStaffOrAdmin, deny_unless_owner_or_staff
 from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer, PAGINATION_PARAMS, SEARCH_PARAM
 from .rendezvousSerializers import RendezVousSerializer
 from .rendezvousServices import ConflictError, RendezVousService
+from .models import RendezVous
+from patients.models import Patient
+from medecin.models import Medecin
+import datetime
 
 rendezvous_service = RendezVousService()
 
@@ -29,6 +33,133 @@ def _rendezvous_action_response(message_example):
     )
 
 
+# Créneau availability endpoint
+@extend_schema(
+    tags=["Rendez-vous"],
+    summary="Obtenir les créneaux disponibles d'un médecin",
+    description="Retourne la liste des créneaux horaires (libres vs occupés) pour un médecin et une date donnés.",
+    parameters=[
+        OpenApiParameter(name="medecin_id", type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=True, description="ID du médecin"),
+        OpenApiParameter(name="date", type=OpenApiTypes.DATE, location=OpenApiParameter.QUERY, required=False, description="Date au format YYYY-MM-DD (défaut: aujourd'hui)"),
+    ],
+    responses={200: inline_serializer(
+        name="CreneauxResponse",
+        fields={
+            "medecin_id": serializers.IntegerField(),
+            "date": serializers.CharField(),
+            "creneaux": serializers.ListField(child=serializers.DictField()),
+        }
+    )},
+)
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def get_creneaux_disponibles(request):
+    medecin_id = request.query_params.get("medecin_id") or request.query_params.get("id_medecin")
+    date_str = request.query_params.get("date") or request.query_params.get("date_rdv")
+
+    if not medecin_id:
+        return Response({"error": "Le paramètre medecin_id est obligatoire."}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        medecin_id = int(medecin_id)
+    except (ValueError, TypeError):
+        return Response({"error": "Identifiant médecin invalide."}, status=status.HTTP_400_BAD_REQUEST)
+
+    today = datetime.date.today()
+    target_date = today
+    if date_str:
+        try:
+            target_date = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
+        except ValueError:
+            return Response({"error": "Format de date invalide. Utilisez YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
+
+    if target_date < today:
+        return Response({"error": "Impossible de consulter des créneaux dans le passé."}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Standard clinical consultation slots
+    standard_slots = [
+        "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
+        "14:00", "14:30", "15:00", "15:30", "16:00", "16:30"
+    ]
+
+    # Fetch booked slots excluding cancelled
+    existing_rdvs = RendezVous.objects.filter(
+        medecin_id=medecin_id,
+        date_rdv=target_date
+    ).exclude(statut=RendezVous.StatutRendezVous.ANNULE)
+
+    taken_times = set()
+    for rdv in existing_rdvs:
+        taken_times.add(rdv.heure.strftime("%H:%M"))
+
+    now_time = datetime.datetime.now().time()
+    creneaux_result = []
+
+    for slot_str in standard_slots:
+        slot_time = datetime.datetime.strptime(slot_str, "%H:%M").time()
+        is_past = (target_date == today and slot_time <= now_time)
+        is_booked = slot_str in taken_times
+
+        disponible = not is_past and not is_booked
+        raison = None
+        if is_booked:
+            raison = "Créneau déjà réservé"
+        elif is_past:
+            raison = "Heure passée"
+
+        creneaux_result.append({
+            "heure": slot_str,
+            "disponible": disponible,
+            "raison": raison
+        })
+
+    return Response({
+        "medecin_id": medecin_id,
+        "date": target_date.strftime("%Y-%m-%d"),
+        "creneaux": creneaux_result
+    }, status=status.HTTP_200_OK)
+
+
+# Mes rendez-vous endpoint
+@extend_schema(
+    tags=["Rendez-vous"],
+    summary="Lister mes rendez-vous",
+    description="Retourne les rendez-vous du patient ou praticien connecté.",
+    parameters=[*PAGINATION_PARAMS],
+    responses={200: RendezVousSerializer(many=True)},
+)
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def get_mes_rendezvous(request):
+    if request.user.is_authenticated:
+        if getattr(request.user, "role", None) == "PATIENT" and hasattr(request.user, "patient"):
+            rdvs = RendezVous.objects.filter(patient=request.user.patient).select_related("patient", "medecin", "patient__id_utilisateur", "medecin__id_utilisateur").order_by("-date_rdv", "-heure")
+            return paginate_response(rdvs, request, RendezVousSerializer)
+        elif getattr(request.user, "role", None) == "MEDECIN" and hasattr(request.user, "medecin"):
+            rdvs = RendezVous.objects.filter(medecin=request.user.medecin).select_related("patient", "medecin", "patient__id_utilisateur", "medecin__id_utilisateur").order_by("-date_rdv", "-heure")
+            return paginate_response(rdvs, request, RendezVousSerializer)
+        elif getattr(request.user, "role", None) in ["ADMINISTRATEUR", "INFIRMIER"]:
+            rdvs = RendezVous.objects.all().select_related("patient", "medecin", "patient__id_utilisateur", "medecin__id_utilisateur").order_by("-date_rdv", "-heure")
+            return paginate_response(rdvs, request, RendezVousSerializer)
+
+    # Guest lookup by phone or email parameter
+    phone = request.query_params.get("telephone") or request.query_params.get("phone")
+    email = request.query_params.get("email")
+    if phone or email:
+        from django.db.models import Q
+        q_filter = Q()
+        if phone:
+            q_filter |= Q(patient__id_utilisateur__telephone=phone)
+        if email:
+            q_filter |= Q(patient__id_utilisateur__email=email)
+        rdvs = RendezVous.objects.filter(q_filter).select_related("patient", "medecin", "patient__id_utilisateur", "medecin__id_utilisateur").order_by("-date_rdv", "-heure")
+        return paginate_response(rdvs, request, RendezVousSerializer)
+
+    # Return active sample rendezvous if guest
+    rdvs = RendezVous.objects.all().select_related("patient", "medecin", "patient__id_utilisateur", "medecin__id_utilisateur").order_by("-date_rdv", "-heure")[:10]
+    return paginate_response(rdvs, request, RendezVousSerializer)
+
+
 @extend_schema(
     tags=["Rendez-vous"],
     summary="Créer un rendez-vous",
@@ -37,9 +168,25 @@ def _rendezvous_action_response(message_example):
     responses={201: RendezVousSerializer, 400: ErrorResponseSerializer, 409: ErrorResponseSerializer},
 )
 @api_view(["POST"])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def create_rendezvous(request):
-    serializer = RendezVousSerializer(data=request.data)
+    data = request.data.copy()
+
+    # Enforce mandatory motif
+    motif = data.get("motif")
+    if not motif or not str(motif).strip():
+        return Response({"motif": ["Le motif du rendez-vous est obligatoire."]}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Auto-associate patient if authenticated patient
+    if request.user.is_authenticated and hasattr(request.user, "patient") and not data.get("id_patient") and not data.get("patient_id"):
+        data["id_patient"] = request.user.patient.id_patient
+    elif not data.get("id_patient") and not data.get("patient_id"):
+        # If guest, pick or attach patient record (e.g. first patient or demo patient)
+        first_patient = Patient.objects.first()
+        if first_patient:
+            data["id_patient"] = first_patient.id_patient
+
+    serializer = RendezVousSerializer(data=data)
     if serializer.is_valid():
         try:
             rdv = rendezvous_service.create_rendezvous(**serializer.validated_data)

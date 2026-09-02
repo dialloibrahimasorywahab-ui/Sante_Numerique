@@ -4,6 +4,8 @@ import { ServicesListComponent } from './views/services/services-list.component'
 import { ServiceDetailComponent } from './views/services/service-detail/service-detail.component';
 import { MedecinsListComponent } from './views/medecins/medecins-list.component';
 import { MedecinDetailComponent } from './views/medecins/medecin-detail/medecin-detail.component';
+import { BookAppointmentComponent } from './features/appointment/pages/book-appointment/book-appointment.component';
+import { MyAppointmentsComponent } from './features/appointment/pages/my-appointments/my-appointments.component';
 
 export const routes: Routes = [
   {
@@ -30,6 +32,16 @@ export const routes: Routes = [
     path: 'medecins/:id',
     component: MedecinDetailComponent,
     title: 'Profil Médecin — Santé Numérique'
+  },
+  {
+    path: 'rendez-vous',
+    component: BookAppointmentComponent,
+    title: 'Prendre Rendez-vous — Santé Numérique'
+  },
+  {
+    path: 'mes-rendez-vous',
+    component: MyAppointmentsComponent,
+    title: 'Mes Rendez-vous — Santé Numérique'
   },
   {
     path: '**',

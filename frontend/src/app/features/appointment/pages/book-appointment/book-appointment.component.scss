@@ -1,0 +1,857 @@
+/* ==========================================================================
+   BOOK APPOINTMENT WIZARD SCSS — SANTE NUMERIQUE
+   ========================================================================== */
+
+.appointment-page-root {
+  background-color: var(--bg-page);
+  min-height: 100vh;
+  padding-bottom: 5rem;
+}
+
+/* 1. Hero Section & Stepper */
+.appointment-hero {
+  background: var(--bg-hero);
+  padding: 3rem 0 2rem;
+  border-bottom: 1px solid var(--border-light);
+
+  .hero-title {
+    font-size: clamp(1.8rem, 3.2vw, 2.5rem);
+    font-weight: 800;
+    color: var(--text-dark);
+    margin-bottom: 0.6rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1.05rem;
+    color: var(--text-muted);
+    max-width: 620px;
+    margin: 0 auto 2.5rem;
+    line-height: 1.6;
+  }
+
+  .stepper-container {
+    max-width: 750px;
+    margin: 0 auto;
+
+    .stepper-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    .step-node {
+      background: none;
+      border: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.4rem;
+      cursor: pointer;
+      z-index: 2;
+      padding: 0;
+
+      &:disabled {
+        cursor: not-allowed;
+        opacity: 0.6;
+      }
+
+      .step-circle {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: #ffffff;
+        border: 2px solid var(--border-card);
+        color: var(--text-muted);
+        font-weight: 700;
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.25s ease;
+      }
+
+      .step-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        transition: color 0.25s ease;
+      }
+
+      &.active {
+        .step-circle {
+          background: var(--primary-teal);
+          border-color: var(--primary-teal);
+          color: #ffffff;
+          box-shadow: 0 0 0 4px rgba(5, 90, 82, 0.15);
+        }
+        .step-label {
+          color: var(--primary-teal);
+          font-weight: 800;
+        }
+      }
+
+      &.completed {
+        .step-circle {
+          background: var(--color-success);
+          border-color: var(--color-success);
+          color: #ffffff;
+        }
+        .step-label {
+          color: var(--text-dark);
+        }
+      }
+    }
+
+    .step-line {
+      flex: 1;
+      height: 3px;
+      background: var(--border-light);
+      margin: 0 -5px 1.2rem;
+      z-index: 1;
+      transition: background 0.3s ease;
+
+      &.filled {
+        background: var(--color-success);
+      }
+    }
+  }
+}
+
+/* 2. Main Body */
+.appointment-main-body {
+  padding-top: 2.5rem;
+}
+
+.step-section {
+  animation: fadeIn 0.3s ease;
+
+  .step-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+
+    .section-title {
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: var(--text-dark);
+      margin-bottom: 0.25rem;
+    }
+
+    .section-subtitle {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+    }
+  }
+}
+
+/* STEP 1: Services Grid */
+.services-wizard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+
+  .service-select-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 2px solid var(--border-card);
+    padding: 1.75rem;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: flex;
+    flex-direction: column;
+
+    &:hover {
+      border-color: var(--primary-teal);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 24px rgba(5, 90, 82, 0.08);
+    }
+
+    &.selected {
+      border-color: var(--primary-teal);
+      background: var(--primary-teal-soft);
+
+      .radio-indicator .radio-dot {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .service-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+
+      .service-icon-box {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: var(--primary-teal-soft);
+        color: var(--primary-teal);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        svg {
+          width: 22px;
+          height: 22px;
+        }
+      }
+
+      .radio-indicator {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 2px solid var(--primary-teal);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        .radio-dot {
+          width: 10px;
+          height: 10px;
+          border-radius: 50%;
+          background: var(--primary-teal);
+          opacity: 0;
+          transform: scale(0.5);
+          transition: all 0.2s ease;
+        }
+      }
+    }
+
+    .serv-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--text-dark);
+      margin-bottom: 0.5rem;
+    }
+
+    .serv-desc {
+      font-size: 0.88rem;
+      color: var(--text-body);
+      line-height: 1.5;
+      margin-bottom: 1rem;
+      flex: 1;
+    }
+
+    .serv-loc {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+  }
+}
+
+/* STEP 2: Doctors Grid */
+.doctors-wizard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+
+  .doctor-select-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 2px solid var(--border-card);
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: flex;
+    flex-direction: column;
+
+    &:hover {
+      border-color: var(--primary-teal);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 24px rgba(5, 90, 82, 0.08);
+    }
+
+    &.selected {
+      border-color: var(--primary-teal);
+      background: var(--primary-teal-soft);
+    }
+
+    .doc-card-head {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+
+      .doc-avatar-wrap {
+        position: relative;
+
+        .doc-avatar {
+          width: 54px;
+          height: 54px;
+          border-radius: 14px;
+          background: var(--primary-teal);
+          color: #ffffff;
+          font-family: var(--font-heading);
+          font-weight: 800;
+          font-size: 1.15rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .status-dot-online {
+          position: absolute;
+          bottom: -2px;
+          right: -2px;
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          background: var(--color-success);
+          border: 2px solid #ffffff;
+        }
+      }
+
+      .doc-meta {
+        flex: 1;
+
+        .spec-pill {
+          font-size: 0.72rem;
+          font-weight: 700;
+          color: var(--primary-teal);
+          background: var(--primary-teal-soft);
+          padding: 0.15rem 0.5rem;
+          border-radius: var(--radius-full);
+          display: inline-block;
+          margin-bottom: 0.25rem;
+        }
+
+        .doc-name {
+          font-size: 1.05rem;
+          font-weight: 800;
+          color: var(--text-dark);
+          line-height: 1.3;
+        }
+
+        .doc-sub {
+          font-size: 0.78rem;
+          color: var(--text-muted);
+        }
+      }
+    }
+
+    .doc-card-body {
+      flex: 1;
+      margin-bottom: 1rem;
+
+      .doc-details-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.8rem;
+        color: var(--text-body);
+        font-weight: 600;
+        margin-bottom: 0.6rem;
+      }
+
+      .doc-langs-row {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+
+        .langs-label {
+          font-size: 0.75rem;
+          color: var(--text-muted);
+        }
+
+        .langs-tags {
+          display: flex;
+          gap: 0.3rem;
+          flex-wrap: wrap;
+
+          .lang-tag {
+            font-size: 0.7rem;
+            background: var(--bg-card-muted);
+            border: 1px solid var(--border-light);
+            padding: 0.1rem 0.4rem;
+            border-radius: var(--radius-sm);
+            color: var(--text-body);
+          }
+        }
+      }
+    }
+
+    .btn-teal-ghost {
+      background: transparent;
+      border: 1px solid var(--primary-teal);
+      color: var(--primary-teal);
+      font-size: 0.88rem;
+      font-weight: 700;
+      padding: 0.5rem;
+      border-radius: var(--radius-md);
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: var(--primary-teal);
+        color: #ffffff;
+      }
+    }
+  }
+}
+
+/* STEP 3: Date, Slots & Motif Grid */
+.step-3-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 2rem;
+
+  .date-slots-card, .motif-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid var(--border-card);
+    padding: 2rem;
+  }
+
+  .consultation-modes-pills {
+    display: flex;
+    gap: 1rem;
+
+    .mode-pill {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.88rem;
+      font-weight: 600;
+      transition: all 0.2s ease;
+
+      input {
+        display: none;
+      }
+
+      &.active {
+        border-color: var(--primary-teal);
+        background: var(--primary-teal-soft);
+        color: var(--primary-teal);
+        font-weight: 700;
+      }
+    }
+  }
+
+  .slots-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    gap: 0.6rem;
+
+    .slot-button {
+      background: var(--bg-card-muted);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-md);
+      padding: 0.75rem 0.5rem;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.2rem;
+      transition: all 0.2s ease;
+
+      .slot-time {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--text-dark);
+      }
+
+      &:hover:not(:disabled) {
+        border-color: var(--primary-teal);
+        background: var(--primary-teal-soft);
+        color: var(--primary-teal);
+      }
+
+      &.selected {
+        background: var(--primary-teal);
+        border-color: var(--primary-teal);
+        .slot-time {
+          color: #ffffff;
+        }
+      }
+
+      &.disabled, &:disabled {
+        background: #f1f5f9;
+        border-color: #e2e8f0;
+        cursor: not-allowed;
+        opacity: 0.65;
+
+        .slot-time {
+          color: #94a3b8;
+          text-decoration: line-through;
+        }
+
+        .slot-status-text {
+          font-size: 0.65rem;
+          color: var(--color-danger);
+          font-weight: 600;
+        }
+      }
+    }
+  }
+
+  .card-inner-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--text-dark);
+    margin-bottom: 0.5rem;
+  }
+
+  .motif-help-text {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 1.25rem;
+    line-height: 1.5;
+  }
+
+  .required-star {
+    color: var(--color-danger);
+    font-size: 0.8rem;
+  }
+
+  .field-error-text {
+    font-size: 0.78rem;
+    color: var(--color-danger);
+    font-weight: 600;
+    margin-top: 0.35rem;
+  }
+
+  .security-guarantee-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    border-radius: var(--radius-md);
+    padding: 0.9rem 1rem;
+    margin-top: 1rem;
+
+    .shield-icon {
+      font-size: 1.25rem;
+    }
+
+    strong {
+      display: block;
+      font-size: 0.85rem;
+      color: #065f46;
+      margin-bottom: 0.2rem;
+    }
+
+    p {
+      font-size: 0.78rem;
+      color: #047857;
+      margin: 0;
+      line-height: 1.4;
+    }
+  }
+}
+
+/* STEP 4: Summary Layout */
+.summary-layout-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+
+  .recap-card, .patient-form-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid var(--border-card);
+    padding: 2rem;
+  }
+
+  .recap-header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-light);
+
+    .recap-badge {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--primary-teal);
+      text-transform: uppercase;
+      margin-bottom: 0.25rem;
+    }
+
+    .recap-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--text-dark);
+    }
+  }
+
+  .recap-items-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+
+    .recap-item {
+      display: flex;
+      flex-direction: column;
+
+      &.full-width {
+        grid-column: span 2;
+      }
+
+      .r-label {
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        margin-bottom: 0.2rem;
+      }
+
+      .r-val {
+        font-size: 0.95rem;
+        color: var(--text-dark);
+      }
+
+      .r-sub {
+        font-size: 0.78rem;
+        color: var(--text-muted);
+      }
+
+      .r-motif {
+        font-size: 0.88rem;
+        color: var(--text-body);
+        background: var(--bg-card-muted);
+        padding: 0.75rem 1rem;
+        border-radius: var(--radius-md);
+        margin: 0.35rem 0 0;
+        line-height: 1.5;
+      }
+    }
+  }
+
+  .sms-notice-band {
+    background: var(--primary-teal-soft);
+    border: 1px solid var(--primary-teal-border);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1rem;
+    font-size: 0.82rem;
+    color: var(--primary-teal);
+    font-weight: 600;
+  }
+}
+
+/* STEP 5: Success & Pass Screen */
+.success-screen-section {
+  max-width: 680px;
+  margin: 0 auto;
+
+  .success-card {
+    background: #ffffff;
+    border-radius: 20px;
+    border: 1px solid var(--border-card);
+    padding: 3rem 2.5rem;
+  }
+
+  .success-icon-badge {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: #ecfdf5;
+    color: var(--color-success);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.25rem;
+
+    svg {
+      width: 32px;
+      height: 32px;
+    }
+  }
+
+  .badge-success-pill {
+    background: #ecfdf5;
+    color: var(--color-success);
+    border: 1px solid #a7f3d0;
+    font-weight: 700;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-full);
+    display: inline-block;
+  }
+
+  .success-main-title {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--text-dark);
+    margin-bottom: 1.25rem;
+  }
+
+  .sms-notification-callout {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-align: left;
+
+    .bell-icon {
+      font-size: 1.5rem;
+    }
+
+    p {
+      margin: 0;
+      font-size: 0.95rem;
+      color: #1e40af;
+      line-height: 1.5;
+    }
+  }
+
+  .official-ticket {
+    background: var(--bg-card-muted);
+    border: 1px dashed var(--primary-teal);
+    border-radius: 16px;
+    padding: 1.75rem;
+    margin-bottom: 2rem;
+    text-align: left;
+
+    .ticket-top-band {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 1rem;
+      margin-bottom: 1.25rem;
+      border-bottom: 1px solid var(--border-light);
+
+      .h-name {
+        font-weight: 800;
+        color: var(--primary-teal);
+        display: block;
+        font-size: 0.95rem;
+      }
+
+      .h-sub {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+      }
+
+      .ticket-code {
+        font-family: var(--font-heading);
+        font-weight: 800;
+        font-size: 1.1rem;
+        color: var(--text-dark);
+        background: #ffffff;
+        padding: 0.35rem 0.75rem;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border-light);
+      }
+    }
+
+    .ticket-body-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+
+      .t-col {
+        display: flex;
+        flex-direction: column;
+
+        .t-title {
+          font-size: 0.72rem;
+          text-transform: uppercase;
+          color: var(--text-muted);
+          margin-bottom: 0.2rem;
+        }
+
+        .t-value {
+          font-size: 0.9rem;
+          color: var(--text-dark);
+        }
+
+        .t-sub {
+          font-size: 0.75rem;
+          color: var(--text-muted);
+        }
+      }
+    }
+  }
+
+  .success-actions-row {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+}
+
+.alert-error-banner {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  .alert-text {
+    flex: 1;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .alert-close {
+    background: none;
+    border: none;
+    font-size: 1.1rem;
+    color: #991b1b;
+    cursor: pointer;
+  }
+}
+
+.loading-box, .empty-box {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid var(--border-card);
+  padding: 3rem 2rem;
+  text-align: center;
+
+  .spinner-teal {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--primary-teal-soft);
+    border-top-color: var(--primary-teal);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 1rem;
+  }
+}
+
+.spinner-inline {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+  margin-right: 0.5rem;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 900px) {
+  .step-3-grid, .summary-layout-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .success-screen-section .official-ticket .ticket-body-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}

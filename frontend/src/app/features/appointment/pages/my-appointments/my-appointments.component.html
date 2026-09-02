@@ -1,0 +1,203 @@
+<div class="my-appointments-root">
+
+  <!-- =========================================================================
+       1. BREADCRUMB & HERO
+       ========================================================================= -->
+  <section class="my-rdv-hero">
+    <div class="container">
+      
+      <nav class="breadcrumb-nav mb-3">
+        <a routerLink="/" class="crumb-link">Accueil</a>
+        <span class="crumb-sep">/</span>
+        <span class="crumb-current">Mes Rendez-vous</span>
+      </nav>
+
+      <div class="hero-flex-row">
+        <div>
+          <span class="badge badge-teal-light mb-2">ESPACE PATIENT</span>
+          <h1 class="hero-title">Mes Rendez-vous Médicaux</h1>
+          <p class="hero-subtitle">
+            Consultez le statut de vos demandes, vos consultations programmées et votre historique.
+          </p>
+        </div>
+
+        <a routerLink="/rendez-vous" class="btn btn-teal btn-lg">
+          + Prendre un rendez-vous
+        </a>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       2. TABS & MAIN CONTENT
+       ========================================================================= -->
+  <main class="container my-rdv-content">
+
+    <!-- Tabs Header -->
+    <div class="rdv-tabs-row">
+      <button 
+        class="tab-btn" 
+        [class.active]="activeTab() === 'UPCOMING'"
+        (click)="activeTab.set('UPCOMING')">
+        🗓️ Rendez-vous à venir ({{ upcomingAppointments().length }})
+      </button>
+
+      <button 
+        class="tab-btn" 
+        [class.active]="activeTab() === 'PAST'"
+        (click)="activeTab.set('PAST')">
+        📁 Historique & Passés ({{ pastAppointments().length }})
+      </button>
+    </div>
+
+    <!-- Error Alert -->
+    @if (errorMessage()) {
+      <div class="alert-error-box card shadow-sm mb-4">
+        <p>{{ errorMessage() }}</p>
+        <button class="btn btn-teal btn-sm mt-2" (click)="loadAppointments()">Réessayer</button>
+      </div>
+    }
+
+    <!-- Loading State -->
+    @if (isLoading()) {
+      <div class="loading-state card shadow-sm">
+        <div class="spinner-teal"></div>
+        <p>Chargement de vos rendez-vous...</p>
+      </div>
+    } @else {
+
+      <!-- TAB 1: UPCOMING -->
+      @if (activeTab() === 'UPCOMING') {
+        @if (upcomingAppointments().length === 0) {
+          <div class="empty-rdv-card card shadow-sm text-center">
+            <div class="empty-icon">🗓️</div>
+            <h3>Aucun rendez-vous à venir</h3>
+            <p>Vous n'avez aucune consultation médicale programmée pour le moment.</p>
+            <a routerLink="/rendez-vous" class="btn btn-teal mt-3">
+              Planifier un rendez-vous maintenant
+            </a>
+          </div>
+        } @else {
+          <div class="rdv-cards-list">
+            @for (rdv of upcomingAppointments(); track rdv.id) {
+              <div class="rdv-item-card card shadow-sm">
+                
+                <div class="rdv-card-header">
+                  <div class="date-badge-box">
+                    <span class="day-month">{{ rdv.date_rdv }}</span>
+                    <span class="time-hour">🕒 {{ rdv.heure.substring(0, 5) }}</span>
+                  </div>
+
+                  <span class="status-badge" [ngClass]="getStatusBadgeClass(rdv.statut)">
+                    {{ getStatusLabel(rdv.statut) }}
+                  </span>
+                </div>
+
+                <div class="rdv-card-body">
+                  <div class="doc-info-row">
+                    <div class="doc-circle-avatar">
+                      {{ (rdv.medecin_detail?.prenom?.[0] || 'D') + (rdv.medecin_detail?.nom?.[0] || 'R') }}
+                    </div>
+                    <div class="doc-meta-text">
+                      <h3 class="doc-full-name">
+                        {{ rdv.medecin_detail?.titre || 'Dr.' }} {{ rdv.medecin_detail?.prenom }} {{ rdv.medecin_detail?.nom }}
+                      </h3>
+                      <span class="doc-spec">{{ rdv.medecin_detail?.specialiteDisplay || rdv.medecin_detail?.specialite }} • {{ rdv.medecin_detail?.bureau || 'Cabinet médical' }}</span>
+                    </div>
+                  </div>
+
+                  @if (rdv.motif) {
+                    <div class="rdv-motif-box">
+                      <span class="m-label">Motif :</span>
+                      <p class="m-text">{{ rdv.motif }}</p>
+                    </div>
+                  }
+                </div>
+
+                <div class="rdv-card-footer">
+                  <span class="rdv-id-ref">N° RDV : <strong>#{{ rdv.id }}</strong></span>
+                  
+                  @if (rdv.statut !== 'ANNULE') {
+                    <button 
+                      class="btn btn-outline-danger btn-sm"
+                      [disabled]="cancellingId() === rdv.id"
+                      (click)="cancelAppointment(rdv)">
+                      @if (cancellingId() === rdv.id) {
+                        <span>Annulation en cours...</span>
+                      } @else {
+                        <span>Annuler ce rendez-vous</span>
+                      }
+                    </button>
+                  }
+                </div>
+
+              </div>
+            }
+          </div>
+        }
+      }
+
+      <!-- TAB 2: PAST -->
+      @if (activeTab() === 'PAST') {
+        @if (pastAppointments().length === 0) {
+          <div class="empty-rdv-card card shadow-sm text-center">
+            <div class="empty-icon">📁</div>
+            <h3>Aucun historique</h3>
+            <p>Vos rendez-vous passés apparaîtront ici.</p>
+          </div>
+        } @else {
+          <div class="rdv-cards-list">
+            @for (rdv of pastAppointments(); track rdv.id) {
+              <div class="rdv-item-card card shadow-sm past-item">
+                
+                <div class="rdv-card-header">
+                  <div class="date-badge-box past">
+                    <span class="day-month">{{ rdv.date_rdv }}</span>
+                    <span class="time-hour">🕒 {{ rdv.heure.substring(0, 5) }}</span>
+                  </div>
+
+                  <span class="status-badge" [ngClass]="getStatusBadgeClass(rdv.statut)">
+                    {{ getStatusLabel(rdv.statut) }}
+                  </span>
+                </div>
+
+                <div class="rdv-card-body">
+                  <div class="doc-info-row">
+                    <div class="doc-circle-avatar past">
+                      {{ (rdv.medecin_detail?.prenom?.[0] || 'D') + (rdv.medecin_detail?.nom?.[0] || 'R') }}
+                    </div>
+                    <div class="doc-meta-text">
+                      <h3 class="doc-full-name">
+                        {{ rdv.medecin_detail?.titre || 'Dr.' }} {{ rdv.medecin_detail?.prenom }} {{ rdv.medecin_detail?.nom }}
+                      </h3>
+                      <span class="doc-spec">{{ rdv.medecin_detail?.specialiteDisplay || rdv.medecin_detail?.specialite }}</span>
+                    </div>
+                  </div>
+
+                  @if (rdv.motif) {
+                    <div class="rdv-motif-box">
+                      <span class="m-label">Motif :</span>
+                      <p class="m-text">{{ rdv.motif }}</p>
+                    </div>
+                  }
+                </div>
+
+                <div class="rdv-card-footer">
+                  <span class="rdv-id-ref">N° RDV : <strong>#{{ rdv.id }}</strong></span>
+                  <a routerLink="/rendez-vous" [queryParams]="{ medecin: rdv.medecin_detail?.idMedecin }" class="btn btn-outline-teal btn-sm">
+                    Reprendre rendez-vous
+                  </a>
+                </div>
+
+              </div>
+            }
+          </div>
+        }
+      }
+
+    }
+
+  </main>
+
+</div>
