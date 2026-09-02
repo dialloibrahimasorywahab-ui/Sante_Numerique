@@ -10,22 +10,22 @@ class MedecinRepository:
     # Rechercher et afficher un médecin par son ID
     def get_medecin(self, medecin_id):
         try:
-            return Medecin.objects.select_related('idUtilisateur').get(idMedecin=medecin_id)
+            return Medecin.objects.select_related('id_utilisateur').get(id_medecin=medecin_id)
         except Medecin.DoesNotExist:
             return None
 
     # Afficher tous les médecins
     def get_all_medecin(self, actif_only: bool = True):
-        qs = Medecin.objects.select_related('idUtilisateur').all()
+        qs = Medecin.objects.select_related('id_utilisateur').all()
         if actif_only:
-            qs = qs.filter(idUtilisateur__actif=True)
+            qs = qs.filter(id_utilisateur__actif=True)
         return qs
 
     # Rechercher les médecins par spécialité / service
     def get_medecins_by_specialite(self, specialite, actif_only: bool = True):
-        qs = Medecin.objects.filter(specialite__iexact=specialite).select_related('idUtilisateur')
+        qs = Medecin.objects.filter(specialite__iexact=specialite).select_related('id_utilisateur')
         if actif_only:
-            qs = qs.filter(idUtilisateur__actif=True)
+            qs = qs.filter(id_utilisateur__actif=True)
         return qs
 
     # Rechercher des médecins par mot-clé
@@ -35,14 +35,14 @@ class MedecinRepository:
         from django.db.models import Q
         clean_q = str(query).strip()
         qs = Medecin.objects.filter(
-            Q(idUtilisateur__nom__icontains=clean_q) |
-            Q(idUtilisateur__prenom__icontains=clean_q) |
-            Q(idUtilisateur__email__icontains=clean_q) |
+            Q(id_utilisateur__nom__icontains=clean_q) |
+            Q(id_utilisateur__prenom__icontains=clean_q) |
+            Q(id_utilisateur__email__icontains=clean_q) |
             Q(matricule__icontains=clean_q) |
             Q(specialite__icontains=clean_q)
-        ).select_related('idUtilisateur')
+        ).select_related('id_utilisateur')
         if actif_only:
-            qs = qs.filter(idUtilisateur__actif=True)
+            qs = qs.filter(id_utilisateur__actif=True)
         return qs
 
     # Mettre à jour les informations d'un médecin
@@ -55,12 +55,12 @@ class MedecinRepository:
     # Désactiver ou supprimer un médecin
     def delete_medecin(self, medecin, hard=False):
         if hard:
-            if medecin.idUtilisateur:
-                medecin.idUtilisateur.delete()
+            if medecin.id_utilisateur:
+                medecin.id_utilisateur.delete()
             else:
                 medecin.delete()
         else:
-            if medecin.idUtilisateur:
-                medecin.idUtilisateur.actif = False
-                medecin.idUtilisateur.save()
-
+            if medecin.id_utilisateur:
+                medecin.id_utilisateur.actif = False
+                medecin.id_utilisateur.save(update_fields=["actif"])
+        return medecin

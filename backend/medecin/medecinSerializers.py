@@ -4,14 +4,16 @@ from .models import Medecin
 
 
 class MedecinSerializer(serializers.ModelSerializer):
-    nom = serializers.CharField(source="idUtilisateur.nom", required=False)
-    prenom = serializers.CharField(source="idUtilisateur.prenom", required=False)
-    email = serializers.EmailField(source="idUtilisateur.email", required=False)
+    idUtilisateur = serializers.IntegerField(source="id_utilisateur.id_user", required=False, allow_null=True)
+    nom = serializers.CharField(source="id_utilisateur.nom", required=False)
+    prenom = serializers.CharField(source="id_utilisateur.prenom", required=False)
+    email = serializers.EmailField(source="id_utilisateur.email", required=False)
     telephone = serializers.CharField(
-        source="idUtilisateur.telephone",
+        source="id_utilisateur.telephone",
         validators=[validate_phone_number],
         required=False
     )
+    specialiteDisplay = serializers.CharField(source="get_specialite_display", read_only=True)
     telephonePro = serializers.CharField(
         validators=[validate_phone_number],
         required=False,
@@ -40,6 +42,7 @@ class MedecinSerializer(serializers.ModelSerializer):
             "login",
             "motDePasse",
             "specialite",
+            "specialiteDisplay",
             "matricule",
             "numeroOrdre",
             "telephonePro",

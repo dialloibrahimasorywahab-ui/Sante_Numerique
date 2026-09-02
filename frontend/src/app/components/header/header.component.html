@@ -23,7 +23,7 @@
     <nav class="nav-links" [class.open]="isMobileMenuOpen">
       <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-item">Accueil</a>
       <a routerLink="/services" routerLinkActive="active" class="nav-item">Services</a>
-      <button class="nav-item" (click)="onNavigate('medecins')">Médecins</button>
+      <a routerLink="/medecins" routerLinkActive="active" class="nav-item">Médecins</a>
       <button class="nav-item" (click)="onNavigate('a-propos')">À propos</button>
       <button class="nav-item" (click)="onNavigate('actualites')">Actualités</button>
       <button class="nav-item" (click)="onNavigate('contact')">Contact</button>

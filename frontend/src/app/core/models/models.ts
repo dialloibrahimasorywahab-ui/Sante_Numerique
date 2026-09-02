@@ -37,6 +37,33 @@ export type SpecialiteMedecin =
   | 'PSYCHIATRIE'
   | 'RADIOLOGIE';
 
+export interface MedecinDto {
+  idMedecin: number;
+  idUtilisateur?: number;
+  nom: string;
+  prenom: string;
+  email?: string;
+  telephone?: string;
+  specialite: string;
+  specialiteDisplay?: string;
+  matricule?: string | null;
+  numeroOrdre: string;
+  telephonePro?: string | null;
+  emailPro?: string | null;
+  bureau?: string | null;
+  dateEmbauche?: string;
+  // Computed fields
+  titre?: string;
+  specialiteLabel?: string;
+  avatarInitials?: string;
+  anciennete?: string;
+  langues?: string[];
+  disponibilites?: string[];
+  biographie?: string;
+  evaluation?: number;
+  avisCount?: number;
+}
+
 export interface Medecin {
   id_medecin: number;
   id_utilisateur: User;
@@ -51,6 +78,9 @@ export interface Medecin {
 
 export interface PaginatedResponse<T> {
   count: number;
+  total_pages?: number;
+  current_page?: number;
+  page_size?: number;
   next: string | null;
   previous: string | null;
   results: T[];

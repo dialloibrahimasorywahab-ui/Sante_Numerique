@@ -73,8 +73,11 @@ class MedecinService:
         return self.repository.createMedecin(**data)
 
     # Rechercher et afficher un médecin par son ID
-    def get_Medecin(self, medecin_id):
+    def get_medecin(self, medecin_id):
         return self.repository.get_medecin(medecin_id)
+
+    def get_Medecin(self, medecin_id):
+        return self.get_medecin(medecin_id)
 
     # Récupérer tous les médecins
     def get_all_medecin(self, actif_only: bool = True):
