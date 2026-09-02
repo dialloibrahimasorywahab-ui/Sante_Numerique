@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map, catchError, throwError } from 'rxjs';
 import { MedecinDto } from '../../features/medecins/models/models';
 import { PaginatedResponse } from '../models/models';
+import { environment } from '../../../environments/environment';
 
 export interface DoctorQueryParams {
   search?: string;
@@ -22,7 +23,7 @@ export interface SpecialiteOption {
 })
 export class MedecinService {
   private http = inject(HttpClient);
-  private readonly API_BASE_URL = 'http://127.0.0.1:8000';
+  private readonly API_BASE_URL = environment.apiUrl;
 
   // State Signals
   medecinsList = signal<MedecinDto[]>([]);

@@ -6,13 +6,14 @@ import {
   AvailableSlotsResponse,
   CreateAppointmentDto
 } from '../../features/appointment/models/models';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AppointmentService {
   private http = inject(HttpClient);
-  private readonly baseUrl = 'http://127.0.0.1:8000/rendezvous';
+  private readonly baseUrl = `${environment.apiUrl}/rendezvous`;
 
   /**
    * Récupère les créneaux horaires disponibles d'un médecin pour une date donnée.

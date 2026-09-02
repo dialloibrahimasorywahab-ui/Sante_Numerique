@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map, catchError, of, throwError } from 'rxjs';
 import { ServiceHospitalier } from '../../features/services/models/models';
 import { PaginatedResponse } from '../models/models';
+import { environment } from '../../../environments/environment';
 import { DoctorProfile, HospitalService } from './hospital.service';
 
 export interface ServiceDetailExtended extends ServiceHospitalier {
@@ -21,7 +22,7 @@ export class ServicesService {
   private http = inject(HttpClient);
   private hospitalService = inject(HospitalService);
 
-  private readonly API_BASE_URL = 'http://127.0.0.1:8000';
+  private readonly API_BASE_URL = environment.apiUrl;
 
   // State Signals
   servicesList = signal<ServiceHospitalier[]>([]);
