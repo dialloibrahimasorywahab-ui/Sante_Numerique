@@ -4,10 +4,8 @@ import { Observable, catchError, map, of, throwError } from 'rxjs';
 import {
   RendezVousDto,
   AvailableSlotsResponse,
-  CreateAppointmentDto,
-  PaginatedResponse,
-  TimeSlot
-} from '../models/models';
+  CreateAppointmentDto
+} from '../../features/appointment/models/models';
 
 @Injectable({
   providedIn: 'root'

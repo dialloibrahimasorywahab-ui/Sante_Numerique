@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
 import { HospitalService, ServiceSpecialite, DoctorProfile, BookingFormState, BookingConfirmation } from '../../core/services/hospital.service';
 import { AuthService } from '../../core/services/auth.service';
-import { SpecialiteMedecin } from '../../core/models/models';
+import { SpecialiteMedecin } from '../medecins/models/models';
 
 export interface MedicalServicePole {
   id: string;

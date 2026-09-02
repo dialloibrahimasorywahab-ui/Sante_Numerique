@@ -1,7 +1,8 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map, catchError, of, throwError } from 'rxjs';
-import { ServiceHospitalier, PaginatedResponse, Medecin } from '../models/models';
+import { ServiceHospitalier } from '../../features/services/models/models';
+import { PaginatedResponse } from '../models/models';
 import { DoctorProfile, HospitalService } from './hospital.service';
 
 export interface ServiceDetailExtended extends ServiceHospitalier {

@@ -1,7 +1,8 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map, catchError, throwError } from 'rxjs';
-import { MedecinDto, PaginatedResponse, ServiceHospitalier } from '../models/models';
+import { MedecinDto } from '../../features/medecins/models/models';
+import { PaginatedResponse } from '../models/models';
 
 export interface DoctorQueryParams {
   search?: string;

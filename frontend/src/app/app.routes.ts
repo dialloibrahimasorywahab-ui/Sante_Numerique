@@ -1,9 +1,9 @@
 import { Routes } from '@angular/router';
-import { HomeComponent } from './views/home/home.component';
-import { ServicesListComponent } from './views/services/services-list.component';
-import { ServiceDetailComponent } from './views/services/service-detail/service-detail.component';
-import { MedecinsListComponent } from './views/medecins/medecins-list.component';
-import { MedecinDetailComponent } from './views/medecins/medecin-detail/medecin-detail.component';
+import { HomeComponent } from './features/home/home.component';
+import { ServicesListComponent } from './features/services/services-list.component';
+import { ServiceDetailComponent } from './features/services/service-detail/service-detail.component';
+import { MedecinsListComponent } from './features/medecins/medecins-list.component';
+import { MedecinDetailComponent } from './features/medecins/medecin-detail/medecin-detail.component';
 import { BookAppointmentComponent } from './features/appointment/pages/book-appointment/book-appointment.component';
 import { MyAppointmentsComponent } from './features/appointment/pages/my-appointments/my-appointments.component';
 

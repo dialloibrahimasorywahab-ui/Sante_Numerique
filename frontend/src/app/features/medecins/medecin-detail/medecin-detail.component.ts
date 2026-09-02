@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MedecinService } from '../../../core/services/medecin.service';
-import { MedecinDto } from '../../../core/models/models';
+import { MedecinDto } from '../models/models';
 import { HospitalService, BookingFormState, BookingConfirmation } from '../../../core/services/hospital.service';
 
 @Component({

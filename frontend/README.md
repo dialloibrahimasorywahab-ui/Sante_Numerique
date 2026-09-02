@@ -1,59 +1,81 @@
-# SanteNumerique
+# Santé Numérique - Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.1.6.
+Interface web de la plateforme de gestion hospitalière **Santé Numérique**. Le frontend permet notamment de consulter les services de soins et les médecins, de prendre un rendez-vous et de consulter les rendez-vous du patient connecté.
 
-## Development server
+Le projet est construit avec [Angular](https://angular.dev/) 22, TypeScript, SCSS et RxJS. Il communique avec le backend Django du dépôt via l’API REST.
 
-To start a local development server, run:
+## Prérequis
 
-```bash
-ng serve
-```
+- Node.js compatible avec Angular 22
+- npm 11 (version déclarée par `package.json`)
+- Le backend Django lancé sur `http://127.0.0.1:8000`
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+## Installation
 
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+Depuis ce dossier (`frontend/`) :
 
 ```bash
-ng generate component component-name
+npm install
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+Pour lancer l’API dans un autre terminal, depuis `backend/` :
 
 ```bash
-ng generate --help
+python manage.py runserver
 ```
 
-## Building
-
-To build the project run:
+## Développement
 
 ```bash
-ng build
+npm start
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+L’application est disponible sur <http://localhost:4200/>. Le serveur recharge automatiquement l’application après les modifications des fichiers source.
 
-## Running unit tests
+Les services Angular utilisent actuellement l’URL locale `http://127.0.0.1:8000`. Le backend doit donc être démarré avant de tester les appels API et les fonctionnalités nécessitant une session authentifiée.
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+## Routes disponibles
 
-```bash
-ng test
+| Route | Fonctionnalité |
+| --- | --- |
+| `/` | Accueil |
+| `/services` | Liste des services et pôles de soins |
+| `/services/:id` | Détail d’un service |
+| `/medecins` | Liste de l’équipe médicale |
+| `/medecins/:id` | Profil d’un médecin |
+| `/rendez-vous` | Prise de rendez-vous |
+| `/mes-rendez-vous` | Rendez-vous du patient connecté |
+
+## Commandes npm
+
+| Commande | Description |
+| --- | --- |
+| `npm start` | Lance le serveur de développement |
+| `npm run build` | Génère le build de production dans `dist/` |
+| `npm run watch` | Recompile automatiquement en configuration développement |
+| `npm test` | Lance les tests unitaires avec Vitest |
+| `npm run ng -- generate component nom` | Génère un composant Angular |
+
+Le projet ne contient pas de configuration e2e actuellement.
+
+## Structure principale
+
+```text
+frontend/
+├── public/                 # Ressources statiques
+├── src/
+│   ├── app/
+│   │   ├── components/     # Composants partagés (en-tête, pied de page...)
+│   │   ├── core/           # Services partagés et pagination générique
+│   │   └── features/       # Fonctionnalités, pages et modèles métier
+│   ├── main.ts             # Point d’entrée Angular
+│   └── styles.scss         # Styles globaux
+├── angular.json            # Configuration Angular CLI
+└── package.json            # Dépendances et scripts npm
 ```
 
-## Running end-to-end tests
+## Références
 
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- [Documentation Angular](https://angular.dev/)
+- [Documentation Angular CLI](https://angular.dev/tools/cli)
+- [Documentation Vitest](https://vitest.dev/)

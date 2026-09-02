@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import { Medecin, SpecialiteMedecin, RendezVous, Patient, User } from '../models/models';
+import { SpecialiteMedecin } from '../../features/medecins/models/models';
 
 export interface ServiceSpecialite {
   id: string;

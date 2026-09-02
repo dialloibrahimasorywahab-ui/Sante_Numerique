@@ -6,13 +6,9 @@ import { AppointmentService } from '../../../../core/services/appointment.servic
 import { ServicesService } from '../../../../core/services/services.service';
 import { MedecinService } from '../../../../core/services/medecin.service';
 import { AuthService } from '../../../../core/services/auth.service';
-import {
-  ServiceHospitalier,
-  MedecinDto,
-  TimeSlot,
-  RendezVousDto,
-  CreateAppointmentDto
-} from '../../../../core/models/models';
+import { ServiceHospitalier } from '../../../services/models/models';
+import { MedecinDto } from '../../../medecins/models/models';
+import { TimeSlot, RendezVousDto, CreateAppointmentDto } from '../../models/models';
 
 @Component({
   selector: 'app-book-appointment',

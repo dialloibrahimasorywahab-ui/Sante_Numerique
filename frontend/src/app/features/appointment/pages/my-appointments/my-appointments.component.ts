@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AppointmentService } from '../../../../core/services/appointment.service';
 import { AuthService } from '../../../../core/services/auth.service';
-import { RendezVousDto } from '../../../../core/models/models';
+import { RendezVousDto } from '../../models/models';
 
 @Component({
   selector: 'app-my-appointments',
