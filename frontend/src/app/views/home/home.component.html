@@ -30,13 +30,13 @@
             <span>Prendre rendez-vous</span>
           </button>
 
-          <button class="btn btn-outline-teal btn-hero" (click)="openDoctorSearch()">
+          <a routerLink="/medecins" class="btn btn-outline-teal btn-hero">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
               <circle cx="12" cy="7" r="4"></circle>
             </svg>
             <span>Trouver un médecin</span>
-          </button>
+          </a>
         </div>
 
         <!-- 3 Trust Points -->
@@ -211,7 +211,7 @@
 
         <div class="stat-banner-sep"></div>
 
-        <div class="stat-banner-item">
+        <a routerLink="/medecins" class="stat-banner-item" style="text-decoration: none; color: inherit; cursor: pointer;">
           <div class="stat-banner-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -222,7 +222,7 @@
             <span class="stat-banner-number">60+</span>
             <span class="stat-banner-label">Médecins spécialistes</span>
           </div>
-        </div>
+        </a>
 
         <div class="stat-banner-sep"></div>
 

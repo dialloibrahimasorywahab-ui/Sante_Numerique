@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterModule, Router } from '@angular/router';
 import { HospitalService, ServiceSpecialite, DoctorProfile, BookingFormState, BookingConfirmation } from '../../core/services/hospital.service';
 import { AuthService } from '../../core/services/auth.service';
 import { SpecialiteMedecin } from '../../core/models/models';
@@ -16,13 +17,14 @@ export interface MedicalServicePole {
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss'
 })
 export class HomeComponent {
   hospitalService = inject(HospitalService);
   authService = inject(AuthService);
+  router = inject(Router);
 
   // 6 Medical Care Poles as in reference design
   readonly polesDeSoins: MedicalServicePole[] = [
@@ -190,7 +192,7 @@ export class HomeComponent {
   }
 
   openDoctorSearch(): void {
-    this.isDoctorModalOpen = true;
+    this.router.navigate(['/medecins']);
   }
 
   closeDoctorSearch(): void {
