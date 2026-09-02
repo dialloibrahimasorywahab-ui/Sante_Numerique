@@ -1,46 +1,39 @@
 import { Routes } from '@angular/router';
-import { HomeComponent } from './features/home/home.component';
-import { ServicesListComponent } from './features/services/services-list.component';
-import { ServiceDetailComponent } from './features/services/service-detail/service-detail.component';
-import { MedecinsListComponent } from './features/medecins/medecins-list.component';
-import { MedecinDetailComponent } from './features/medecins/medecin-detail/medecin-detail.component';
-import { BookAppointmentComponent } from './features/appointment/pages/book-appointment/book-appointment.component';
-import { MyAppointmentsComponent } from './features/appointment/pages/my-appointments/my-appointments.component';
 
 export const routes: Routes = [
   {
     path: '',
-    component: HomeComponent,
+    loadComponent: () => import('./features/landing/landing.component').then(m => m.HomeComponent),
     title: 'Santé Numérique — Centre Hospitalier Universitaire'
   },
   {
     path: 'services',
-    component: ServicesListComponent,
+    loadComponent: () => import('./features/services-hospitaliers/services-list.component').then(m => m.ServicesListComponent),
     title: 'Nos Pôles de Soins & Spécialités — Santé Numérique'
   },
   {
     path: 'services/:id',
-    component: ServiceDetailComponent,
+    loadComponent: () => import('./features/services-hospitaliers/service-detail/service-detail.component').then(m => m.ServiceDetailComponent),
     title: 'Détails du Service — Santé Numérique'
   },
   {
     path: 'medecins',
-    component: MedecinsListComponent,
+    loadComponent: () => import('./features/medecins/medecins-list.component').then(m => m.MedecinsListComponent),
     title: 'Notre Équipe Médicale — Santé Numérique'
   },
   {
     path: 'medecins/:id',
-    component: MedecinDetailComponent,
+    loadComponent: () => import('./features/medecins/medecin-detail/medecin-detail.component').then(m => m.MedecinDetailComponent),
     title: 'Profil Médecin — Santé Numérique'
   },
   {
     path: 'rendez-vous',
-    component: BookAppointmentComponent,
+    loadComponent: () => import('./features/rendez-vous/pages/book-appointment/book-appointment.component').then(m => m.BookAppointmentComponent),
     title: 'Prendre Rendez-vous — Santé Numérique'
   },
   {
     path: 'mes-rendez-vous',
-    component: MyAppointmentsComponent,
+    loadComponent: () => import('./features/rendez-vous/pages/my-appointments/my-appointments.component').then(m => m.MyAppointmentsComponent),
     title: 'Mes Rendez-vous — Santé Numérique'
   },
   {

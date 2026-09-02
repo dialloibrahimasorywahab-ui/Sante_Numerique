@@ -1,4 +1,4 @@
-import { User } from '../../auth/models/models';
+import { User } from '../../../core/models/user.model';
 
 export interface Patient {
   id_patient: number;

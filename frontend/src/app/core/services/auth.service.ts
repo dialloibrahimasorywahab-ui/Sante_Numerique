@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import { User, UserRole } from '../../features/auth/models/models';
+import { User, UserRole } from '../models/user.model';
 
 export interface PersonaAccount {
   role: UserRole;

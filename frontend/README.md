@@ -65,9 +65,11 @@ frontend/
 ├── public/                 # Ressources statiques
 ├── src/
 │   ├── app/
-│   │   ├── components/     # Composants partagés (en-tête, pied de page...)
-│   │   ├── core/           # Services partagés et pagination générique
-│   │   └── features/       # Fonctionnalités, pages et modèles métier
+│   │   ├── core/           # Guards, interceptors, auth et modèles transverses
+│   │   ├── shared/         # UI réutilisable sans logique métier
+│   │   ├── layout/         # Coquilles public/admin
+│   │   └── features/       # Domaines métier autonomes
+│   ├── environments/       # Configuration par environnement
 │   ├── main.ts             # Point d’entrée Angular
 │   └── styles.scss         # Styles globaux
 ├── angular.json            # Configuration Angular CLI

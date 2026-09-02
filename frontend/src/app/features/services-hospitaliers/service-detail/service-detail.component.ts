@@ -2,29 +2,28 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { MedecinService } from '../services/medecin.service';
-import { MedecinDto } from '../models/models';
-import { HospitalService, BookingFormState, BookingConfirmation } from '../../landing/services/hospital.service';
+import { ServicesService, ServiceDetailExtended } from '../services/services.service';
+import { HospitalService, DoctorProfile, BookingFormState, BookingConfirmation } from '../../landing/services/hospital.service';
 
 @Component({
-  selector: 'app-medecin-detail',
+  selector: 'app-service-detail',
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule],
-  templateUrl: './medecin-detail.component.html',
-  styleUrl: './medecin-detail.component.scss'
+  templateUrl: './service-detail.component.html',
+  styleUrl: './service-detail.component.scss'
 })
-export class MedecinDetailComponent implements OnInit {
+export class ServiceDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  private medecinService = inject(MedecinService);
+  private servicesService = inject(ServicesService);
   hospitalService = inject(HospitalService);
 
-  medecinId = signal<number | null>(null);
-  doctor = signal<MedecinDto | null>(null);
+  serviceId = signal<number | null>(null);
+  service = signal<ServiceDetailExtended | null>(null);
   isLoading = signal<boolean>(true);
   errorMessage = signal<string | null>(null);
 
-  // Booking modal state
+  // Booking modal
   isBookingModalOpen = false;
   bookingStep = 1;
   bookingForm: BookingFormState = {
@@ -49,39 +48,49 @@ export class MedecinDetailComponent implements OnInit {
       const idParam = params.get('id');
       if (idParam) {
         const id = parseInt(idParam, 10);
-        this.medecinId.set(id);
-        this.loadDoctor(id);
+        this.serviceId.set(id);
+        this.loadServiceDetail(id);
       } else {
-        this.errorMessage.set('Identifiant de médecin invalide.');
+        this.errorMessage.set('Identifiant de service invalide.');
         this.isLoading.set(false);
       }
     });
   }
 
-  loadDoctor(id: number): void {
+  loadServiceDetail(id: number): void {
     this.isLoading.set(true);
     this.errorMessage.set(null);
 
-    this.medecinService.getMedecinById(id).subscribe({
-      next: (doc) => {
-        this.doctor.set(doc);
+    this.servicesService.getServiceById(id).subscribe({
+      next: (detail) => {
+        this.service.set(detail);
         this.isLoading.set(false);
-        if (doc.specialite) {
-          this.bookingForm.specialite = doc.specialite as any;
+        if (detail.nom_service) {
+          this.bookingForm.specialite = detail.nom_service as any;
         }
-        this.bookingForm.medecinId = doc.idMedecin;
       },
       error: (err) => {
-        console.error(`Erreur de chargement du médecin #${id}:`, err);
-        this.errorMessage.set('Impossible de charger les informations de ce praticien.');
+        console.error(`Erreur de chargement du service #${id}:`, err);
+        this.errorMessage.set('Impossible de charger les détails de ce service hospitalier.');
         this.isLoading.set(false);
       }
     });
   }
 
-  openBooking(): void {
+  openBooking(doctorId?: number): void {
     this.bookingStep = 1;
     this.confirmedBooking = null;
+
+    if (this.service()?.nom_service) {
+      this.bookingForm.specialite = this.service()!.nom_service as any;
+    }
+
+    if (doctorId) {
+      this.bookingForm.medecinId = doctorId;
+    } else if (this.service()?.medecinsAssocies && this.service()!.medecinsAssocies!.length > 0) {
+      this.bookingForm.medecinId = this.service()!.medecinsAssocies![0].id;
+    }
+
     this.isBookingModalOpen = true;
   }
 
@@ -108,11 +117,15 @@ export class MedecinDetailComponent implements OnInit {
     this.bookingStep = 4;
   }
 
+  getSelectedDoctor() {
+    return this.hospitalService.doctors().find(d => d.id === this.bookingForm.medecinId);
+  }
+
   printCurrentPage(): void {
     window.print();
   }
 
   goBack(): void {
-    this.router.navigate(['/medecins']);
+    this.router.navigate(['/services']);
   }
 }

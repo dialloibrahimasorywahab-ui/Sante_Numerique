@@ -1,6 +1,6 @@
 import { Patient } from '../../patients/models/models';
 import { Medecin } from '../../medecins/models/models';
-import { RendezVous } from '../../appointment/models/models';
+import { RendezVous } from '../../rendez-vous/models/models';
 
 export interface Consultation {
   id: number;
