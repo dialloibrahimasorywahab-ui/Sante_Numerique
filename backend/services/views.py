@@ -3,7 +3,7 @@ from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from config.pagination import paginate_response
@@ -30,7 +30,7 @@ service_service = ServiceService()
     responses={200: ServiceSerializer(many=True), 201: ServiceSerializer, 400: ErrorResponseSerializer},
 )
 @api_view(["GET", "POST"])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def create_service(request):
     if request.method == "GET":
         actif_only = request.query_params.get("all", "false").lower() != "true"
@@ -41,7 +41,7 @@ def create_service(request):
             services = service_service.get_all_services(actif_only=actif_only)
         return paginate_response(services, request, ServiceSerializer)
 
-    if getattr(request.user, "role", None) not in ["ADMINISTRATEUR"]:
+    if not request.user.is_authenticated or getattr(request.user, "role", None) not in ["ADMINISTRATEUR"]:
         return Response({"error": "Seul un administrateur peut créer un service hospitalier."}, status=status.HTTP_403_FORBIDDEN)
 
     serializer = ServiceSerializer(data=request.data)
@@ -79,7 +79,7 @@ def create_service(request):
     responses={200: ServiceSerializer(many=True)},
 )
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def get_all_services(request):
     actif_only = request.query_params.get("all", "false").lower() != "true"
     services = service_service.get_all_services(actif_only=actif_only)
@@ -96,11 +96,15 @@ def get_all_services(request):
     responses={200: ServiceSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
 )
 @api_view(["GET", "PUT", "PATCH", "DELETE"])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def get_service(request, service_id):
     if request.method in ["PUT", "PATCH"]:
+        if not request.user.is_authenticated or getattr(request.user, "role", None) != "ADMINISTRATEUR":
+            return Response({"message": "Accès non autorisé."}, status=status.HTTP_403_FORBIDDEN)
         return update_service(request, service_id)
     elif request.method == "DELETE":
+        if not request.user.is_authenticated or getattr(request.user, "role", None) != "ADMINISTRATEUR":
+            return Response({"message": "Accès non autorisé."}, status=status.HTTP_403_FORBIDDEN)
         return delete_service(request, service_id)
 
     service = service_service.get_service(service_id)

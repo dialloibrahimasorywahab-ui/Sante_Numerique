@@ -3,7 +3,7 @@ from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from config.pagination import paginate_response
@@ -35,7 +35,7 @@ medecin_service = MedecinService()
     responses={200: MedecinSerializer(many=True), 201: MedecinSerializer, 400: ErrorResponseSerializer},
 )
 @api_view(["GET", "POST"])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def create_medecin(request):
     if request.method == "GET":
         actif_only = request.query_params.get("all", "false").lower() != "true"
@@ -49,7 +49,7 @@ def create_medecin(request):
             medecins = medecin_service.get_all_medecin(actif_only=actif_only)
         return paginate_response(medecins, request, MedecinSerializer)
 
-    if getattr(request.user, "role", None) != "ADMINISTRATEUR":
+    if not request.user.is_authenticated or getattr(request.user, "role", None) != "ADMINISTRATEUR":
         return Response({"message": "Seul un administrateur peut enregistrer un médecin."}, status=status.HTTP_403_FORBIDDEN)
 
     serializer = MedecinSerializer(data=request.data)
@@ -65,7 +65,7 @@ def create_medecin(request):
             )
         except IntegrityError as e:
             return Response(
-                {"error": "Un médecin ou utilisateur avec cet identifiant, email, téléphone ou numéro d'ordre existe déjà.", "detail": str(e)},
+                {"error": "Impossible d'enregistrer ce médecin.", "detail": str(e)},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -79,7 +79,7 @@ def create_medecin(request):
 @extend_schema(
     tags=["Médecins"],
     summary="Lister les médecins",
-    description="Retourne la liste des médecins, avec filtre optionnel par service/spécialité ou inclusion des inactifs (?all=true).",
+    description="Retourne la liste de tous les médecins avec filtres optionnels ?all=, ?service=, ?specialite=.",
     parameters=[
         OpenApiParameter(name="all", type=OpenApiTypes.BOOL, location=OpenApiParameter.QUERY, required=False,
                           description="Inclure aussi les médecins inactifs si true."),
@@ -92,7 +92,7 @@ def create_medecin(request):
     responses={200: MedecinSerializer(many=True)},
 )
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def get_all_medecin(request):
     actif_only = request.query_params.get("all", "false").lower() != "true"
     specialite = request.query_params.get("service") or request.query_params.get("specialite")
@@ -113,7 +113,7 @@ def get_all_medecin(request):
     responses={200: MedecinSerializer(many=True)},
 )
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def get_medecins_by_specialite(request, specialite):
     medecins = medecin_service.get_medecins_by_specialite(specialite)
     return paginate_response(medecins, request, MedecinSerializer)
@@ -123,20 +123,25 @@ def get_medecins_by_specialite(request, specialite):
 @extend_schema(
     tags=["Médecins"],
     summary="Récupérer, modifier ou supprimer un médecin",
-    description="Retourne, modifie ou supprime un médecin à partir de son identifiant.",
+    description="Retourne, modifie ou supprime un médecin par son identifiant.",
     parameters=[HARD_DELETE_PARAM],
     request=MedecinSerializer,
     responses={200: MedecinSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
 )
 @api_view(["GET", "PUT", "PATCH", "DELETE"])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def get_medecin(request, medecin_id):
     if request.method in ["PUT", "PATCH"]:
+        deny = deny_unless_owner_or_staff(request, medecin_id, id_field="id_medecin")
+        if deny:
+            return deny
         return update_medecin(request, medecin_id)
     elif request.method == "DELETE":
+        if not request.user.is_authenticated or getattr(request.user, "role", None) != "ADMINISTRATEUR":
+            return Response({"message": "Accès non autorisé."}, status=status.HTTP_403_FORBIDDEN)
         return delete_medecin(request, medecin_id)
 
-    medecin = medecin_service.get_Medecin(medecin_id)
+    medecin = medecin_service.get_medecin(medecin_id)
 
     if medecin is None:
         return Response(

@@ -1,0 +1,465 @@
+<div class="service-detail-root">
+
+  <!-- =========================================================================
+       1. BREADCRUMB
+       ========================================================================= -->
+  <div class="container breadcrumb-container">
+    <nav class="breadcrumb-nav">
+      <a routerLink="/" class="crumb-link">Accueil</a>
+      <span class="crumb-sep">/</span>
+      <a routerLink="/services" class="crumb-link">Services</a>
+      <span class="crumb-sep">/</span>
+      <span class="crumb-current">{{ service()?.displayNom || 'Détails du service' }}</span>
+    </nav>
+  </div>
+
+  <!-- =========================================================================
+       2. LOADING & ERROR STATES
+       ========================================================================= -->
+  @if (isLoading()) {
+    <div class="container py-8">
+      <div class="detail-loading-box card shadow-sm">
+        <div class="spinner-teal"></div>
+        <p>Chargement des informations du pôle de soins...</p>
+      </div>
+    </div>
+  } @else if (errorMessage()) {
+    <div class="container py-8">
+      <div class="error-box card shadow-sm text-center">
+        <h3>Service introuvable</h3>
+        <p>{{ errorMessage() }}</p>
+        <button class="btn btn-teal mt-3" (click)="goBack()">Retour à la liste des services</button>
+      </div>
+    </div>
+  } @else if (service()) {
+
+    <!-- =======================================================================
+         3. SERVICE HEADER & OVERVIEW
+         ======================================================================= -->
+    <section class="service-header-section">
+      <div class="container">
+        
+        <div class="header-card card shadow-md">
+          <div class="header-left">
+            <div class="badge badge-teal-light mb-2">
+              {{ service()?.poleCategorie }}
+            </div>
+
+            <div class="title-with-icon">
+              <div class="service-giant-icon">
+                @if (service()?.icon === 'heart') {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                  </svg>
+                } @else if (service()?.icon === 'brain') {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-5.04z"></path>
+                    <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-5.04z"></path>
+                  </svg>
+                } @else if (service()?.icon === 'child') {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="6" r="4"></circle>
+                    <path d="M6 14a6 6 0 0 1 12 0v6a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-6z"></path>
+                  </svg>
+                } @else if (service()?.icon === 'female') {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="8" r="5"></circle>
+                    <path d="M12 13v8"></path>
+                    <path d="M9 18h6"></path>
+                  </svg>
+                } @else if (service()?.icon === 'microscope') {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 18h8"></path>
+                    <path d="M3 22h18"></path>
+                    <path d="M14 22a7 7 0 1 0 0-14h-1"></path>
+                    <path d="M9 14h2"></path>
+                    <path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z"></path>
+                    <path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"></path>
+                  </svg>
+                } @else if (service()?.icon === 'radiation') {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="2"></circle>
+                    <path d="M4.93 4.93a10 10 0 0 1 14.14 0"></path>
+                    <path d="M7.76 7.76a6 6 0 0 1 8.48 0"></path>
+                  </svg>
+                } @else if (service()?.icon === 'cut') {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="6" cy="6" r="3"></circle>
+                    <circle cx="6" cy="18" r="3"></circle>
+                    <line x1="20" y1="4" x2="8.12" y2="15.88"></line>
+                    <line x1="14.47" y1="14.48" x2="20" y2="20"></line>
+                    <line x1="8.12" y1="8.12" x2="12" y2="12"></line>
+                  </svg>
+                } @else {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"></path>
+                    <path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4"></path>
+                    <circle cx="20" cy="10" r="2"></circle>
+                  </svg>
+                }
+              </div>
+              <h1 class="service-detail-title">{{ service()?.displayNom }}</h1>
+            </div>
+
+            <p class="service-detail-desc">
+              {{ service()?.displayDesc }}
+            </p>
+
+            <div class="header-badges-row">
+              @if (service()?.bureau_localisation) {
+                <div class="info-badge">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="info-badge-icon">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                  </svg>
+                  <span>{{ service()?.bureau_localisation }}</span>
+                </div>
+              }
+
+              <div class="info-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="info-badge-icon">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span>{{ service()?.horairesConsultations }}</span>
+              </div>
+
+              @if (service()?.urgencesPriseEnCharge) {
+                <div class="info-badge urgence-badge">
+                  <span class="pulse-dot"></span>
+                  <span>Prise en charge d'urgence 24/7</span>
+                </div>
+              }
+            </div>
+          </div>
+
+          <div class="header-right">
+            <button class="btn btn-teal btn-lg btn-book-hero" (click)="openBooking()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              <span>Prendre Rendez-vous</span>
+            </button>
+            <span class="booking-note">Rendez-vous confirmé immédiatement par SMS</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- =======================================================================
+         4. DETAILS GRID (Missions & Plateau Technique)
+         ======================================================================= -->
+    <section class="service-body-section">
+      <div class="container">
+        
+        <div class="details-2col-grid">
+          
+          <!-- Col 1: Missions & Activités -->
+          <div class="detail-block-card card shadow-sm">
+            <div class="block-header">
+              <div class="block-icon-circle">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+              </div>
+              <h3>Missions & Actes Médicaux</h3>
+            </div>
+            
+            <ul class="missions-list">
+              @for (mission of service()?.missions; track mission) {
+                <li class="mission-item">
+                  <div class="check-bullet">✓</div>
+                  <span>{{ mission }}</span>
+                </li>
+              }
+            </ul>
+          </div>
+
+          <!-- Col 2: Plateau Technique -->
+          <div class="detail-block-card card shadow-sm">
+            <div class="block-header">
+              <div class="block-icon-circle">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                  <line x1="8" y1="21" x2="16" y2="21"></line>
+                  <line x1="12" y1="17" x2="12" y2="21"></line>
+                </svg>
+              </div>
+              <h3>Plateau Technique & Équipements</h3>
+            </div>
+
+            <ul class="missions-list">
+              @for (equip of service()?.plateauTechnique; track equip) {
+                <li class="mission-item">
+                  <div class="check-bullet tech-bullet">⚙</div>
+                  <span>{{ equip }}</span>
+                </li>
+              }
+            </ul>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- =======================================================================
+         5. MÉDECINS RATTACHÉS À CE SERVICE
+         ======================================================================= -->
+    <section class="doctors-service-section">
+      <div class="container">
+        
+        <div class="section-heading-row">
+          <div>
+            <span class="subhead">CORPS MÉDICAL</span>
+            <h2 class="sec-title">Médecins spécialistes de ce pôle</h2>
+          </div>
+        </div>
+
+        @if (service()?.medecinsAssocies && service()!.medecinsAssocies!.length > 0) {
+          <div class="doctors-grid">
+            @for (doc of service()?.medecinsAssocies; track doc.id) {
+              <div class="doctor-card card shadow-sm">
+                
+                <div class="doc-card-top">
+                  <div class="doc-avatar-wrapper">
+                    <div class="doc-avatar">
+                      {{ doc.prenom.charAt(0) }}{{ doc.nom.charAt(0) }}
+                    </div>
+                    <span class="online-indicator"></span>
+                  </div>
+
+                  <div class="doc-rating-pill">
+                    ★ <strong>{{ doc.evaluation }}</strong>
+                    <span class="rating-count">({{ doc.avisCount }})</span>
+                  </div>
+                </div>
+
+                <div class="doc-body">
+                  <span class="doc-spec-badge">{{ doc.specialiteLabel }}</span>
+                  <h3 class="doc-name">{{ doc.titre }} {{ doc.prenom }} {{ doc.nom }}</h3>
+                  <span class="doc-order">{{ doc.numeroOrdre }} • {{ doc.experience }}</span>
+                  <p class="doc-desc">{{ doc.description }}</p>
+                </div>
+
+                <div class="doc-footer">
+                  <div class="doc-bureau-row">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="doc-icon">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                      <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                    <span>{{ doc.bureau }} • {{ doc.disponibilites?.[0] || 'Consultations sur RDV' }}</span>
+                  </div>
+
+                  <button class="btn btn-teal w-full mt-3" (click)="openBooking(doc.id)">
+                    Prendre Rendez-vous
+                  </button>
+                </div>
+
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="no-doc-box card p-4 text-center">
+            <p>Les consultations pour ce pôle sont assurées par l’équipe de garde et les spécialistes du CHU.</p>
+            <button class="btn btn-teal mt-3" (click)="openBooking()">Prendre un rendez-vous général</button>
+          </div>
+        }
+
+      </div>
+    </section>
+
+  }
+
+</div>
+
+<!-- =========================================================================
+     MODAL: ASSISTANT DE RÉSERVATION
+     ========================================================================= -->
+@if (isBookingModalOpen) {
+  <div class="modal-backdrop" (click)="closeBooking()">
+    <div class="modal-dialog booking-modal shadow-2xl" (click)="$event.stopPropagation()">
+      
+      <div class="modal-header">
+        <div class="modal-header-text">
+          <span class="badge badge-teal-light">Prise de Rendez-vous en Ligne</span>
+          <h3 class="modal-title">
+            @if (bookingStep === 1) { 1. Médecin et Spécialité }
+            @else if (bookingStep === 2) { 2. Date et Créneau }
+            @else if (bookingStep === 3) { 3. Coordonnées Patient }
+            @else { Rendez-vous Confirmé ! }
+          </h3>
+        </div>
+        <button class="modal-close" (click)="closeBooking()" aria-label="Fermer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        
+        <!-- STEP 1: Doctor select -->
+        @if (bookingStep === 1) {
+          <div class="step-content">
+            <div class="p-3 bg-teal-50 border border-teal-200 rounded-md mb-3">
+              <strong>Pôle :</strong> {{ service()?.displayNom }}
+            </div>
+
+            <label class="form-label mb-2">Sélectionnez le Médecin :</label>
+            <div class="doc-selection-list">
+              @for (doc of service()?.medecinsAssocies; track doc.id) {
+                <div 
+                  class="doc-select-card" 
+                  [class.selected]="bookingForm.medecinId === doc.id"
+                  (click)="bookingForm.medecinId = doc.id">
+                  
+                  <div class="doc-select-avatar">
+                    {{ doc.prenom.charAt(0) }}{{ doc.nom.charAt(0) }}
+                  </div>
+
+                  <div class="doc-select-info">
+                    <strong>{{ doc.titre }} {{ doc.prenom }} {{ doc.nom }}</strong>
+                    <span class="spec">{{ doc.specialiteLabel }}</span>
+                    <span class="bureau">{{ doc.bureau }}</span>
+                  </div>
+
+                  <div class="radio-indicator">
+                    <div class="radio-inner" *ngIf="bookingForm.medecinId === doc.id"></div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- STEP 2: Date & Slot -->
+        @if (bookingStep === 2) {
+          <div class="step-content">
+            <div class="form-group mb-3">
+              <label class="form-label">Date du rendez-vous :</label>
+              <input type="date" class="form-control" [(ngModel)]="bookingForm.date" />
+            </div>
+
+            <div class="form-group mb-3">
+              <label class="form-label">Créneaux horaires disponibles :</label>
+              <div class="slots-grid">
+                @for (slot of ['08:30', '09:00', '09:30', '10:15', '11:00', '14:00', '14:45', '15:30', '16:15']; track slot) {
+                  <button 
+                    type="button"
+                    class="slot-btn" 
+                    [class.selected]="bookingForm.heure === slot"
+                    (click)="bookingForm.heure = slot">
+                    {{ slot }}
+                  </button>
+                }
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Mode de Consultation :</label>
+              <div class="type-cons-options">
+                <label class="option-pill" [class.active]="bookingForm.typeConsultation === 'SUR_PLACE'">
+                  <input type="radio" name="typeCons" value="SUR_PLACE" [(ngModel)]="bookingForm.typeConsultation" />
+                  <span>🏥 Présentiel au Cabinet</span>
+                </label>
+                <label class="option-pill" [class.active]="bookingForm.typeConsultation === 'TELECONSULTATION'">
+                  <input type="radio" name="typeCons" value="TELECONSULTATION" [(ngModel)]="bookingForm.typeConsultation" />
+                  <span>💻 Téléconsultation</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- STEP 3: Patient Info -->
+        @if (bookingStep === 3) {
+          <div class="step-content">
+            <div class="form-row-2">
+              <div class="form-group mb-3">
+                <label class="form-label">Nom * :</label>
+                <input type="text" class="form-control" [(ngModel)]="bookingForm.patientNom" />
+              </div>
+              <div class="form-group mb-3">
+                <label class="form-label">Prénom * :</label>
+                <input type="text" class="form-control" [(ngModel)]="bookingForm.patientPrenom" />
+              </div>
+            </div>
+
+            <div class="form-row-2">
+              <div class="form-group mb-3">
+                <label class="form-label">Téléphone * :</label>
+                <input type="tel" class="form-control" [(ngModel)]="bookingForm.patientTelephone" />
+              </div>
+              <div class="form-group mb-3">
+                <label class="form-label">Email * :</label>
+                <input type="email" class="form-control" [(ngModel)]="bookingForm.patientEmail" />
+              </div>
+            </div>
+
+            <div class="form-group mb-3">
+              <label class="form-label">Motif :</label>
+              <textarea class="form-control" rows="2" [(ngModel)]="bookingForm.motif"></textarea>
+            </div>
+          </div>
+        }
+
+        <!-- STEP 4: Confirmed -->
+        @if (bookingStep === 4 && confirmedBooking) {
+          <div class="confirmation-ticket-view">
+            <div class="success-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            
+            <h4 class="conf-title">Rendez-vous Confirmé !</h4>
+            <p class="conf-desc">Code : <strong>{{ confirmedBooking.codeConfirmation }}</strong></p>
+
+            <div class="printable-ticket card shadow-md">
+              <div class="ticket-header-band">
+                <span>{{ service()?.displayNom }}</span>
+                <strong>N° {{ confirmedBooking.idRdv }}</strong>
+              </div>
+
+              <div class="ticket-grid">
+                <div class="t-item">
+                  <span class="t-label">Médecin</span>
+                  <strong class="t-val">{{ confirmedBooking.medecin.titre }} {{ confirmedBooking.medecin.prenom }} {{ confirmedBooking.medecin.nom }}</strong>
+                </div>
+
+                <div class="t-item">
+                  <span class="t-label">Date</span>
+                  <strong class="t-val">{{ confirmedBooking.date }} à {{ confirmedBooking.heure }}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+
+      </div>
+
+      <div class="modal-footer">
+        @if (bookingStep > 1 && bookingStep < 4) {
+          <button class="btn btn-outline-teal" (click)="prevBookingStep()">Précédent</button>
+        }
+
+        @if (bookingStep < 3) {
+          <button class="btn btn-teal" (click)="nextBookingStep()">Continuer</button>
+        } @else if (bookingStep === 3) {
+          <button class="btn btn-teal" (click)="submitBooking()">Confirmer</button>
+        } @else {
+          <button class="btn btn-outline-teal" (click)="printCurrentPage()">Imprimer</button>
+          <button class="btn btn-teal" (click)="closeBooking()">Terminer</button>
+        }
+      </div>
+
+    </div>
+  </div>
+}

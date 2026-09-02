@@ -49,6 +49,31 @@ export interface Medecin {
   date_embauche: string;
 }
 
+export interface PaginatedResponse<T> {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
+}
+
+export interface ServiceHospitalier {
+  id_service: number;
+  idService?: number;
+  nom_service: string;
+  nomService?: string;
+  nom_service_display?: string;
+  nomServiceDisplay?: string;
+  description?: string | null;
+  bureau_localisation?: string | null;
+  bureauLocalisation?: string | null;
+  actif: boolean;
+  // Computed / UI properties
+  icon?: string;
+  displayNom?: string;
+  displayDesc?: string;
+  badgeCountMedecins?: number;
+}
+
 export type StatutRendezVous =
   | 'PROGRAMME'
   | 'CONFIRME'
