@@ -253,11 +253,11 @@
               </label>
               <div class="consultation-modes-pills">
                 <label class="mode-pill" [class.active]="selectedConsultationType() === 'SUR_PLACE'">
-                  <input type="radio" name="consMode" value="SUR_PLACE" [(ngModel)]="selectedConsultationType" />
+                  <input type="radio" name="consMode" value="SUR_PLACE" [ngModel]="selectedConsultationType()" (ngModelChange)="selectedConsultationType.set($event)" />
                   <span>🏥 Présentiel au Cabinet</span>
                 </label>
                 <label class="mode-pill" [class.active]="selectedConsultationType() === 'TELECONSULTATION'">
-                  <input type="radio" name="consMode" value="TELECONSULTATION" [(ngModel)]="selectedConsultationType" />
+                  <input type="radio" name="consMode" value="TELECONSULTATION" [ngModel]="selectedConsultationType()" (ngModelChange)="selectedConsultationType.set($event)" />
                   <span>💻 Téléconsultation Vidéo</span>
                 </label>
               </div>
@@ -407,22 +407,22 @@
             <div class="form-row-2">
               <div class="form-group mb-3">
                 <label class="form-label">Nom de famille * :</label>
-                <input type="text" class="form-control" [ngModel]="patientNom()" (ngModelChange)="patientNom.set($event)" />
+                <input type="text" class="form-control" [value]="patientNom()" readonly />
               </div>
               <div class="form-group mb-3">
                 <label class="form-label">Prénom * :</label>
-                <input type="text" class="form-control" [ngModel]="patientPrenom()" (ngModelChange)="patientPrenom.set($event)" />
+                <input type="text" class="form-control" [value]="patientPrenom()" readonly />
               </div>
             </div>
 
             <div class="form-row-2">
               <div class="form-group mb-3">
                 <label class="form-label">Téléphone (SMS de confirmation) * :</label>
-                <input type="tel" class="form-control" [ngModel]="patientTelephone()" (ngModelChange)="patientTelephone.set($event)" />
+                <input type="tel" class="form-control" [value]="patientTelephone()" readonly />
               </div>
               <div class="form-group mb-3">
                 <label class="form-label">Email :</label>
-                <input type="email" class="form-control" [ngModel]="patientEmail()" (ngModelChange)="patientEmail.set($event)" />
+                <input type="email" class="form-control" [value]="patientEmail()" readonly />
               </div>
             </div>
 

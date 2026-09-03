@@ -43,4 +43,9 @@ export class HeaderComponent {
     this.isMobileMenuOpen = false;
     this.openBookingModal.emit();
   }
+
+  onLogout(): void {
+    this.isMobileMenuOpen = false;
+    this.authService.logout().subscribe();
+  }
 }

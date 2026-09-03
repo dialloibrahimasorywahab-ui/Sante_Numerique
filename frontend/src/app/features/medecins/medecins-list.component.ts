@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { MedecinService } from './services/medecin.service';
 import { MedecinDto } from './models/models';
 import { HospitalService, BookingFormState, BookingConfirmation } from '../landing/services/hospital.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-medecins-list',
@@ -16,6 +17,7 @@ import { HospitalService, BookingFormState, BookingConfirmation } from '../landi
 export class MedecinsListComponent implements OnInit {
   medecinService = inject(MedecinService);
   hospitalService = inject(HospitalService);
+  authService = inject(AuthService);
   router = inject(Router);
 
   searchQuery = '';
@@ -42,6 +44,9 @@ export class MedecinsListComponent implements OnInit {
   };
 
   confirmedBooking: BookingConfirmation | null = null;
+
+  readonly bookingSlots = ['08:30', '09:00', '09:30', '10:15', '11:00', '14:00', '14:45', '15:30', '16:15'];
+  readonly todayString = this.getTodayString();
 
   ngOnInit(): void {
     this.fetchDoctors();
@@ -92,16 +97,55 @@ export class MedecinsListComponent implements OnInit {
   }
 
   openBookingModal(doc: MedecinDto): void {
+    if (!this.authService.isAuthenticated()) {
+      this.router.navigate(['/login'], { queryParams: { returnUrl: '/medecins' } });
+      return;
+    }
+
     this.selectedDoctorForBooking = doc;
     this.bookingStep = 1;
     this.confirmedBooking = null;
 
     if (doc.specialite) {
       this.bookingForm.specialite = doc.specialite as any;
+      this.selectedSpecialite = doc.specialite;
     }
     this.bookingForm.medecinId = doc.idMedecin;
+    const currentUser = this.authService.currentUser();
+    if (currentUser) {
+      this.bookingForm.patientNom = currentUser.nom;
+      this.bookingForm.patientPrenom = currentUser.prenom;
+      this.bookingForm.patientTelephone = currentUser.telephone || '';
+      this.bookingForm.patientEmail = currentUser.email || '';
+    }
+    this.bookingForm.date = this.getTodayString();
+    this.bookingForm.heure = this.getAvailableBookingSlots()[0] || '';
 
     this.isBookingModalOpen = true;
+  }
+
+  onBookingDateChange(date: string): void {
+    this.bookingForm.date = date;
+    const availableSlots = this.getAvailableBookingSlots();
+    if (!availableSlots.includes(this.bookingForm.heure)) {
+      this.bookingForm.heure = availableSlots[0] || '';
+    }
+  }
+
+  getAvailableBookingSlots(): string[] {
+    const today = this.getTodayString();
+    if (this.bookingForm.date < today) return [];
+    if (this.bookingForm.date !== today) return this.bookingSlots;
+
+    const currentTime = new Date().toTimeString().slice(0, 5);
+    return this.bookingSlots.filter(slot => slot > currentTime);
+  }
+
+  private getTodayString(): string {
+    const today = new Date();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${today.getFullYear()}-${month}-${day}`;
   }
 
   closeBookingModal(): void {
@@ -123,6 +167,17 @@ export class MedecinsListComponent implements OnInit {
   }
 
   submitBooking(): void {
+    const currentUser = this.authService.currentUser();
+    if (!currentUser) {
+      this.closeBookingModal();
+      this.router.navigate(['/login'], { queryParams: { returnUrl: '/medecins' } });
+      return;
+    }
+
+    this.bookingForm.patientNom = currentUser.nom;
+    this.bookingForm.patientPrenom = currentUser.prenom;
+    this.bookingForm.patientTelephone = currentUser.telephone || '';
+    this.bookingForm.patientEmail = currentUser.email || '';
     this.confirmedBooking = this.hospitalService.bookAppointment(this.bookingForm);
     this.bookingStep = 4;
   }

@@ -7,6 +7,16 @@ export const routes: Routes = [
     title: 'Santé Numérique — Centre Hospitalier Universitaire'
   },
   {
+    path: 'login',
+    loadComponent: () => import('./features/auth/login/login.component').then(m => m.LoginComponent),
+    title: 'Connexion — Santé Numérique'
+  },
+  {
+    path: 'register',
+    loadComponent: () => import('./features/auth/register/register.component').then(m => m.RegisterComponent),
+    title: 'Créer un compte — Santé Numérique'
+  },
+  {
     path: 'services',
     loadComponent: () => import('./features/services-hospitaliers/services-list.component').then(m => m.ServicesListComponent),
     title: 'Nos Pôles de Soins & Spécialités — Santé Numérique'
@@ -28,13 +38,17 @@ export const routes: Routes = [
   },
   {
     path: 'rendez-vous',
-    loadComponent: () => import('./features/rendez-vous/pages/book-appointment/book-appointment.component').then(m => m.BookAppointmentComponent),
-    title: 'Prendre Rendez-vous — Santé Numérique'
+    loadChildren: () => import('./features/rendez-vous/rendez-vous.routes').then(module => module.rendezVousRoutes)
   },
   {
     path: 'mes-rendez-vous',
-    loadComponent: () => import('./features/rendez-vous/pages/my-appointments/my-appointments.component').then(m => m.MyAppointmentsComponent),
-    title: 'Mes Rendez-vous — Santé Numérique'
+    redirectTo: 'rendez-vous/mes-rendez-vous',
+    pathMatch: 'full'
+  },
+  {
+    path: 'patient/dashboard',
+    redirectTo: 'rendez-vous/mes-rendez-vous',
+    pathMatch: 'full'
   },
   {
     path: '**',

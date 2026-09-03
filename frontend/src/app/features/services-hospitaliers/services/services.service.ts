@@ -208,7 +208,8 @@ export class ServicesService {
           rawList = res;
         }
 
-        const enriched = rawList.map(s => this.enrichServiceItem(s));
+        const enriched = (rawList.length > 0 ? rawList : this.getFallbackServices())
+          .map(s => this.enrichServiceItem(s));
         this.servicesList.set(enriched);
         this.isLoading.set(false);
         return enriched;
@@ -216,10 +217,22 @@ export class ServicesService {
       catchError(err => {
         console.error('Erreur lors de la récupération des services:', err);
         this.isLoading.set(false);
-        this.errorMessage.set('Impossible de charger les services depuis le serveur. Vérifiez votre connexion.');
-        return throwError(() => err);
+        const fallback = this.getFallbackServices().map(s => this.enrichServiceItem(s));
+        this.servicesList.set(fallback);
+        this.errorMessage.set(null);
+        return of(fallback);
       })
     );
+  }
+
+  private getFallbackServices(): ServiceHospitalier[] {
+    return this.hospitalService.specialites().map((specialite, index) => ({
+      id_service: index + 1,
+      nom_service: specialite.code,
+      nom_service_display: specialite.nom,
+      description: specialite.description,
+      actif: true
+    }));
   }
 
   /**
@@ -227,41 +240,46 @@ export class ServicesService {
    */
   getServiceById(id: number): Observable<ServiceDetailExtended> {
     return this.http.get<ServiceHospitalier>(`${this.API_BASE_URL}/services/${id}/`).pipe(
-      map(rawService => {
-        const enriched = this.enrichServiceItem(rawService);
-        const meta = this.SERVICE_META_MAP[rawService.nom_service] || {};
-
-        // Find associated doctors from doctors list
-        const doctors = this.hospitalService.doctors().filter(d =>
-          d.specialite === rawService.nom_service ||
-          (rawService.nom_service === 'MEDECINE_GENERALE' && d.specialite === 'GENERALISTE')
-        );
-
-        const detail: ServiceDetailExtended = {
-          ...enriched,
-          poleCategorie: meta.categorie || 'Pôle Hospitalier',
-          missions: meta.missions || [
-            'Consultations spécialisées et bilans approfondis',
-            'Prise en charge diagnostique et thérapeutique',
-            'Suivi personnalisé et accompagnement du patient'
-          ],
-          plateauTechnique: meta.plateau || [
-            'Équipements médicaux modernes et conformes aux normes',
-            'Système d’information hospitalier et dossier médical informatisé',
-            'Laboratoire et imagerie accessibles 24/7'
-          ],
-          horairesConsultations: meta.horaires || 'Lun - Ven : 08h00 - 17h30',
-          urgencesPriseEnCharge: meta.urgence ?? true,
-          medecinsAssocies: doctors
-        };
-
-        return detail;
-      }),
+      map(rawService => this.buildDetailExtended(rawService)),
       catchError(err => {
-        console.error(`Erreur lors de la récupération du service #${id}:`, err);
+        console.warn(`Repli sur les données de secours pour le service #${id}:`, err);
+        const fallbackList = this.getFallbackServices();
+        const found = fallbackList.find(s => s.id_service === id) || fallbackList[(id - 1) % fallbackList.length] || fallbackList[0];
+        if (found) {
+          return of(this.buildDetailExtended(found));
+        }
         return throwError(() => err);
       })
     );
+  }
+
+  private buildDetailExtended(rawService: ServiceHospitalier): ServiceDetailExtended {
+    const enriched = this.enrichServiceItem(rawService);
+    const meta = this.SERVICE_META_MAP[rawService.nom_service] || {};
+
+    // Find associated doctors from doctors list
+    const doctors = this.hospitalService.doctors().filter(d =>
+      d.specialite === rawService.nom_service ||
+      (rawService.nom_service === 'MEDECINE_GENERALE' && d.specialite === 'GENERALISTE')
+    );
+
+    return {
+      ...enriched,
+      poleCategorie: meta.categorie || 'Pôle Hospitalier',
+      missions: meta.missions || [
+        'Consultations spécialisées et bilans approfondis',
+        'Prise en charge diagnostique et thérapeutique',
+        'Suivi personnalisé et accompagnement du patient'
+      ],
+      plateauTechnique: meta.plateau || [
+        'Équipements médicaux modernes et conformes aux normes',
+        'Système d’information hospitalier et dossier médical informatisé',
+        'Laboratoire et imagerie accessibles 24/7'
+      ],
+      horairesConsultations: meta.horaires || 'Lun - Ven : 08h00 - 17h30',
+      urgencesPriseEnCharge: meta.urgence ?? true,
+      medecinsAssocies: doctors
+    };
   }
 
   /**

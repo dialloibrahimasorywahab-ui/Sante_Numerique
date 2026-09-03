@@ -39,6 +39,10 @@ export interface RendezVousDto {
   id_medecin?: number;
   patient_detail?: Patient;
   medecin_detail?: MedecinDto;
+  patient_nom?: string;
+  patient_prenom?: string;
+  patient_email?: string;
+  patient_telephone?: string;
   date_rdv: string;
   heure: string;
   motif: string;

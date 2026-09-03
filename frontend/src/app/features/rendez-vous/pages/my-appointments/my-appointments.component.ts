@@ -48,9 +48,17 @@ export class MyAppointmentsComponent implements OnInit {
     this.isLoading.set(true);
     this.errorMessage.set(null);
 
-    this.appointmentService.getMyAppointments().subscribe({
+    const user = this.authService.currentUser();
+    const filter = user ? {
+      email: user.email,
+      telephone: user.telephone,
+      patient_id: user.id_user
+    } : undefined;
+
+    this.appointmentService.getMyAppointments(filter).subscribe({
       next: (data) => {
-        this.appointments.set(data);
+        const patientOnly = this.filterOnlyPatient(data, user);
+        this.appointments.set(patientOnly);
         this.isLoading.set(false);
       },
       error: (err) => {
@@ -58,6 +66,33 @@ export class MyAppointmentsComponent implements OnInit {
         this.errorMessage.set('Impossible de récupérer la liste de vos rendez-vous.');
         this.isLoading.set(false);
       }
+    });
+  }
+
+  private filterOnlyPatient(list: RendezVousDto[], user: any): RendezVousDto[] {
+    if (!user) return [];
+    const userEmail = (user.email || '').toLowerCase();
+    const userTel = user.telephone || '';
+    const userId = user.id_user;
+    const userName = (user.nom || '').toLowerCase();
+
+    return list.filter(rdv => {
+      if (rdv.id_patient && rdv.id_patient === userId) return true;
+      if (rdv.patient_email && rdv.patient_email.toLowerCase() === userEmail) return true;
+      if (rdv.patient_telephone && rdv.patient_telephone === userTel) return true;
+      if (rdv.patient_detail) {
+        const patientDetail = rdv.patient_detail as any;
+        const patientUserId = patientDetail.idUtilisateur || patientDetail.id_utilisateur;
+        if (patientUserId === userId) return true;
+        if (typeof patientUserId === 'object' && patientUserId) {
+          if (patientUserId.id_user === userId) return true;
+          if (patientUserId.email && patientUserId.email.toLowerCase() === userEmail) return true;
+          if (patientUserId.telephone && patientUserId.telephone === userTel) return true;
+          if (patientUserId.nom && patientUserId.nom.toLowerCase() === userName) return true;
+        }
+      }
+      if (rdv.patient_nom && rdv.patient_nom.toLowerCase() === userName) return true;
+      return false;
     });
   }
 

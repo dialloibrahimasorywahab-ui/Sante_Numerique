@@ -358,13 +358,18 @@
           <div class="step-content">
             <div class="form-group mb-3">
               <label class="form-label">Date du rendez-vous :</label>
-              <input type="date" class="form-control" [(ngModel)]="bookingForm.date" />
+              <input 
+                type="date" 
+                class="form-control" 
+                [min]="todayString"
+                [ngModel]="bookingForm.date"
+                (ngModelChange)="onBookingDateChange($event)" />
             </div>
 
             <div class="form-group mb-3">
               <label class="form-label">Créneaux horaires disponibles :</label>
               <div class="slots-grid">
-                @for (slot of ['08:30', '09:00', '09:30', '10:15', '11:00', '14:00', '14:45', '15:30', '16:15']; track slot) {
+                @for (slot of getAvailableBookingSlots(); track slot) {
                   <button 
                     type="button"
                     class="slot-btn" 
@@ -398,22 +403,22 @@
             <div class="form-row-2">
               <div class="form-group mb-3">
                 <label class="form-label">Nom de famille * :</label>
-                <input type="text" class="form-control" [(ngModel)]="bookingForm.patientNom" />
+                <input type="text" class="form-control" [value]="bookingForm.patientNom" readonly />
               </div>
               <div class="form-group mb-3">
                 <label class="form-label">Prénom * :</label>
-                <input type="text" class="form-control" [(ngModel)]="bookingForm.patientPrenom" />
+                <input type="text" class="form-control" [value]="bookingForm.patientPrenom" readonly />
               </div>
             </div>
 
             <div class="form-row-2">
               <div class="form-group mb-3">
                 <label class="form-label">Numéro de Téléphone * :</label>
-                <input type="tel" class="form-control" [(ngModel)]="bookingForm.patientTelephone" placeholder="+224 6..." />
+                <input type="tel" class="form-control" [value]="bookingForm.patientTelephone" readonly />
               </div>
               <div class="form-group mb-3">
                 <label class="form-label">Adresse Email * :</label>
-                <input type="email" class="form-control" [(ngModel)]="bookingForm.patientEmail" />
+                <input type="email" class="form-control" [value]="bookingForm.patientEmail" readonly />
               </div>
             </div>
 

@@ -1,1 +1,1 @@
-export type { User, UserRole } from '../../../core/models/user.model';
+export type { User, UserRole, LoginDto, RegisterDto } from '../../../core/models/user.model';

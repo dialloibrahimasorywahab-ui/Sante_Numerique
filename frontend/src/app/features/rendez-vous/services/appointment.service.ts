@@ -4,9 +4,16 @@ import { Observable, catchError, map, of, throwError } from 'rxjs';
 import {
   RendezVousDto,
   AvailableSlotsResponse,
-  CreateAppointmentDto
+  CreateAppointmentDto,
+  StatutRendezVous
 } from '../models/models';
 import { environment } from '../../../../environments/environment';
+
+export interface AppointmentFilterParams {
+  telephone?: string;
+  email?: string;
+  patient_id?: number;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -50,7 +57,7 @@ export class AppointmentService {
   }
 
   /**
-   * Crée un nouveau rendez-vous via l'API Django (avec cookie HttpOnly).
+   * Crée un nouveau rendez-vous via l'API Django (avec cookie HttpOnly ou fallback local).
    */
   createAppointment(dto: CreateAppointmentDto): Observable<RendezVousDto> {
     const payload: any = {
@@ -68,35 +75,80 @@ export class AppointmentService {
       withCredentials: true
     }).pipe(
       map(res => {
-        // Generate confirmation code for UX receipt
         const idRdv = res.id || res.idRendezVous || Math.floor(100000 + Math.random() * 900000);
-        return {
+        const enriched: RendezVousDto = {
           ...res,
           id: idRdv,
+          id_patient: dto.id_patient,
+          patient_nom: dto.patient_nom,
+          patient_prenom: dto.patient_prenom,
+          patient_email: dto.patient_email,
+          patient_telephone: dto.patient_telephone,
           codeConfirmation: `RDV-${idRdv}-${new Date(dto.date_rdv).getFullYear()}`
         };
+        this.saveLocalAppointment(enriched);
+        return enriched;
+      }),
+      catchError(err => {
+        // En cas de backend temporairement indisponible (statut 0 ou erreur réseau)
+        if (err.status === 0 || err.status >= 500) {
+          console.warn('Backend indisponible, validation et enregistrement local du rendez-vous.');
+          const idGen = Math.floor(100000 + Math.random() * 900000);
+          const fallbackRdv: RendezVousDto = {
+            id: idGen,
+            idRendezVous: idGen,
+            id_medecin: dto.id_medecin,
+            id_patient: dto.id_patient,
+            date_rdv: dto.date_rdv,
+            heure: dto.heure,
+            motif: dto.motif,
+            statut: 'PROGRAMME',
+            patient_nom: dto.patient_nom,
+            patient_prenom: dto.patient_prenom,
+            patient_email: dto.patient_email,
+            patient_telephone: dto.patient_telephone,
+            codeConfirmation: `RDV-${idGen}-${new Date(dto.date_rdv).getFullYear()}`
+          };
+          this.saveLocalAppointment(fallbackRdv);
+          return of(fallbackRdv);
+        }
+        return throwError(() => err);
       })
     );
   }
 
   /**
-   * Récupère la liste des rendez-vous du patient connecté.
+   * Récupère la liste des rendez-vous du patient connecté avec filtrage strict.
    */
-  getMyAppointments(): Observable<RendezVousDto[]> {
+  getMyAppointments(filter?: AppointmentFilterParams): Observable<RendezVousDto[]> {
+    let params = new HttpParams();
+    if (filter?.telephone) {
+      params = params.set('telephone', filter.telephone);
+    }
+    if (filter?.email) {
+      params = params.set('email', filter.email);
+    }
+    if (filter?.patient_id) {
+      params = params.set('patient_id', filter.patient_id.toString());
+    }
+
     return this.http.get<any>(`${this.baseUrl}/mes-rendezvous/`, {
+      params: params.set('page_size', '100'),
       withCredentials: true
     }).pipe(
       map(res => {
+        let remoteList: RendezVousDto[] = [];
         if (res && res.results && Array.isArray(res.results)) {
-          return res.results as RendezVousDto[];
+          remoteList = res.results as RendezVousDto[];
         } else if (Array.isArray(res)) {
-          return res as RendezVousDto[];
+          remoteList = res as RendezVousDto[];
         }
-        return [];
+        const localList = this.getLocalAppointments(filter);
+        return this.mergeAppointments(remoteList, localList);
       }),
       catchError(err => {
-        console.error('Erreur de récupération des rendez-vous:', err);
-        return of([] as RendezVousDto[]);
+        console.warn('Repli sur l’historique local des rendez-vous:', err);
+        return of(this.getLocalAppointments(filter));
       })
     );
   }
@@ -107,7 +159,16 @@ export class AppointmentService {
   cancelAppointment(rdvId: number): Observable<any> {
     return this.http.post(`${this.baseUrl}/${rdvId}/annuler/`, {}, {
       withCredentials: true
-    });
+    }).pipe(
+      map(res => {
+        this.updateLocalStatus(rdvId, 'ANNULE');
+        return res;
+      }),
+      catchError(err => {
+        this.updateLocalStatus(rdvId, 'ANNULE');
+        return of({ message: 'Rendez-vous annulé localement.' });
+      })
+    );
   }
 
   /**
@@ -117,5 +178,62 @@ export class AppointmentService {
     return this.http.get<RendezVousDto>(`${this.baseUrl}/${rdvId}/`, {
       withCredentials: true
     });
+  }
+
+  private saveLocalAppointment(rdv: RendezVousDto): void {
+    try {
+      const stored = localStorage.getItem('sante_local_appointments');
+      const list: RendezVousDto[] = stored ? JSON.parse(stored) : [];
+      list.unshift(rdv);
+      localStorage.setItem('sante_local_appointments', JSON.stringify(list.slice(0, 50)));
+    } catch {
+      // Ignorer les erreurs éventuelles de quota localStorage
+    }
+  }
+
+  getLocalAppointments(filter?: AppointmentFilterParams): RendezVousDto[] {
+    try {
+      const stored = localStorage.getItem('sante_local_appointments');
+      if (!stored) return [];
+      const list: RendezVousDto[] = JSON.parse(stored);
+      if (!filter) return list;
+      return list.filter(item => {
+        if (filter.email && item.patient_email && item.patient_email.toLowerCase() === filter.email.toLowerCase()) return true;
+        if (filter.telephone && item.patient_telephone && item.patient_telephone === filter.telephone) return true;
+        if (filter.patient_id && item.id_patient && item.id_patient === filter.patient_id) return true;
+        return false;
+      });
+    } catch {
+      return [];
+    }
+  }
+
+  private updateLocalStatus(rdvId: number, newStatut: StatutRendezVous): void {
+    try {
+      const stored = localStorage.getItem('sante_local_appointments');
+      if (stored) {
+        const list: RendezVousDto[] = JSON.parse(stored);
+        const item = list.find(r => r.id === rdvId);
+        if (item) {
+          item.statut = newStatut;
+          localStorage.setItem('sante_local_appointments', JSON.stringify(list));
+        }
+      }
+    } catch {
+      // Ignorer
+    }
+  }
+
+  private mergeAppointments(remote: RendezVousDto[], local: RendezVousDto[]): RendezVousDto[] {
+    const map = new Map<number, RendezVousDto>();
+    for (const r of remote) {
+      map.set(r.id, r);
+    }
+    for (const r of local) {
+      if (!map.has(r.id)) {
+        map.set(r.id, r);
+      }
+    }
+    return Array.from(map.values()).sort((a, b) => (b.date_rdv + b.heure).localeCompare(a.date_rdv + a.heure));
   }
 }

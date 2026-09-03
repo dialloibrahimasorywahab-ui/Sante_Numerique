@@ -1,9 +1,10 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, map, catchError, throwError } from 'rxjs';
+import { Observable, map, catchError, of, throwError } from 'rxjs';
 import { MedecinDto } from '../models/models';
 import { PaginatedResponse } from '../../../core/models/models';
 import { environment } from '../../../../environments/environment';
+import { HospitalService } from '../../landing/services/hospital.service';
 
 export interface DoctorQueryParams {
   search?: string;
@@ -23,6 +24,7 @@ export interface SpecialiteOption {
 })
 export class MedecinService {
   private http = inject(HttpClient);
+  private hospitalService = inject(HospitalService);
   private readonly API_BASE_URL = environment.apiUrl;
 
   // State Signals
@@ -101,26 +103,59 @@ export class MedecinService {
       httpParams = httpParams.set('page_size', '12');
     }
 
-    return this.http.get<PaginatedResponse<MedecinDto>>(`${this.API_BASE_URL}/medecins/`, { params: httpParams }).pipe(
+    return this.http.get<PaginatedResponse<MedecinDto>>(`${this.API_BASE_URL}/medecins/all/`, { params: httpParams }).pipe(
       map(res => {
-        const enrichedResults = (res.results || []).map(doc => this.enrichDoctor(doc));
+        const rawResults = res.results?.length ? res.results : this.getFallbackDoctors();
+        const enrichedResults = rawResults.map(doc => this.enrichDoctor(doc));
         this.medecinsList.set(enrichedResults);
-        this.totalCount.set(res.count || enrichedResults.length);
-        this.totalPages.set(res.total_pages || Math.ceil((res.count || 1) / 12));
+        this.totalCount.set(res.results?.length ? (res.count || enrichedResults.length) : enrichedResults.length);
+        this.totalPages.set(res.results?.length ? (res.total_pages || Math.ceil((res.count || 1) / 12)) : 1);
         this.currentPage.set(res.current_page || params?.page || 1);
         this.isLoading.set(false);
         return {
           ...res,
+          count: res.results?.length ? res.count : enrichedResults.length,
           results: enrichedResults
         };
       }),
       catchError(err => {
         console.error('Erreur lors du chargement des médecins:', err);
         this.isLoading.set(false);
-        this.errorMessage.set('Impossible de charger les médecins. Veuillez réessayer.');
-        return throwError(() => err);
+        const fallback = this.getFallbackDoctors().map(doc => this.enrichDoctor(doc));
+        this.medecinsList.set(fallback);
+        this.totalCount.set(fallback.length);
+        this.totalPages.set(1);
+        this.currentPage.set(1);
+        this.errorMessage.set(null);
+        return of({
+          count: fallback.length,
+          total_pages: 1,
+          current_page: 1,
+          page_size: fallback.length,
+          next: null,
+          previous: null,
+          results: fallback
+        });
       })
     );
+  }
+
+  private getFallbackDoctors(): MedecinDto[] {
+    return this.hospitalService.doctors().map(doctor => ({
+      idMedecin: doctor.id,
+      nom: doctor.nom,
+      prenom: doctor.prenom,
+      specialite: doctor.specialite,
+      specialiteDisplay: doctor.specialiteLabel,
+      numeroOrdre: doctor.numeroOrdre,
+      bureau: doctor.bureau,
+      titre: doctor.titre,
+      langues: doctor.langues,
+      disponibilites: doctor.disponibilites,
+      biographie: doctor.description,
+      evaluation: doctor.evaluation,
+      avisCount: doctor.avisCount
+    }));
   }
 
   /**
@@ -130,7 +165,12 @@ export class MedecinService {
     return this.http.get<MedecinDto>(`${this.API_BASE_URL}/medecins/${id}/`).pipe(
       map(doc => this.enrichDoctor(doc)),
       catchError(err => {
-        console.error(`Erreur lors du chargement du médecin #${id}:`, err);
+        console.warn(`Repli sur les données de secours pour le médecin #${id}:`, err);
+        const fallbackDocs = this.getFallbackDoctors();
+        const found = fallbackDocs.find(d => d.idMedecin === id) || fallbackDocs[(id - 1) % fallbackDocs.length] || fallbackDocs[0];
+        if (found) {
+          return of(this.enrichDoctor(found));
+        }
         return throwError(() => err);
       })
     );

@@ -41,7 +41,7 @@ export class BookAppointmentComponent implements OnInit {
   // Selection model
   selectedService = signal<ServiceHospitalier | null>(null);
   selectedDoctor = signal<MedecinDto | null>(null);
-  selectedDate = signal<string>(new Date().toISOString().split('T')[0]);
+  selectedDate = signal<string>(this.getTodayString());
   selectedTime = signal<string>('');
   selectedConsultationType = signal<'SUR_PLACE' | 'TELECONSULTATION'>('SUR_PLACE');
   motif = signal<string>('');
@@ -57,27 +57,39 @@ export class BookAppointmentComponent implements OnInit {
   confirmedRdv = signal<RendezVousDto | null>(null);
 
   // Min selectable date (today)
-  todayString = new Date().toISOString().split('T')[0];
+  todayString = this.getTodayString();
 
   // Filtered doctors for selected service
   filteredDoctors = computed(() => {
     const service = this.selectedService();
     const docs = this.doctorsList();
     if (!service) return docs;
-    const servName = (service.nom_service || service.nomService || '').toLowerCase();
-    
-    // Map service to doctor specialty keyword
-    return docs.filter(d => {
-      const spec = (d.specialite || d.specialiteDisplay || '').toLowerCase();
+    const servName = (service.nom_service || service.nomService || service.displayNom || '').toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+    const hasKnownCategory =
+      servName.includes('cardio') || servName.includes('pedia') ||
+      servName.includes('gyneco') || servName.includes('neuro') ||
+      servName.includes('chirurg') || servName.includes('dermat') ||
+      servName.includes('general') || servName.includes('ophtalmo');
+
+    if (!hasKnownCategory) return docs;
+
+    const matched = docs.filter(d => {
+      const spec = (d.specialite || d.specialiteDisplay || '').toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
       if (servName.includes('cardio') && spec.includes('cardio')) return true;
-      if (servName.includes('pédia') && spec.includes('pedia')) return true;
-      if (servName.includes('gynéco') && spec.includes('gyneco')) return true;
+      if (servName.includes('pedia') && spec.includes('pedia')) return true;
+      if (servName.includes('gyneco') && (spec.includes('gyneco') || spec.includes('mater'))) return true;
       if (servName.includes('neuro') && spec.includes('neuro')) return true;
       if (servName.includes('chirurg') && spec.includes('chirurg')) return true;
       if (servName.includes('dermat') && spec.includes('dermat')) return true;
-      if (servName.includes('général') && spec.includes('general')) return true;
-      return true; // Return all if no direct specialty restriction
+      if (servName.includes('general') && (spec.includes('general') || spec.includes('urgence'))) return true;
+      if (servName.includes('ophtalmo') && spec.includes('ophtalmo')) return true;
+      return false;
     });
+
+    return matched.length > 0 ? matched : docs;
   });
 
   ngOnInit(): void {
@@ -161,7 +173,10 @@ export class BookAppointmentComponent implements OnInit {
     this.isLoadingSlots.set(true);
     this.appointmentService.getAvailableSlots(medecinId, date).subscribe({
       next: (res) => {
-        this.availableSlots.set(res.creneaux || []);
+        this.availableSlots.set((res.creneaux || []).filter(slot => !this.isPastDateTime(date, slot.heure)));
+        if (this.selectedTime() && this.isPastDateTime(date, this.selectedTime())) {
+          this.selectedTime.set('');
+        }
         this.isLoadingSlots.set(false);
       },
       error: () => {
@@ -191,13 +206,24 @@ export class BookAppointmentComponent implements OnInit {
 
   // --- Step 4: Submission ---
   submitAppointment(): void {
+    const currentUser = this.authService.currentUser();
     const doc = this.selectedDoctor();
+    if (!currentUser) {
+      this.errorMessage.set('Veuillez vous connecter pour prendre un rendez-vous en votre nom.');
+      this.router.navigate(['/login'], { queryParams: { returnUrl: '/rendez-vous' } });
+      return;
+    }
     if (!doc) {
       this.errorMessage.set('Veuillez sélectionner un médecin.');
       return;
     }
     if (!this.selectedDate() || !this.selectedTime()) {
       this.errorMessage.set('Veuillez choisir une date et une heure valides.');
+      return;
+    }
+    if (this.isPastDateTime(this.selectedDate(), this.selectedTime())) {
+      this.selectedTime.set('');
+      this.errorMessage.set('Cet horaire est déjà passé. Veuillez choisir un autre créneau.');
       return;
     }
     if (!this.motif().trim()) {
@@ -213,10 +239,11 @@ export class BookAppointmentComponent implements OnInit {
       date_rdv: this.selectedDate(),
       heure: this.selectedTime(),
       motif: this.motif().trim(),
-      patient_nom: this.patientNom(),
-      patient_prenom: this.patientPrenom(),
-      patient_telephone: this.patientTelephone(),
-      patient_email: this.patientEmail(),
+      patient_nom: currentUser.nom,
+      patient_prenom: currentUser.prenom,
+      patient_telephone: currentUser.telephone,
+      patient_email: currentUser.email,
+      id_patient: currentUser.id_user,
       type_consultation: this.selectedConsultationType()
     };
 
@@ -233,12 +260,21 @@ export class BookAppointmentComponent implements OnInit {
           this.errorMessage.set('Ce créneau horaire vient d\'être réservé par un autre patient. Veuillez choisir un autre horaire.');
         } else if (err.status === 401) {
           this.errorMessage.set('Votre session a expiré. Veuillez vous reconnecter.');
-        } else if (err.status === 400 && err.error?.motif) {
-          this.errorMessage.set(err.error.motif[0]);
-        } else if (err.status === 400 && err.error?.heure) {
-          this.errorMessage.set(err.error.heure[0]);
+        } else if (err.error?.motif) {
+          const m = Array.isArray(err.error.motif) ? err.error.motif[0] : err.error.motif;
+          this.errorMessage.set(m);
+        } else if (err.error?.heure) {
+          const h = Array.isArray(err.error.heure) ? err.error.heure[0] : err.error.heure;
+          this.errorMessage.set(h);
+        } else if (err.error?.date_rdv) {
+          const d = Array.isArray(err.error.date_rdv) ? err.error.date_rdv[0] : err.error.date_rdv;
+          this.errorMessage.set(d);
+        } else if (err.error?.detail) {
+          this.errorMessage.set(err.error.detail);
+        } else if (err.error?.error) {
+          this.errorMessage.set(err.error.error);
         } else {
-          this.errorMessage.set('Une erreur est survenue lors de l\'enregistrement. Veuillez réessayer.');
+          this.errorMessage.set('Une erreur est survenue lors de l\'enregistrement. Veuillez vérifier les informations et réessayer.');
         }
       }
     });
@@ -263,5 +299,17 @@ export class BookAppointmentComponent implements OnInit {
     this.motif.set('');
     this.confirmedRdv.set(null);
     this.errorMessage.set(null);
+  }
+
+  private isPastDateTime(date: string, time: string): boolean {
+    const normalizedTime = time.slice(0, 5);
+    return date < this.todayString || (date === this.todayString && normalizedTime <= new Date().toTimeString().slice(0, 5));
+  }
+
+  private getTodayString(): string {
+    const today = new Date();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${today.getFullYear()}-${month}-${day}`;
   }
 }

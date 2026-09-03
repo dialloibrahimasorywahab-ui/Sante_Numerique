@@ -1,15 +1,15 @@
 import { HttpInterceptorFn } from '@angular/common/http';
-import { inject } from '@angular/core';
-import { TokenService } from '../services/token.service';
 
+/**
+ * Intercepteur HTTP pour Santé Numérique :
+ * Assure la transmission automatique des cookies HttpOnly (access_token et refresh_token)
+ * pour toutes les requêtes adressées au backend Django.
+ * Conforme à la directive de sécurité : aucun token JWT n'est lu ni manipulé côté JavaScript.
+ */
 export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
-  const token = inject(TokenService).getToken();
+  const clonedReq = req.clone({
+    withCredentials: true
+  });
 
-  if (!token || req.headers.has('Authorization')) {
-    return next(req);
-  }
-
-  return next(req.clone({
-    setHeaders: { Authorization: `Bearer ${token}` }
-  }));
+  return next(clonedReq);
 };
