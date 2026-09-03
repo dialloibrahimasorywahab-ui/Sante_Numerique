@@ -31,7 +31,7 @@ export class MedecinDetailComponent implements OnInit {
     specialite: '',
     medecinId: null,
     date: new Date().toISOString().split('T')[0],
-    heure: '09:30',
+    heure: '09:15',
     motif: '',
     typeConsultation: 'SUR_PLACE',
     patientNom: 'Dupont',

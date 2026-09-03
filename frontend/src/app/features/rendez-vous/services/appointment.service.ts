@@ -39,16 +39,14 @@ export class AppointmentService {
           date,
           creneaux: [
             { heure: '08:30', disponible: true },
-            { heure: '09:00', disponible: true },
-            { heure: '09:30', disponible: true },
+            { heure: '09:15', disponible: true },
             { heure: '10:00', disponible: true },
-            { heure: '10:30', disponible: true },
-            { heure: '11:00', disponible: true },
+            { heure: '10:45', disponible: true },
+            { heure: '11:30', disponible: true },
             { heure: '14:00', disponible: true },
-            { heure: '14:30', disponible: true },
-            { heure: '15:00', disponible: true },
+            { heure: '14:45', disponible: true },
             { heure: '15:30', disponible: true },
-            { heure: '16:00', disponible: true }
+            { heure: '16:15', disponible: true }
           ]
         };
         return of(fallback);
@@ -133,7 +131,7 @@ export class AppointmentService {
     }
 
     return this.http.get<any>(`${this.baseUrl}/mes-rendezvous/`, {
-      params: params.set('page_size', '100'),
+      params,
       withCredentials: true
     }).pipe(
       map(res => {

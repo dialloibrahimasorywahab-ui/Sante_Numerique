@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AppointmentService } from '../../services/appointment.service';
@@ -12,7 +12,7 @@ import { RendezVousDto } from '../../models/models';
   templateUrl: './my-appointments.component.html',
   styleUrl: './my-appointments.component.scss'
 })
-export class MyAppointmentsComponent implements OnInit {
+export class MyAppointmentsComponent implements OnInit, OnDestroy {
   private appointmentService = inject(AppointmentService);
   authService = inject(AuthService);
 
@@ -22,26 +22,41 @@ export class MyAppointmentsComponent implements OnInit {
   activeTab = signal<'UPCOMING' | 'PAST'>('UPCOMING');
 
   cancellingId = signal<number | null>(null);
+  appointmentToCancel = signal<RendezVousDto | null>(null);
+  private refreshTimer?: ReturnType<typeof setInterval>;
+  private currentTime = signal(Date.now());
 
   // Filtered upcoming vs past appointments
   upcomingAppointments = computed(() => {
-    const today = new Date().toISOString().split('T')[0];
+    this.currentTime();
     return this.appointments().filter(rdv => {
-      const isPast = rdv.date_rdv < today || rdv.statut === 'TERMINE' || rdv.statut === 'ANNULE';
+      const isPast = this.isAppointmentPast(rdv) || rdv.statut === 'TERMINE' || rdv.statut === 'ANNULE';
       return !isPast;
     });
   });
 
   pastAppointments = computed(() => {
-    const today = new Date().toISOString().split('T')[0];
+    this.currentTime();
     return this.appointments().filter(rdv => {
-      const isPast = rdv.date_rdv < today || rdv.statut === 'TERMINE' || rdv.statut === 'ANNULE';
+      const isPast = this.isAppointmentPast(rdv) || rdv.statut === 'TERMINE' || rdv.statut === 'ANNULE';
       return isPast;
     });
   });
 
   ngOnInit(): void {
     this.loadAppointments();
+    this.refreshTimer = setInterval(() => this.currentTime.set(Date.now()), 30000);
+  }
+
+  ngOnDestroy(): void {
+    if (this.refreshTimer) {
+      clearInterval(this.refreshTimer);
+    }
+  }
+
+  private isAppointmentPast(rdv: RendezVousDto): boolean {
+    const dateTime = new Date(`${rdv.date_rdv}T${rdv.heure.substring(0, 5)}`);
+    return !Number.isNaN(dateTime.getTime()) && dateTime.getTime() <= this.currentTime();
   }
 
   loadAppointments(): void {
@@ -97,9 +112,18 @@ export class MyAppointmentsComponent implements OnInit {
   }
 
   cancelAppointment(rdv: RendezVousDto): void {
-    if (!confirm(`Êtes-vous sûr de vouloir annuler votre rendez-vous du ${rdv.date_rdv} à ${rdv.heure} ?`)) {
+    if (this.cancellingId()) {
       return;
     }
+
+    this.appointmentToCancel.set(rdv);
+  }
+
+  confirmCancellation(): void {
+    const rdv = this.appointmentToCancel();
+    if (!rdv) return;
+
+    this.appointmentToCancel.set(null);
 
     this.cancellingId.set(rdv.id);
     this.appointmentService.cancelAppointment(rdv.id).subscribe({
@@ -110,10 +134,16 @@ export class MyAppointmentsComponent implements OnInit {
       },
       error: (err) => {
         this.cancellingId.set(null);
-        alert('Une erreur est survenue lors de l\'annulation du rendez-vous.');
+        this.errorMessage.set('Une erreur est survenue lors de l\'annulation du rendez-vous.');
         console.error(err);
       }
     });
+  }
+
+  closeCancellationDialog(): void {
+    if (!this.cancellingId()) {
+      this.appointmentToCancel.set(null);
+    }
   }
 
   getStatusBadgeClass(statut: string): string {

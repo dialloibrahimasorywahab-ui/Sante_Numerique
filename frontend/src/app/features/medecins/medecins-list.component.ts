@@ -32,7 +32,7 @@ export class MedecinsListComponent implements OnInit {
     specialite: '',
     medecinId: null,
     date: new Date().toISOString().split('T')[0],
-    heure: '09:30',
+    heure: '09:15',
     motif: '',
     typeConsultation: 'SUR_PLACE',
     patientNom: 'Dupont',
@@ -45,7 +45,7 @@ export class MedecinsListComponent implements OnInit {
 
   confirmedBooking: BookingConfirmation | null = null;
 
-  readonly bookingSlots = ['08:30', '09:00', '09:30', '10:15', '11:00', '14:00', '14:45', '15:30', '16:15'];
+  readonly bookingSlots = ['08:30', '09:15', '10:00', '10:45', '11:30', '14:00', '14:45', '15:30', '16:15'];
   readonly todayString = this.getTodayString();
 
   ngOnInit(): void {

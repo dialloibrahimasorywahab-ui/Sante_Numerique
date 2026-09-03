@@ -201,3 +201,20 @@
   </main>
 
 </div>
+
+@if (appointmentToCancel(); as rdv) {
+  <div class="cancellation-dialog-backdrop" (click)="closeCancellationDialog()">
+    <section class="cancellation-dialog" role="dialog" aria-modal="true" aria-labelledby="cancellation-title" (click)="$event.stopPropagation()">
+      <div class="cancellation-dialog-icon" aria-hidden="true">!</div>
+      <h2 id="cancellation-title">Annuler ce rendez-vous ?</h2>
+      <p>
+        Voulez-vous vraiment annuler votre rendez-vous du <strong>{{ rdv.date_rdv }}</strong>
+        à <strong>{{ rdv.heure.substring(0, 5) }}</strong> ?
+      </p>
+      <div class="cancellation-dialog-actions">
+        <button type="button" class="btn btn-outline-teal" (click)="closeCancellationDialog()">Garder le rendez-vous</button>
+        <button type="button" class="btn btn-danger-confirm" (click)="confirmCancellation()">Confirmer l'annulation</button>
+      </div>
+    </section>
+  </div>
+}
