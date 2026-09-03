@@ -139,15 +139,30 @@ def get_mes_rendezvous(request):
             rdvs = RendezVous.objects.filter(medecin=request.user.medecin).select_related("patient", "medecin", "patient__id_utilisateur", "medecin__id_utilisateur").order_by("-date_rdv", "-heure")
             return paginate_response(rdvs, request, RendezVousSerializer)
         elif getattr(request.user, "role", None) in ["ADMINISTRATEUR", "INFIRMIER"]:
+            patient_id = request.query_params.get("patient_id") or request.query_params.get("id_patient")
+            if patient_id:
+                try:
+                    pid = int(patient_id)
+                    rdvs = RendezVous.objects.filter(patient_id=pid).select_related("patient", "medecin", "patient__id_utilisateur", "medecin__id_utilisateur").order_by("-date_rdv", "-heure")
+                    return paginate_response(rdvs, request, RendezVousSerializer)
+                except (ValueError, TypeError):
+                    pass
             rdvs = RendezVous.objects.all().select_related("patient", "medecin", "patient__id_utilisateur", "medecin__id_utilisateur").order_by("-date_rdv", "-heure")
             return paginate_response(rdvs, request, RendezVousSerializer)
 
-    # Guest lookup by phone or email parameter
+    # Guest lookup by patient_id, phone or email parameter
+    patient_id = request.query_params.get("patient_id") or request.query_params.get("id_patient")
     phone = request.query_params.get("telephone") or request.query_params.get("phone")
     email = request.query_params.get("email")
-    if phone or email:
+    if patient_id or phone or email:
         from django.db.models import Q
         q_filter = Q()
+        if patient_id:
+            try:
+                pid = int(patient_id)
+                q_filter |= Q(patient_id=pid) | Q(patient__id_utilisateur_id=pid)
+            except (ValueError, TypeError):
+                pass
         if phone:
             q_filter |= Q(patient__id_utilisateur__telephone=phone)
         if email:
@@ -155,9 +170,16 @@ def get_mes_rendezvous(request):
         rdvs = RendezVous.objects.filter(q_filter).select_related("patient", "medecin", "patient__id_utilisateur", "medecin__id_utilisateur").order_by("-date_rdv", "-heure")
         return paginate_response(rdvs, request, RendezVousSerializer)
 
-    # Return active sample rendezvous if guest
-    rdvs = RendezVous.objects.all().select_related("patient", "medecin", "patient__id_utilisateur", "medecin__id_utilisateur").order_by("-date_rdv", "-heure")[:10]
-    return paginate_response(rdvs, request, RendezVousSerializer)
+    # Retourner une liste vide si aucun patient n'est identifié (ne pas exposer les données des autres patients)
+    return Response({
+        "count": 0,
+        "total_pages": 1,
+        "current_page": 1,
+        "page_size": 20,
+        "next": None,
+        "previous": None,
+        "results": []
+    }, status=status.HTTP_200_OK)
 
 
 @extend_schema(
@@ -178,9 +200,50 @@ def create_rendezvous(request):
         return Response({"motif": ["Le motif du rendez-vous est obligatoire."]}, status=status.HTTP_400_BAD_REQUEST)
 
     # Auto-associate patient if authenticated patient
-    if request.user.is_authenticated and hasattr(request.user, "patient") and not data.get("id_patient") and not data.get("patient_id"):
-        data["id_patient"] = request.user.patient.id_patient
-    elif not data.get("id_patient") and not data.get("patient_id"):
+    if request.user.is_authenticated:
+        if hasattr(request.user, "patient"):
+            data["id_patient"] = request.user.patient.id_patient
+        elif getattr(request.user, "role", None) == "PATIENT":
+            from django.utils import timezone
+            p, _ = Patient.objects.get_or_create(
+                id_utilisateur=request.user,
+                defaults={
+                    "sexe": "M",
+                    "adresse": "Conakry",
+                    "groupe_sanguin": "O+",
+                    "personne_a_contacter": request.user.telephone or "Non renseigné",
+                    "date_inscription": timezone.now().date(),
+                }
+            )
+            data["id_patient"] = p.id_patient
+
+    # Si id_patient ou patient_id est fourni mais correspond à un id_user
+    pid = data.get("id_patient") or data.get("patient_id")
+    if pid:
+        try:
+            pid_int = int(pid)
+            if not Patient.objects.filter(id_patient=pid_int).exists():
+                user_match = User.objects.filter(id_user=pid_int).first()
+                if user_match:
+                    if hasattr(user_match, "patient"):
+                        data["id_patient"] = user_match.patient.id_patient
+                    else:
+                        from django.utils import timezone
+                        p, _ = Patient.objects.get_or_create(
+                            id_utilisateur=user_match,
+                            defaults={
+                                "sexe": "M",
+                                "adresse": "Conakry",
+                                "groupe_sanguin": "O+",
+                                "personne_a_contacter": user_match.telephone or "Non renseigné",
+                                "date_inscription": timezone.now().date(),
+                            }
+                        )
+                        data["id_patient"] = p.id_patient
+        except (ValueError, TypeError):
+            pass
+
+    if not data.get("id_patient") and not data.get("patient_id"):
         # If guest, pick or attach patient record (e.g. first patient or demo patient)
         first_patient = Patient.objects.first()
         if first_patient:

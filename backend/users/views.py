@@ -45,7 +45,7 @@ def set_jwt_cookies(response, refresh_token):
         max_age=3600,
         httponly=True,
         secure=getattr(settings, 'JWT_COOKIE_SECURE', False),
-        samesite=getattr(settings, 'JWT_COOKIE_SAMESITE', 'Strict'),
+        samesite=getattr(settings, 'JWT_COOKIE_SAMESITE', 'Lax'),
         path="/",
     )
     response.set_cookie(
@@ -54,16 +54,16 @@ def set_jwt_cookies(response, refresh_token):
         max_age=2592000,
         httponly=True,
         secure=getattr(settings, 'JWT_COOKIE_SECURE', False),
-        samesite=getattr(settings, 'JWT_COOKIE_SAMESITE', 'Strict'),
-        path="/users/token/refresh/",
+        samesite=getattr(settings, 'JWT_COOKIE_SAMESITE', 'Lax'),
+        path="/",
     )
     return response
 
 
 def delete_jwt_cookies(response):
     """Supprime les cookies d'authentification JWT."""
-    response.delete_cookie(key="access_token", path="/")
-    response.delete_cookie(key="refresh_token", path="/users/token/refresh/")
+    response.delete_cookie(key="access_token", path="/", samesite=getattr(settings, 'JWT_COOKIE_SAMESITE', 'Lax'))
+    response.delete_cookie(key="refresh_token", path="/", samesite=getattr(settings, 'JWT_COOKIE_SAMESITE', 'Lax'))
     return response
 
 
@@ -121,6 +121,19 @@ def create_user(request):
 
         try:
             user = user_service.createUser(**validated_data)
+            if user.role == User.Role.PATIENT:
+                from django.utils import timezone
+                from patients.models import Patient
+                Patient.objects.get_or_create(
+                    id_utilisateur=user,
+                    defaults={
+                        "sexe": "M",
+                        "adresse": "Conakry",
+                        "groupe_sanguin": "O+",
+                        "personne_a_contacter": user.telephone or "Non renseigné",
+                        "date_inscription": timezone.now().date(),
+                    }
+                )
             serializer = UserSerializers(user)
 
             return Response(
@@ -367,7 +380,7 @@ class CookieTokenRefreshView(TokenRefreshView):
             max_age=3600,
             httponly=True,
             secure=getattr(settings, 'JWT_COOKIE_SECURE', False),
-            samesite=getattr(settings, 'JWT_COOKIE_SAMESITE', 'Strict'),
+            samesite=getattr(settings, 'JWT_COOKIE_SAMESITE', 'Lax'),
             path="/",
         )
 
@@ -378,8 +391,8 @@ class CookieTokenRefreshView(TokenRefreshView):
                 max_age=2592000,
                 httponly=True,
                 secure=getattr(settings, 'JWT_COOKIE_SECURE', False),
-                samesite=getattr(settings, 'JWT_COOKIE_SAMESITE', 'Strict'),
-                path="/users/token/refresh/",
+                samesite=getattr(settings, 'JWT_COOKIE_SAMESITE', 'Lax'),
+                path="/",
             )
 
         return response

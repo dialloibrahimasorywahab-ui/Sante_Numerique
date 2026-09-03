@@ -105,11 +105,11 @@ SIMPLE_JWT = {
     'ALGORITHM': 'HS256',
 }
 
-JWT_COOKIE_SAMESITE = env('JWT_COOKIE_SAMESITE', default='Strict')
+JWT_COOKIE_SAMESITE = env('JWT_COOKIE_SAMESITE', default='Lax')
 JWT_COOKIE_SECURE = env.bool('JWT_COOKIE_SECURE', default=not DEBUG)
 
 # CORS Configuration
-CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=['http://localhost:4200'])
+CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=['http://localhost:4200', 'http://127.0.0.1:4200'])
 CORS_ALLOW_CREDENTIALS = True
 
 SPECTACULAR_SETTINGS = {
