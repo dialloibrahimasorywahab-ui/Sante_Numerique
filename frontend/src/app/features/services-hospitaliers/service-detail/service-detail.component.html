@@ -82,13 +82,14 @@
                     <path d="M4.93 4.93a10 10 0 0 1 14.14 0"></path>
                     <path d="M7.76 7.76a6 6 0 0 1 8.48 0"></path>
                   </svg>
-                } @else if (service()?.icon === 'cut') {
+                } @else if (service()?.icon === 'tooth') {
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="6" cy="6" r="3"></circle>
-                    <circle cx="6" cy="18" r="3"></circle>
-                    <line x1="20" y1="4" x2="8.12" y2="15.88"></line>
-                    <line x1="14.47" y1="14.48" x2="20" y2="20"></line>
-                    <line x1="8.12" y1="8.12" x2="12" y2="12"></line>
+                    <path d="M12 2C8 2 5 5 5 9c0 3.5 1.5 6.5 2.5 10 .8 2.8 2 3 3.5 3 1.2 0 1.8-1 1-3-.7-1.8 0-4 0-4s.7 2.2 0 4c-.8 2-.2 3 1 3 1.5 0 2.7-.2 3.5-3 1-3.5 2.5-6.5 2.5-10 0-4-3-7-7-7z"></path>
+                  </svg>
+                } @else if (service()?.icon === 'briefcase-med') {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
                   </svg>
                 } @else {
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -342,21 +343,37 @@
         <!-- STEP 2: Date & Slot -->
         @if (bookingStep === 2) {
           <div class="step-content">
+            @if (bookingError) {
+              <div class="alert alert-danger mb-3 p-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded">
+                {{ bookingError }}
+              </div>
+            }
+
             <div class="form-group mb-3">
               <label class="form-label">Date du rendez-vous :</label>
-              <input type="date" class="form-control" [(ngModel)]="bookingForm.date" />
+              <input 
+                type="date" 
+                class="form-control" 
+                [min]="minBookingDate" 
+                [(ngModel)]="bookingForm.date" 
+                (ngModelChange)="onBookingDateChange()" />
             </div>
 
             <div class="form-group mb-3">
               <label class="form-label">Créneaux horaires disponibles :</label>
               <div class="slots-grid">
-                @for (slot of ['08:30', '09:15', '10:00', '10:45', '11:30', '14:00', '14:45', '15:30', '16:15']; track slot) {
+                @for (slot of hospitalService.standardSlots; track slot) {
                   <button 
                     type="button"
                     class="slot-btn" 
                     [class.selected]="bookingForm.heure === slot"
+                    [class.disabled-slot]="isSlotDisabled(slot)"
+                    [disabled]="isSlotDisabled(slot)"
                     (click)="bookingForm.heure = slot">
                     {{ slot }}
+                    @if (isSlotDisabled(slot)) {
+                      <span class="text-xs text-gray-400 block">(Passé)</span>
+                    }
                   </button>
                 }
               </div>

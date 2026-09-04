@@ -13,7 +13,13 @@ class UserService:
 
     # creation d'un utilisateur dans service
     def createUser(self, **data):
-        raw_password = data.pop("motDePasse", None) or data.get("motDePasseHash")
+        raw_password = (
+            data.pop("motDePasse", None)
+            or data.pop("mot_de_passe", None)
+            or data.pop("password", None)
+            or data.pop("motDePasseHash", None)
+            or data.pop("mot_de_passe_hash", None)
+        )
         if raw_password:
             if not raw_password.startswith(("pbkdf2_", "bcrypt", "argon2", "scrypt")):
                 temp_user = User(
@@ -23,7 +29,7 @@ class UserService:
                     prenom=data.get("prenom", ""),
                 )
                 validate_password(raw_password, user=temp_user)
-            data["motDePasseHash"] = make_password(raw_password)
+            data["mot_de_passe_hash"] = make_password(raw_password)
         return self.repository.createUser(**data)
 
     # recuperation d'un utilisateur dans service grace a son id
@@ -43,7 +49,7 @@ class UserService:
     # authentification d'un utilisateur par son login et mot de passe (sans JWT)
     def loginUser(self, login, password):
         user = self.repository.getUserByLogin(login)
-        if user and user.actif and check_password(password, user.motDePasseHash):
+        if user and user.actif and user.check_password(password):
             user.derniereConnexion = timezone.now()
             user.save(update_fields=["last_login"])
             return user

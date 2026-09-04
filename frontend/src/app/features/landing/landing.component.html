@@ -394,21 +394,37 @@
               </div>
             </div>
 
+            @if (bookingError) {
+              <div class="alert alert-danger mb-3 p-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded">
+                {{ bookingError }}
+              </div>
+            }
+
             <div class="form-group mb-4">
               <label class="form-label">Date du rendez-vous :</label>
-              <input type="date" class="form-control" [(ngModel)]="bookingForm.date" />
+              <input 
+                type="date" 
+                class="form-control" 
+                [min]="minBookingDate" 
+                [(ngModel)]="bookingForm.date" 
+                (ngModelChange)="onBookingDateChange()" />
             </div>
 
             <div class="form-group mb-4">
               <label class="form-label">Créneaux horaires disponibles :</label>
               <div class="slots-grid">
-                @for (slot of ['08:30', '09:15', '10:00', '10:45', '11:30', '14:00', '14:45', '15:30', '16:15']; track slot) {
+                @for (slot of hospitalService.standardSlots; track slot) {
                   <button 
                     type="button"
                     class="slot-btn" 
                     [class.selected]="bookingForm.heure === slot"
+                    [class.disabled-slot]="isSlotDisabled(slot)"
+                    [disabled]="isSlotDisabled(slot)"
                     (click)="bookingForm.heure = slot">
                     {{ slot }}
+                    @if (isSlotDisabled(slot)) {
+                      <span class="text-xs text-gray-400 block">(Passé)</span>
+                    }
                   </button>
                 }
               </div>
@@ -633,10 +649,13 @@
           </div>
         </div>
 
-        <div class="modal-actions-row">
-          <button class="btn btn-teal w-full" (click)="openBooking(selectedPole()?.code)">
+        <div class="modal-actions-row flex gap-3">
+          <button class="btn btn-teal flex-1" (click)="openBooking(selectedPole()?.code)">
             Prendre Rendez-vous dans ce Pôle
           </button>
+          <a class="btn btn-outline-teal flex-1 text-center" [routerLink]="['/services']" [queryParams]="{ search: selectedPole()?.nom }" (click)="closeServiceDetails()">
+            Voir la fiche du service
+          </a>
         </div>
       </div>
 

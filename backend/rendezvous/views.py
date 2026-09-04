@@ -194,31 +194,34 @@ def get_mes_rendezvous(request):
 def create_rendezvous(request):
     data = request.data.copy()
 
-    # Enforce mandatory motif
-    motif = data.get("motif")
+    # Enforce mandatory motif or reason
+    motif = data.get("motif") or data.get("reason")
     if not motif or not str(motif).strip():
         return Response({"motif": ["Le motif du rendez-vous est obligatoire."]}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Auto-associate patient if authenticated patient
+    # Auto-associate patient if authenticated patient and prevent spoofing
     if request.user.is_authenticated:
-        if hasattr(request.user, "patient"):
-            data["id_patient"] = request.user.patient.id_patient
-        elif getattr(request.user, "role", None) == "PATIENT":
-            from django.utils import timezone
-            p, _ = Patient.objects.get_or_create(
-                id_utilisateur=request.user,
-                defaults={
-                    "sexe": "M",
-                    "adresse": "Conakry",
-                    "groupe_sanguin": "O+",
-                    "personne_a_contacter": request.user.telephone or "Non renseigné",
-                    "date_inscription": timezone.now().date(),
-                }
-            )
-            data["id_patient"] = p.id_patient
+        if getattr(request.user, "role", None) == "PATIENT" or hasattr(request.user, "patient"):
+            if hasattr(request.user, "patient"):
+                patient_rec = request.user.patient
+            else:
+                from django.utils import timezone
+                patient_rec, _ = Patient.objects.get_or_create(
+                    id_utilisateur=request.user,
+                    defaults={
+                        "sexe": "M",
+                        "adresse": "Conakry",
+                        "groupe_sanguin": "O+",
+                        "personne_a_contacter": request.user.telephone or "Non renseigné",
+                        "date_inscription": timezone.now().date(),
+                    }
+                )
+            data["id_patient"] = patient_rec.id_patient
+            data.pop("patient_id", None)
+            data.pop("patient", None)
 
-    # Si id_patient ou patient_id est fourni mais correspond à un id_user
-    pid = data.get("id_patient") or data.get("patient_id")
+    # Si id_patient, patient_id ou patient est fourni (pour admin ou personnel médical)
+    pid = data.get("id_patient") or data.get("patient_id") or data.get("patient")
     if pid:
         try:
             pid_int = int(pid)

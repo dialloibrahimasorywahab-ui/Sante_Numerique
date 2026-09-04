@@ -44,10 +44,47 @@ class RendezVousSerializer(serializers.ModelSerializer):
     def to_internal_value(self, data):
         if isinstance(data, dict):
             data = data.copy()
-            if 'patient_id' in data and 'id_patient' not in data:
+            # Mapping patient aliases
+            if 'patient' in data and 'id_patient' not in data:
+                data['id_patient'] = data['patient']
+            elif 'patient_id' in data and 'id_patient' not in data:
                 data['id_patient'] = data['patient_id']
-            if 'medecin_id' in data and 'id_medecin' not in data:
+
+            # Mapping doctor aliases
+            if 'doctor' in data and 'id_medecin' not in data:
+                data['id_medecin'] = data['doctor']
+            elif 'medecin_id' in data and 'id_medecin' not in data:
                 data['id_medecin'] = data['medecin_id']
+            elif 'medecin' in data and 'id_medecin' not in data:
+                data['id_medecin'] = data['medecin']
+
+            # Mapping date aliases
+            if 'date' in data and 'date_rdv' not in data:
+                data['date_rdv'] = data['date']
+
+            # Mapping time aliases
+            if 'time' in data and 'heure' not in data:
+                data['heure'] = data['time']
+
+            # Formatting motif from reason / appointment_type / notes
+            reason = data.get('reason') or data.get('motif') or ''
+            app_type = data.get('appointment_type') or data.get('type_consultation') or data.get('typeConsultation')
+            notes = data.get('notes') or data.get('observation')
+
+            full_motif_parts = []
+            if app_type:
+                type_label = "Téléconsultation" if str(app_type).lower() in ["teleconsultation", "téléconsultation", "video"] else "Présentiel"
+                full_motif_parts.append(f"[{type_label}]")
+            if reason:
+                full_motif_parts.append(str(reason).strip())
+            if notes and str(notes).strip():
+                full_motif_parts.append(f"(Notes: {str(notes).strip()})")
+
+            if full_motif_parts:
+                data['motif'] = " - ".join(full_motif_parts)
+            elif 'motif' not in data:
+                data['motif'] = str(reason).strip()
+
         return super().to_internal_value(data)
 
     def validate_date_rdv(self, value):

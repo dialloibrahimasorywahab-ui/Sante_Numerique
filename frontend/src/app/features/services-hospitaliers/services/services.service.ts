@@ -44,68 +44,78 @@ export class ServicesService {
   }> = {
     'CARDIOLOGIE': {
       icon: 'heart',
-      nomClair: 'Cardiologie & Vasculaire',
-      desc: 'Prise en charge complète des pathologies cardiovasculaires, coronarographies et réadaptation cardiaque.',
+      nomClair: 'Cardiologie',
+      desc: 'Prise en charge complète des maladies cardiovasculaires.',
       categorie: 'Pôle Médical Spécialisé',
-      missions: ['Consultations d’échocardiographie', 'Suivi de l’hypertension artérielle et insuffisance cardiaque', 'Pose et contrôle de stimulateurs cardiaques (Pacemaker)'],
+      missions: ['Consultations d’échocardiographie et électrocardiogramme', 'Suivi de l’hypertension artérielle et insuffisance cardiaque', 'Pose et contrôle de stimulateurs cardiaques (Pacemaker)'],
       plateau: ['Échographe Doppler 4D dernière génération', 'Table de coronarographie numérisée', 'Holter ECG et MAPA 48h'],
       horaires: 'Lun - Ven : 08h00 - 17h30 | Urgences 24/7',
       urgence: true
     },
     'NEUROLOGIE': {
       icon: 'brain',
-      nomClair: 'Neurologie & Neurosciences',
-      desc: 'Diagnostic, exploration et traitement des affections du système nerveux central et périphérique.',
+      nomClair: 'Neurologie',
+      desc: 'Diagnostic et traitement des troubles neurologiques.',
       categorie: 'Pôle Neurosciences',
       missions: ['Électroencéphalographie (EEG) et Électromyogramme (EMG)', 'Prise en charge des AVC et migraines sévères', 'Bilan cognitif et suivi des neuropathies'],
       plateau: ['Salle d’exploration fonctionnelle EEG haute résolution', 'Accès IRM 3T & Scanner spiralé', 'Unité Neuro-Vasculaire (UNV)'],
       horaires: 'Lun - Ven : 08h30 - 17h00',
       urgence: true
     },
-    'PEDIATRIE': {
-      icon: 'child',
-      nomClair: 'Pédiatrie & Néonatalogie',
-      desc: 'Soins médicaux spécialisés pour nouveau-nés, nourrissons, enfants et adolescents.',
-      categorie: 'Pôle Mère-Enfant',
-      missions: ['Suivi du développement et croissance de l’enfant', 'Vaccinations et bilans pédiatriques', 'Urgences et réanimation pédiatrique'],
-      plateau: ['Couveuses néonatales avec monitoring multiparamétrique', 'Unité de photothérapie intensive', 'Espace pédiatrique ludique et rassurant'],
-      horaires: 'Lun - Sam : 08h00 - 18h00 | Garde 24/7',
+    'CHIRURGIE': {
+      icon: 'tooth',
+      nomClair: 'Dentisterie & Chirurgie',
+      desc: 'Soins dentaires modernes et chirurgies buccales.',
+      categorie: 'Pôle Odontologie & Chirurgie',
+      missions: ['Soins dentaires conservateurs et esthétiques', 'Chirurgies buccales et implantologie', 'Traumatologie faciale et extractions complexes'],
+      plateau: ['Fauteuils dentaires haute technologie', 'Radiologie panoramique dentaire 3D', 'Bloc opératoire ambulatoire stérile'],
+      horaires: 'Lun - Sam : 08h00 - 17h00',
       urgence: true
     },
     'GYNECOLOGIE': {
       icon: 'female',
-      nomClair: 'Gynécologie & Obstétrique',
-      desc: 'Suivi de grossesse, consultations gynécologiques, échographies et chirurgie de la femme.',
+      nomClair: 'Gynécologie',
+      desc: 'Suivi de grossesse, accouchement et soins pour femmes.',
       categorie: 'Pôle Mère-Enfant',
       missions: ['Suivi obstétrical et préparation à la naissance', 'Dépistage gynécologique et frottis', 'Chirurgie gynécologique mini-invasive'],
       plateau: ['Échographes obstétricaux volumiques HD', 'Blocs d’accouchement modernes', 'Salles de monitoring fœtal sans fil'],
       horaires: 'Lun - Sam : 08h00 - 17h30',
       urgence: true
     },
+    'PEDIATRIE': {
+      icon: 'child',
+      nomClair: 'Pédiatrie',
+      desc: 'Soins médicaux spécialisés pour enfants.',
+      categorie: 'Pôle Mère-Enfant',
+      missions: ['Suivi du développement et croissance de l’enfant', 'Vaccinations et bilans pédiatriques', 'Urgences et réanimation pédiatrique'],
+      plateau: ['Couveuses néonatales avec monitoring multiparamétrique', 'Unité de photothérapie intensive', 'Espace pédiatrique ludique et rassurant'],
+      horaires: 'Lun - Sam : 08h00 - 18h00 | Garde 24/7',
+      urgence: true
+    },
     'MEDECINE_GENERALE': {
-      icon: 'stethoscope',
-      nomClair: 'Médecine Générale',
-      desc: 'Consultations de premier recours, prévention, bilans de santé et soins pour toute la famille.',
+      icon: 'briefcase-med',
+      nomClair: 'Médecine générale',
+      desc: 'Consultations et soins pour toute la famille.',
       categorie: 'Pôle Consultations Externes',
       missions: ['Diagnostic et traitement des maladies aiguës et chroniques', 'Bilans de santé et dépistage', 'Orientation vers les spécialistes du CHU'],
       plateau: ['Cabinets de consultation modernes', 'Télémédecine intégrée', 'Laboratoire d’analyses rapide sur place'],
       horaires: 'Lun - Sam : 07h30 - 19h00',
       urgence: false
     },
-    'CHIRURGIE': {
-      icon: 'cut',
-      nomClair: 'Chirurgie Générale & Viscérale',
-      desc: 'Actes chirurgicaux programmés et d’urgence avec techniques mini-invasives et cœlioscopie.',
-      categorie: 'Pôle Chirurgical',
-      missions: ['Chirurgie digestive et viscérale', 'Chirurgie ambulatoire', 'Traumatologie et réparations d’urgence'],
-      plateau: ['4 Blocs opératoires ISO 5 à flux laminaire', 'Colonnes de cœlioscopie 4K UHD', 'Salle de réveil et soins continus post-opératoires'],
-      horaires: 'Consultations : Lun - Ven 08h00 - 16h00 | Bloc 24/7',
-      urgence: true
+    'GENERALISTE': {
+      icon: 'briefcase-med',
+      nomClair: 'Médecine générale',
+      desc: 'Consultations et soins pour toute la famille.',
+      categorie: 'Pôle Consultations Externes',
+      missions: ['Diagnostic et traitement des maladies aiguës et chroniques', 'Bilans de santé et dépistage', 'Orientation vers les spécialistes du CHU'],
+      plateau: ['Cabinets de consultation modernes', 'Télémédecine intégrée', 'Laboratoire d’analyses rapide sur place'],
+      horaires: 'Lun - Sam : 07h30 - 19h00',
+      urgence: false
     },
     'DERMATOLOGIE': {
       icon: 'sparkles',
       nomClair: 'Dermatologie & Vénérologie',
-      desc: 'Dépistage, diagnostic et traitement des maladies de la peau, des muqueuses, des ongles et des cheveux.',
+      desc: 'Dépistage, diagnostic et traitement des maladies de la peau et des muqueuses.',
       categorie: 'Pôle Spécialités Médicales',
       missions: ['Dépistage des lésions cutanées et mélanomes', 'Dermatologie pédiatrique et allergologie', 'Petite chirurgie dermatologique'],
       plateau: ['Dermatoscope numérique haute résolution', 'Plateforme de photothérapie UVB', 'Laser thérapeutique et cryothérapie'],
@@ -181,6 +191,26 @@ export class ServicesService {
       plateau: ['Respirateurs d’anesthésie-réanimation haut de gamme', 'Moniteurs multiparamétriques centralisés', 'Isolement stérile à pression positive/négative'],
       horaires: 'Permanence 24h/24 | Visites encadrées',
       urgence: true
+    },
+    'PSYCHIATRIE': {
+      icon: 'brain',
+      nomClair: 'Psychiatrie & Santé Mentale',
+      desc: 'Accompagnement psychiatrique, soutien psychologique et prise en charge globale.',
+      categorie: 'Pôle Médical Spécialisé',
+      missions: ['Consultations de pédopsychiatrie et psychiatrie adulte', 'Prise en charge des troubles anxieux et dépressifs', 'Soutien médico-psychologique d’urgence'],
+      plateau: ['Unités d’apaisement', 'Espaces thérapeutiques individuels et de groupe', 'Équipe mobile de liaison'],
+      horaires: 'Lun - Ven : 08h30 - 17h00',
+      urgence: false
+    },
+    'ADMINISTRATION': {
+      icon: 'briefcase-med',
+      nomClair: 'Administration & Admissions',
+      desc: 'Accueil, démarches administratives, facturation et prise en charge des patients.',
+      categorie: 'Pôle Administratif',
+      missions: ['Accueil physique et orientation', 'Création et gestion des dossiers administratifs', 'Coordination des admissions et sorties'],
+      plateau: ['Guichets d’admission numérisés', 'Bornes interactives d’orientation', 'Espace d’information usagers'],
+      horaires: 'Lun - Sam : 07h30 - 18h00',
+      urgence: false
     }
   };
 
@@ -293,9 +323,9 @@ export class ServicesService {
       ...item,
       icon: meta?.icon || 'stethoscope',
       displayNom: meta?.nomClair || item.nom_service_display || item.nom_service,
-      displayDesc: item.description && item.description.length > 20
+      displayDesc: meta?.desc || (item.description && item.description.length > 25
         ? item.description
-        : (meta?.desc || `Prise en charge spécialisée et soins de qualité au sein du service de ${item.nom_service_display || item.nom_service}.`),
+        : `Prise en charge spécialisée et soins de qualité au sein du service de ${item.nom_service_display || item.nom_service}.`),
       badgeCountMedecins: this.countDoctorsForService(code)
     };
   }

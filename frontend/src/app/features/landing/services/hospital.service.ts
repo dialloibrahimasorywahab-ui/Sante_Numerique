@@ -66,6 +66,8 @@ export interface BookingConfirmation {
 })
 export class HospitalService {
 
+  recentBookings = signal<BookingConfirmation[]>([])
+
   // Live Hospital KPIs & Capacity signals
   readonly hospitalStats = signal({
     urgencesAttenteMin: 12,
@@ -282,11 +284,109 @@ export class HospitalService {
     }
   ]);
 
-  // Dernières réservations créées en mémoire pour affichage immédiat
-  readonly recentBookings = signal<BookingConfirmation[]>([]);
+  // Standard clinical consultation slots
+  readonly standardSlots: string[] = [
+    '08:30', '09:15', '10:00', '10:45', '11:30',
+    '14:00', '14:45', '15:30', '16:15'
+  ];
+
+  /**
+   * Retourne la date d'aujourd'hui au format YYYY-MM-DD
+   */
+  getTodayString(): string {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  /**
+   * Retourne la date par défaut pour une prise de RDV :
+   * Si tous les créneaux d'aujourd'hui sont passés (ex: fin de journée), renvoie demain.
+   */
+  getDefaultBookingDate(): string {
+    const today = this.getTodayString();
+    const validTodaySlots = this.getAvailableSlotsForDate(today);
+    if (validTodaySlots.length > 0) {
+      return today;
+    }
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const year = tomorrow.getFullYear();
+    const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
+    const day = String(tomorrow.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  /**
+   * Retourne le premier créneau horaire valide pour une date donnée
+   */
+  getDefaultSlotForDate(dateStr: string): string {
+    const available = this.getAvailableSlotsForDate(dateStr);
+    return available.length > 0 ? available[0] : '';
+  }
+
+  /**
+   * Vérifie si un créneau horaire à une date donnée est déjà dans le passé
+   */
+  isSlotPast(dateStr: string, slotStr: string): boolean {
+    if (!dateStr || !slotStr) return true;
+    const today = this.getTodayString();
+    if (dateStr < today) return true;
+    if (dateStr > today) return false;
+
+    // Si la date est aujourd'hui, vérifier l'heure
+    const parts = slotStr.split(':').map(Number);
+    if (parts.length < 2 || isNaN(parts[0]) || isNaN(parts[1])) return true;
+    const slotMinutes = parts[0] * 60 + parts[1];
+
+    const now = new Date();
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    return slotMinutes <= nowMinutes;
+  }
+
+  /**
+   * Retourne la liste des créneaux encore disponibles pour une date
+   */
+  getAvailableSlotsForDate(dateStr: string): string[] {
+    return this.standardSlots.filter(s => !this.isSlotPast(dateStr, s));
+  }
+
+  /**
+   * Vérifie si une date et une heure sont valides (strictement dans le futur)
+   */
+  isDateTimeValid(dateStr: string, slotStr: string): boolean {
+    return !this.isSlotPast(dateStr, slotStr);
+  }
+
+  /**
+   * Crée un état de formulaire de réservation initialisé avec des dates et heures valides
+   */
+  createInitialBookingForm(): BookingFormState {
+    const initialDate = this.getDefaultBookingDate();
+    return {
+      specialite: '',
+      medecinId: null,
+      date: initialDate,
+      heure: this.getDefaultSlotForDate(initialDate) || '08:30',
+      motif: '',
+      typeConsultation: 'SUR_PLACE',
+      patientNom: 'Dupont',
+      patientPrenom: 'Marie',
+      patientEmail: 'marie.dupont@santenumerique.com',
+      patientTelephone: '+224 621 45 89 20',
+      patientGroupeSanguin: 'O+',
+      patientNSS: '1890425789123'
+    };
+  }
 
   // Simulation d'une prise de rendez-vous avec ticket de confirmation
   bookAppointment(form: BookingFormState): BookingConfirmation {
+    if (!this.isDateTimeValid(form.date, form.heure)) {
+      throw new Error("Impossible de réserver un créneau passé.");
+    }
+
     const doctor = this.doctors().find(d => d.id === form.medecinId) || this.doctors()[0];
     const idGen = 'RDV-' + Math.floor(100000 + Math.random() * 900000);
     const codeSecu = 'SN-' + Math.random().toString(36).substring(2, 8).toUpperCase();

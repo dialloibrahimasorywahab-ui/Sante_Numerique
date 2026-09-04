@@ -103,12 +103,6 @@ def create_user(request):
         return paginate_response(users, request, UserSerializers)
 
     # POST /users/
-    if request.user.is_authenticated and getattr(request.user, "role", None) != "ADMINISTRATEUR":
-        return Response(
-            {"error": "Accès refusé. Seul un administrateur peut créer des utilisateurs lorsqu'un compte est connecté."},
-            status=status.HTTP_403_FORBIDDEN
-        )
-
     serializer = UserSerializers(data=request.data, context={"request": request})
 
     if serializer.is_valid():
@@ -242,6 +236,11 @@ def get_all_user(request):
 def login_user(request):
     login = request.data.get("login") or request.data.get("email") or request.data.get("username")
     password = request.data.get("motDePasse") or request.data.get("password") or request.data.get("motDePasseHash")
+
+    if login:
+        login = str(login).strip()
+    if password:
+        password = str(password)
 
     if not login or not password:
         return Response(

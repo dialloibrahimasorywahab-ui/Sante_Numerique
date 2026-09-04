@@ -54,13 +54,21 @@ export interface RendezVousDto {
 
 export interface CreateAppointmentDto {
   id_patient?: number;
-  id_medecin: number;
-  date_rdv: string;
-  heure: string;
-  motif: string;
+  id_medecin?: number;
+  patient?: number;
+  doctor?: number;
+  service?: number | string;
+  date?: string;
+  date_rdv?: string;
+  time?: string;
+  heure?: string;
+  appointment_type?: string;
+  type_consultation?: string;
+  reason?: string;
+  motif?: string;
+  notes?: string;
   patient_nom?: string;
   patient_prenom?: string;
   patient_telephone?: string;
   patient_email?: string;
-  type_consultation?: 'SUR_PLACE' | 'TELECONSULTATION';
 }

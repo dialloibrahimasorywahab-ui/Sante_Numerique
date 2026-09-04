@@ -58,16 +58,25 @@ export class AppointmentService {
    * Crée un nouveau rendez-vous via l'API Django (avec cookie HttpOnly ou fallback local).
    */
   createAppointment(dto: CreateAppointmentDto): Observable<RendezVousDto> {
-    const payload: any = {
-      id_medecin: dto.id_medecin,
-      date_rdv: dto.date_rdv,
-      heure: dto.heure.length === 5 ? `${dto.heure}:00` : dto.heure,
-      motif: dto.motif
-    };
+    const rawHeure = dto.time || dto.heure || '';
+    const formattedHeure = rawHeure.length === 5 ? `${rawHeure}:00` : rawHeure;
 
-    if (dto.id_patient) {
-      payload.id_patient = dto.id_patient;
-    }
+    const payload: any = {
+      patient: dto.patient || dto.id_patient,
+      doctor: dto.doctor || dto.id_medecin,
+      service: dto.service,
+      id_patient: dto.id_patient || dto.patient,
+      id_medecin: dto.id_medecin || dto.doctor,
+      date: dto.date || dto.date_rdv,
+      date_rdv: dto.date_rdv || dto.date,
+      time: formattedHeure,
+      heure: formattedHeure,
+      appointment_type: dto.appointment_type || dto.type_consultation || 'consultation_presentiel',
+      type_consultation: dto.type_consultation || dto.appointment_type || 'SUR_PLACE',
+      reason: dto.reason || dto.motif || '',
+      motif: dto.motif || dto.reason || '',
+      notes: dto.notes || ''
+    };
 
     return this.http.post<RendezVousDto>(`${this.baseUrl}/`, payload, {
       withCredentials: true
@@ -77,40 +86,15 @@ export class AppointmentService {
         const enriched: RendezVousDto = {
           ...res,
           id: idRdv,
-          id_patient: dto.id_patient,
+          id_patient: payload.id_patient,
           patient_nom: dto.patient_nom,
           patient_prenom: dto.patient_prenom,
           patient_email: dto.patient_email,
           patient_telephone: dto.patient_telephone,
-          codeConfirmation: `RDV-${idRdv}-${new Date(dto.date_rdv).getFullYear()}`
+          codeConfirmation: `RDV-${idRdv}-${new Date(payload.date_rdv).getFullYear()}`
         };
         this.saveLocalAppointment(enriched);
         return enriched;
-      }),
-      catchError(err => {
-        // En cas de backend temporairement indisponible (statut 0 ou erreur réseau)
-        if (err.status === 0 || err.status >= 500) {
-          console.warn('Backend indisponible, validation et enregistrement local du rendez-vous.');
-          const idGen = Math.floor(100000 + Math.random() * 900000);
-          const fallbackRdv: RendezVousDto = {
-            id: idGen,
-            idRendezVous: idGen,
-            id_medecin: dto.id_medecin,
-            id_patient: dto.id_patient,
-            date_rdv: dto.date_rdv,
-            heure: dto.heure,
-            motif: dto.motif,
-            statut: 'PROGRAMME',
-            patient_nom: dto.patient_nom,
-            patient_prenom: dto.patient_prenom,
-            patient_email: dto.patient_email,
-            patient_telephone: dto.patient_telephone,
-            codeConfirmation: `RDV-${idGen}-${new Date(dto.date_rdv).getFullYear()}`
-          };
-          this.saveLocalAppointment(fallbackRdv);
-          return of(fallbackRdv);
-        }
-        return throwError(() => err);
       })
     );
   }

@@ -35,11 +35,6 @@ export class LoginComponent implements OnInit {
     }
 
     this.initForm();
-
-    // Empêcher tout pré-remplissage résiduel ou automatique du navigateur
-    setTimeout(() => {
-      this.loginForm.reset({ login: '', motDePasse: '' });
-    }, 50);
   }
 
   private initForm(): void {

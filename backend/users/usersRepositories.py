@@ -17,10 +17,13 @@ class UserRepository:
     # rechercher un utilisateur par son login ou email
     def getUserByLogin(self, login):
         from django.db.models import Q
+        if not login:
+            return None
+        clean_login = str(login).strip()
         try:
-            return User.objects.get(Q(login=login) | Q(email=login))
+            return User.objects.get(Q(login__iexact=clean_login) | Q(email__iexact=clean_login))
         except (User.DoesNotExist, User.MultipleObjectsReturned):
-            return User.objects.filter(Q(login=login) | Q(email=login)).first()
+            return User.objects.filter(Q(login__iexact=clean_login) | Q(email__iexact=clean_login)).first()
 
 
     # recuperer tous les utilisateurs et les afficher

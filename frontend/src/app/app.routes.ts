@@ -51,6 +51,21 @@ export const routes: Routes = [
     pathMatch: 'full'
   },
   {
+    path: 'medecin/dashboard',
+    redirectTo: 'medecins',
+    pathMatch: 'full'
+  },
+  {
+    path: 'personnel/dashboard',
+    redirectTo: 'services',
+    pathMatch: 'full'
+  },
+  {
+    path: 'admin/dashboard',
+    redirectTo: 'medecins',
+    pathMatch: 'full'
+  },
+  {
     path: '**',
     redirectTo: ''
   }

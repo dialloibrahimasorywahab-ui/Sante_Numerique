@@ -24,6 +24,7 @@ export class MedecinsListComponent implements OnInit {
   selectedSpecialite = '';
   currentPage = 1;
 
+
   // Booking Modal Wizard
   isBookingModalOpen = false;
   bookingStep = 1;
@@ -45,8 +46,9 @@ export class MedecinsListComponent implements OnInit {
 
   confirmedBooking: BookingConfirmation | null = null;
 
-  readonly bookingSlots = ['08:30', '09:15', '10:00', '10:45', '11:30', '14:00', '14:45', '15:30', '16:15'];
-  readonly todayString = this.getTodayString();
+  get todayString(): string {
+    return this.hospitalService.getTodayString();
+  }
 
   ngOnInit(): void {
     this.fetchDoctors();
@@ -105,6 +107,7 @@ export class MedecinsListComponent implements OnInit {
     this.selectedDoctorForBooking = doc;
     this.bookingStep = 1;
     this.confirmedBooking = null;
+    this.bookingForm = this.hospitalService.createInitialBookingForm();
 
     if (doc.specialite) {
       this.bookingForm.specialite = doc.specialite as any;
@@ -118,8 +121,10 @@ export class MedecinsListComponent implements OnInit {
       this.bookingForm.patientTelephone = currentUser.telephone || '';
       this.bookingForm.patientEmail = currentUser.email || '';
     }
-    this.bookingForm.date = this.getTodayString();
-    this.bookingForm.heure = this.getAvailableBookingSlots()[0] || '';
+
+    const initialDate = this.hospitalService.getDefaultBookingDate();
+    this.bookingForm.date = initialDate;
+    this.bookingForm.heure = this.hospitalService.getDefaultSlotForDate(initialDate);
 
     this.isBookingModalOpen = true;
   }
@@ -133,19 +138,7 @@ export class MedecinsListComponent implements OnInit {
   }
 
   getAvailableBookingSlots(): string[] {
-    const today = this.getTodayString();
-    if (this.bookingForm.date < today) return [];
-    if (this.bookingForm.date !== today) return this.bookingSlots;
-
-    const currentTime = new Date().toTimeString().slice(0, 5);
-    return this.bookingSlots.filter(slot => slot > currentTime);
-  }
-
-  private getTodayString(): string {
-    const today = new Date();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    return `${today.getFullYear()}-${month}-${day}`;
+    return this.hospitalService.getAvailableSlotsForDate(this.bookingForm.date);
   }
 
   closeBookingModal(): void {
@@ -156,6 +149,9 @@ export class MedecinsListComponent implements OnInit {
     if (this.bookingStep === 1) {
       this.bookingStep = 2;
     } else if (this.bookingStep === 2) {
+      if (!this.bookingForm.date || !this.bookingForm.heure || !this.hospitalService.isDateTimeValid(this.bookingForm.date, this.bookingForm.heure)) {
+        return;
+      }
       this.bookingStep = 3;
     }
   }
@@ -171,6 +167,10 @@ export class MedecinsListComponent implements OnInit {
     if (!currentUser) {
       this.closeBookingModal();
       this.router.navigate(['/login'], { queryParams: { returnUrl: '/medecins' } });
+      return;
+    }
+
+    if (!this.hospitalService.isDateTimeValid(this.bookingForm.date, this.bookingForm.heure)) {
       return;
     }
 
