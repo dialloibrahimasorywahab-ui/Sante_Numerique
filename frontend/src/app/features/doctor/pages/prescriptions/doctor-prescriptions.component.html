@@ -1,0 +1,146 @@
+<div class="prescriptions-page-container">
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Mes Ordonnances</h1>
+      <p class="page-subtitle">Consultez et rédigez les prescriptions médicales pour vos patients.</p>
+    </div>
+    <div class="header-actions">
+      <a routerLink="/medecin/ordonnances/nouveau" class="btn-create">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        <span>Rédiger une ordonnance</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- SEARCH CARD -->
+  <div class="search-card">
+    <div class="search-input-wrapper">
+      <svg class="search-icon w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+      <input
+        type="text"
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+        placeholder="Rechercher par référence, patient, médicament, posologie..."
+        class="search-input"
+      />
+    </div>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="error-banner">
+      <span>{{ errorMessage() }}</span>
+      <button (click)="loadPrescriptions()" class="btn-retry">Réessayer</button>
+    </div>
+  }
+
+  <!-- PRESCRIPTIONS LIST & TABLE -->
+  <div class="table-container">
+    @if (isLoading()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Chargement des ordonnances...</p>
+      </div>
+    } @else if (filteredPrescriptions().length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg class="w-12 h-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+          </svg>
+        </div>
+        <h3>Aucune ordonnance trouvée</h3>
+        <p>Toutes les ordonnances délivrées lors de vos consultations apparaîtront ici.</p>
+        <a routerLink="/medecin/ordonnances/nouveau" class="btn-create mt-4">
+          Rédiger une ordonnance
+        </a>
+      </div>
+    } @else {
+      <!-- Desktop Table -->
+      <table class="desktop-table">
+        <thead>
+          <tr>
+            <th>Référence</th>
+            <th>Date</th>
+            <th>Patient</th>
+            <th>Consultation Liée</th>
+            <th>Prescription & Posologie</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of paginatedPrescriptions(); track (p.id || p.idOrdonnance)) {
+            <tr>
+              <td>
+                <span class="ref-badge">{{ p.reference || ('ORD-#' + (p.id || p.idOrdonnance)) }}</span>
+              </td>
+              <td>
+                <span class="date-text">{{ p.date_ordonnance }}</span>
+              </td>
+              <td>
+                <div class="patient-name">
+                  {{ p.consultation_details?.patient_details?.prenom || 'Patient' }}
+                  {{ p.consultation_details?.patient_details?.nom || '' }}
+                </div>
+              </td>
+              <td>
+                <a [routerLink]="['/medecin/consultations', p.consultation]" class="consultation-link">
+                  Consultation #{{ p.consultation }}
+                </a>
+              </td>
+              <td>
+                <span class="obs-text">{{ p.observation || 'Prescription médicale standard' }}</span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      <!-- Mobile Cards -->
+      <div class="mobile-cards">
+        @for (p of paginatedPrescriptions(); track (p.id || p.idOrdonnance)) {
+          <div class="mobile-card">
+            <div class="card-top">
+              <span class="ref-badge">{{ p.reference || ('ORD-#' + (p.id || p.idOrdonnance)) }}</span>
+              <span class="date-text">{{ p.date_ordonnance }}</span>
+            </div>
+            <div class="patient-name">
+              Patient : {{ p.consultation_details?.patient_details?.prenom }} {{ p.consultation_details?.patient_details?.nom }}
+            </div>
+            <div class="obs-box">
+              {{ p.observation || 'Prescription standard' }}
+            </div>
+            <div class="card-bottom">
+              <a [routerLink]="['/medecin/consultations', p.consultation]" class="consultation-link">
+                Voir la consultation liée #{{ p.consultation }} &rarr;
+              </a>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- PAGINATION -->
+      @if (totalPages() > 1) {
+        <div class="pagination">
+          <button
+            (click)="setPage(currentPage() - 1)"
+            [disabled]="currentPage() === 1"
+            class="page-btn"
+          >Précédent</button>
+
+          <span class="page-info">
+            Page {{ currentPage() }} sur {{ totalPages() }} ({{ filteredPrescriptions().length }} ordonnances)
+          </span>
+
+          <button
+            (click)="setPage(currentPage() + 1)"
+            [disabled]="currentPage() === totalPages()"
+            class="page-btn"
+          >Suivant</button>
+        </div>
+      }
+    }
+  </div>
+</div>

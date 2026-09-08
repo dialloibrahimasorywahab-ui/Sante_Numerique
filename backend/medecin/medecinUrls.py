@@ -30,6 +30,35 @@ urlpatterns = [
         name="get_medecins_by_specialite"
     ),
 
+    # Disponibilités et créneaux réguliers du médecin
+    path(
+        "disponibilites/",
+        views.disponibilites_list_create_view,
+        name="medecin_disponibilites_list_create"
+    ),
+    path(
+        "disponibilites/bulk/",
+        views.disponibilites_bulk_view,
+        name="medecin_disponibilites_bulk"
+    ),
+    path(
+        "disponibilites/<int:pk>/",
+        views.disponibilite_detail_view,
+        name="medecin_disponibilite_detail"
+    ),
+
+    # Indisponibilités, congés et absences exceptionnelles
+    path(
+        "indisponibilites/",
+        views.indisponibilites_list_create_view,
+        name="medecin_indisponibilites_list_create"
+    ),
+    path(
+        "indisponibilites/<int:pk>/",
+        views.indisponibilite_detail_view,
+        name="medecin_indisponibilite_detail"
+    ),
+
     # Récupérer un médecin par son ID
     path(
         "<int:medecin_id>/",

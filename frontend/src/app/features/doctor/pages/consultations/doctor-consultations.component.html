@@ -1,0 +1,165 @@
+<div class="consultations-page-container">
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Mes Consultations</h1>
+      <p class="page-subtitle">Historique des actes médicaux et comptes-rendus cliniques réalisés.</p>
+    </div>
+    <div class="header-actions">
+      <a routerLink="/medecin/consultations/nouveau" class="btn-create">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        <span>Nouvelle Consultation</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- SEARCH BAR -->
+  <div class="search-card">
+    <div class="search-input-wrapper">
+      <svg class="search-icon w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+      <input
+        type="text"
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+        placeholder="Rechercher par patient, diagnostic, observations..."
+        class="search-input"
+      />
+    </div>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="error-banner">
+      <span>{{ errorMessage() }}</span>
+      <button (click)="loadConsultations()" class="btn-retry">Réessayer</button>
+    </div>
+  }
+
+  <!-- TABLE CONTAINER -->
+  <div class="table-container">
+    @if (isLoading()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Chargement des consultations...</p>
+      </div>
+    } @else if (filteredConsultations().length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg class="w-12 h-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+          </svg>
+        </div>
+        <h3>Aucune consultation trouvée</h3>
+        <p>Enregistrez vos consultations médicales pour construire l'historique de vos patients.</p>
+        <a routerLink="/medecin/consultations/nouveau" class="btn-create mt-4">
+          Démarrer une consultation
+        </a>
+      </div>
+    } @else {
+      <!-- Desktop Table -->
+      <table class="desktop-table">
+        <thead>
+          <tr>
+            <th>Patient</th>
+            <th>Date</th>
+            <th>Diagnostic</th>
+            <th>Observations cliniques</th>
+            <th class="text-right">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of paginatedConsultations(); track (c.id || c.idConsultation)) {
+            <tr>
+              <td>
+                <div class="patient-cell">
+                  <div class="avatar-circle">
+                    {{ (c.patient_details?.nom || 'P')[0] }}
+                  </div>
+                  <div>
+                    <div class="patient-name">
+                      {{ c.patient_details?.prenom }} {{ c.patient_details?.nom }}
+                    </div>
+                    <div class="patient-sub">
+                      {{ c.patient_details?.telephone || 'Sans téléphone' }}
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="date-badge">{{ c.date_cons }}</span>
+              </td>
+              <td>
+                <span class="diagnostic-text">{{ c.diagnostic || 'Non spécifié' }}</span>
+              </td>
+              <td>
+                <span class="obs-preview">{{ c.observations || c.symptomes || 'Examen clinique standard' }}</span>
+              </td>
+              <td class="text-right">
+                <a
+                  [routerLink]="['/medecin/consultations', (c.id || c.idConsultation)]"
+                  class="btn-view"
+                >
+                  Compte-rendu
+                </a>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      <!-- Mobile Cards -->
+      <div class="mobile-cards">
+        @for (c of paginatedConsultations(); track (c.id || c.idConsultation)) {
+          <div class="mobile-card">
+            <div class="card-top">
+              <span class="font-bold text-slate-900">
+                {{ c.patient_details?.prenom }} {{ c.patient_details?.nom }}
+              </span>
+              <span class="date-badge">{{ c.date_cons }}</span>
+            </div>
+
+            <div class="card-body">
+              <p class="diag"><strong>Diagnostic :</strong> {{ c.diagnostic || 'Non spécifié' }}</p>
+              @if (c.observations) {
+                <p class="obs">{{ c.observations }}</p>
+              }
+            </div>
+
+            <div class="card-bottom">
+              <a
+                [routerLink]="['/medecin/consultations', (c.id || c.idConsultation)]"
+                class="btn-view w-full justify-center"
+              >
+                Voir le compte-rendu complet
+              </a>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- PAGINATION -->
+      @if (totalPages() > 1) {
+        <div class="pagination">
+          <button
+            (click)="setPage(currentPage() - 1)"
+            [disabled]="currentPage() === 1"
+            class="page-btn"
+          >Précédent</button>
+
+          <span class="page-info">
+            Page {{ currentPage() }} sur {{ totalPages() }} ({{ filteredConsultations().length }} consultations)
+          </span>
+
+          <button
+            (click)="setPage(currentPage() + 1)"
+            [disabled]="currentPage() === totalPages()"
+            class="page-btn"
+          >Suivant</button>
+        </div>
+      }
+    }
+  </div>
+</div>

@@ -190,4 +190,14 @@ export class AuthService {
         return '/';
     }
   }
+
+  /**
+   * Met à jour le profil stocké et le signal currentUser immédiatement.
+   */
+  updateCurrentUser(user: User): void {
+    try {
+      sessionStorage.setItem(STORAGE_USER_KEY, JSON.stringify(user));
+    } catch {}
+    this.currentUser.set(user);
+  }
 }

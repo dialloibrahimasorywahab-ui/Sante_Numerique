@@ -128,8 +128,8 @@
                     <option value="" disabled>
                       @if (isLoadingDoctors()) {
                         Chargement des médecins...
-                      } @else if (!bookingForm.get('serviceId')?.value) {
-                        -- Choisissez d'abord un service ou un médecin --
+                      } @else if (!selectedServiceId()) {
+                        -- Choisissez d'abord un pôle de soins --
                       } @else if (filteredDoctors().length === 0) {
                         -- Aucun médecin disponible pour ce pôle --
                       } @else {

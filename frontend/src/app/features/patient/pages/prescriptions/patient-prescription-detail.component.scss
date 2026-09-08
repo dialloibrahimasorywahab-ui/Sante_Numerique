@@ -1,0 +1,321 @@
+.prescription-detail-page {
+  padding: 1.5rem 1.5rem 3rem;
+  max-width: 850px;
+  margin: 0 auto;
+
+  @media (min-width: 768px) {
+    padding: 2rem 2rem 4rem;
+  }
+}
+
+.nav-back-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+
+  .btn-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #0d9488;
+    text-decoration: none;
+    transition: color 0.2s;
+
+    svg {
+      width: 1.1rem;
+      height: 1.1rem;
+    }
+
+    &:hover {
+      color: #0f766e;
+    }
+  }
+
+  .btn-print {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #334155;
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    padding: 0.5rem 1rem;
+    border-radius: 0.65rem;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    svg {
+      width: 1.1rem;
+      height: 1.1rem;
+      color: #64748b;
+    }
+
+    &:hover {
+      background-color: #f8fafc;
+      border-color: #94a3b8;
+    }
+  }
+}
+
+// Alerts
+.alert {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1.25rem;
+  border-radius: 0.75rem;
+  font-size: 0.925rem;
+  margin-bottom: 1.5rem;
+
+  svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    flex-shrink: 0;
+  }
+
+  &.alert-error {
+    background-color: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+  }
+}
+
+// Skeleton
+.detail-skeleton {
+  background-color: #ffffff;
+  border-radius: 1.25rem;
+  padding: 2rem;
+  border: 1px solid #e2e8f0;
+
+  .skeleton-header {
+    height: 70px;
+    background-color: #f1f5f9;
+    border-radius: 0.75rem;
+    margin-bottom: 1.5rem;
+    animation: pulse 1.5s infinite;
+  }
+
+  .skeleton-body {
+    height: 300px;
+    background-color: #f8fafc;
+    border-radius: 0.75rem;
+    animation: pulse 1.5s infinite;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+// Medical Prescription Sheet
+.prescription-sheet {
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 1rem;
+  padding: 2.5rem 2rem;
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.06);
+  position: relative;
+
+  @media (min-width: 768px) {
+    padding: 3.5rem 3rem;
+  }
+
+  .sheet-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+
+    .hospital-info {
+      h3 {
+        font-size: 1.35rem;
+        font-weight: 800;
+        color: #0d9488;
+        margin: 0;
+      }
+
+      p {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #334155;
+        margin: 0.2rem 0;
+      }
+
+      .sub {
+        font-size: 0.825rem;
+        color: #64748b;
+      }
+    }
+
+    .doctor-stamp {
+      text-align: left;
+
+      @media (min-width: 640px) {
+        text-align: right;
+      }
+
+      h4 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0;
+      }
+
+      p {
+        font-size: 0.85rem;
+        color: #64748b;
+        margin: 0.2rem 0;
+      }
+    }
+  }
+
+  .sheet-divider {
+    height: 2px;
+    background: linear-gradient(90deg, #0d9488 0%, #cbd5e1 100%);
+    margin: 1.5rem 0;
+  }
+
+  .patient-date-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.65rem;
+    padding: 0.85rem 1.25rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+
+    .patient-line {
+      font-size: 0.95rem;
+      color: #1e293b;
+
+      .lbl {
+        color: #64748b;
+        margin-right: 0.35rem;
+      }
+
+      .age-info {
+        color: #64748b;
+        font-size: 0.85rem;
+        margin-left: 0.4rem;
+      }
+    }
+
+    .date-line {
+      font-size: 0.9rem;
+      color: #1e293b;
+
+      .lbl {
+        color: #64748b;
+        margin-right: 0.35rem;
+      }
+    }
+  }
+
+  .prescription-body {
+    min-height: 240px;
+    margin-bottom: 2.5rem;
+    position: relative;
+
+    .rx-symbol {
+      font-size: 3rem;
+      font-family: serif;
+      font-weight: 700;
+      color: #0d9488;
+      line-height: 1;
+      margin-bottom: 1.25rem;
+    }
+
+    .medications-block {
+      padding-left: 0.5rem;
+
+      .instructions-text {
+        font-size: 1.05rem;
+        color: #1e293b;
+        line-height: 1.8;
+        white-space: pre-line;
+      }
+    }
+  }
+
+  .sheet-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding-top: 1.75rem;
+    border-top: 1px solid #e2e8f0;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+
+    .footer-legal {
+      max-width: 380px;
+
+      .ref {
+        font-size: 0.85rem;
+        color: #334155;
+      }
+
+      .notice {
+        font-size: 0.775rem;
+        color: #94a3b8;
+        margin: 0.35rem 0 0;
+        line-height: 1.4;
+      }
+    }
+
+    .signature-box {
+      text-align: center;
+      min-width: 180px;
+
+      .sig-label {
+        font-size: 0.775rem;
+        color: #64748b;
+        display: block;
+        margin-bottom: 0.5rem;
+      }
+
+      .signature-area {
+        height: 60px;
+        border-bottom: 1px dashed #94a3b8;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        .doc-sig {
+          font-family: 'Brush Script MT', cursive, sans-serif;
+          font-size: 1.4rem;
+          color: #0f766e;
+          transform: rotate(-3deg);
+        }
+      }
+    }
+  }
+}
+
+// Print styles
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .prescription-detail-page {
+    padding: 0;
+    max-width: 100%;
+  }
+
+  .prescription-sheet {
+    box-shadow: none;
+    border: none;
+    padding: 0;
+  }
+}

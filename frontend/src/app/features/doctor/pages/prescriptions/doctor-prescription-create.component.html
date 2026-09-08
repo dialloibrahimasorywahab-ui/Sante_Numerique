@@ -1,0 +1,228 @@
+<div class="create-prescription-container">
+  <!-- PAGE NAV -->
+  <div class="page-nav">
+    <a routerLink="/medecin/ordonnances" class="back-link">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+      </svg>
+      <span>Retour aux ordonnances</span>
+    </a>
+  </div>
+
+  <div class="form-header">
+    <h1 class="page-title">Rédiger une Ordonnance Médicale</h1>
+    <p class="page-subtitle">Prescrivez les médicaments, dosages et posologies pour la consultation sélectionnée.</p>
+  </div>
+
+  @if (successMessage()) {
+    <div class="success-banner">
+      <svg class="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+      </svg>
+      <span>{{ successMessage() }}</span>
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="error-banner">
+      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <span>{{ errorMessage() }}</span>
+    </div>
+  }
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Chargement du formulaire...</p>
+    </div>
+  } @else {
+    <form [formGroup]="prescriptionForm" (ngSubmit)="onSubmit()" class="prescription-form">
+      <!-- 1. CONSULTATION & RÉFÉRENCE -->
+      <div class="form-card">
+        <div class="card-title-row">
+          <div class="step-num">1</div>
+          <h2 class="card-title">Consultation & Informations Générales</h2>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group full-width">
+            <label for="consultation-select">Consultation rattachée <span class="required">*</span></label>
+            <select
+              id="consultation-select"
+              formControlName="consultation"
+              (change)="onConsultationChange($event)"
+              class="form-control"
+            >
+              <option value="" disabled>-- Choisir une consultation --</option>
+              @for (c of consultations(); track (c.id || c.idConsultation)) {
+                <option [value]="c.id || c.idConsultation">
+                  Consultation #{{ c.id || c.idConsultation }} - {{ c.patient_details?.nom }} {{ c.patient_details?.prenom }} ({{ c.date_cons }})
+                </option>
+              }
+            </select>
+            @if (prescriptionForm.get('consultation')?.touched && prescriptionForm.get('consultation')?.invalid) {
+              <span class="field-error">Veuillez sélectionner une consultation.</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="date-ordonnance">Date de prescription <span class="required">*</span></label>
+            <input
+              id="date-ordonnance"
+              type="date"
+              formControlName="date_ordonnance"
+              class="form-control"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="reference">Référence ordonnance <span class="required">*</span></label>
+            <input
+              id="reference"
+              type="text"
+              formControlName="reference"
+              class="form-control font-mono"
+            />
+          </div>
+        </div>
+
+        @if (selectedConsultation()) {
+          <div class="consultation-summary-box">
+            <div class="summary-icon">
+              <svg class="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+              </svg>
+            </div>
+            <div class="summary-content">
+              <div class="summary-patient">
+                Patient : <strong>{{ selectedConsultation()?.patient_details?.prenom }} {{ selectedConsultation()?.patient_details?.nom }}</strong>
+              </div>
+              <div class="summary-diag">
+                Diagnostic : <em>{{ selectedConsultation()?.diagnostic || 'Non spécifié' }}</em>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- 2. MÉDICAMENTS DYNAMIQUES -->
+      <div class="form-card">
+        <div class="card-title-row">
+          <div class="step-num">2</div>
+          <h2 class="card-title">Médicaments & Posologies</h2>
+          <button type="button" (click)="addMedicament()" class="btn-add-med">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            <span>Ajouter un médicament</span>
+          </button>
+        </div>
+
+        <div formArrayName="medicaments" class="medicaments-list">
+          @for (medGroup of medicamentsArray.controls; track $index) {
+            <div [formGroupName]="$index" class="med-row-card">
+              <div class="med-row-header">
+                <span class="med-num">Médicament #{{ $index + 1 }}</span>
+                @if (medicamentsArray.length > 1) {
+                  <button type="button" (click)="removeMedicament($index)" class="btn-remove-med" title="Supprimer ce médicament">
+                    &times; Supprimer
+                  </button>
+                }
+              </div>
+
+              <div class="med-grid">
+                <div class="form-group med-name">
+                  <label>Nom du médicament <span class="required">*</span></label>
+                  <input
+                    type="text"
+                    formControlName="nom"
+                    placeholder="Ex: Paracétamol, Amoxicilline..."
+                    class="form-control"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label>Dosage <span class="required">*</span></label>
+                  <input
+                    type="text"
+                    formControlName="dosage"
+                    placeholder="Ex: 500 mg, 1g..."
+                    class="form-control"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label>Fréquence <span class="required">*</span></label>
+                  <input
+                    type="text"
+                    formControlName="frequence"
+                    placeholder="Ex: 3 fois / jour"
+                    class="form-control"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label>Durée <span class="required">*</span></label>
+                  <input
+                    type="text"
+                    formControlName="duree"
+                    placeholder="Ex: 5 jours, 1 mois"
+                    class="form-control"
+                  />
+                </div>
+
+                <div class="form-group full-width">
+                  <label>Instructions particulières (optionnel)</label>
+                  <input
+                    type="text"
+                    formControlName="instructions"
+                    placeholder="Ex: À prendre au milieu du repas avec un grand verre d'eau"
+                    class="form-control"
+                  />
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- 3. INSTRUCTIONS GÉNÉRALES -->
+      <div class="form-card">
+        <div class="card-title-row">
+          <div class="step-num">3</div>
+          <h2 class="card-title">Recommandations & Conseils Généraux</h2>
+        </div>
+
+        <div class="form-group full-width">
+          <textarea
+            rows="3"
+            formControlName="instructionsGenerales"
+            placeholder="Ex: Ne pas interrompre le traitement avant la fin de la durée prescrite. Revenir en consultation si persistance des symptômes au bout de 48h..."
+            class="form-control"
+          ></textarea>
+        </div>
+      </div>
+
+      <!-- FORM ACTIONS -->
+      <div class="form-submit-row">
+        <a routerLink="/medecin/ordonnances" class="btn-cancel">Annuler</a>
+        <button
+          type="submit"
+          [disabled]="isSubmitting() || prescriptionForm.invalid"
+          class="btn-save"
+        >
+          @if (isSubmitting()) {
+            <span>Enregistrement en cours...</span>
+          } @else {
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            <span>Enregistrer l'ordonnance</span>
+          }
+        </button>
+      </div>
+    </form>
+  }
+</div>

@@ -50,6 +50,19 @@ export interface RendezVousDto {
   statutDisplay?: string;
   typeConsultation?: 'SUR_PLACE' | 'TELECONSULTATION';
   codeConfirmation?: string;
+  medecin_nom?: string;
+  medecin_prenom?: string;
+  medecin_specialite?: string;
+  medecin_telephone?: string;
+  medecin_email?: string;
+  service_nom?: string;
+  bureau?: string;
+  type_consultation?: string;
+  appointment_type?: string;
+  reason?: string;
+  notes?: string;
+  date?: string;
+  time?: string;
 }
 
 export interface CreateAppointmentDto {

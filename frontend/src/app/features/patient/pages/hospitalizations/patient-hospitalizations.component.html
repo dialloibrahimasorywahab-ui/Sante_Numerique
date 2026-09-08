@@ -1,0 +1,206 @@
+<div class="hospitalizations-page">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="title-group">
+      <h1>Mes Séjours & Hospitalisations</h1>
+      <p>Suivez vos admissions hospitalières, chambres d'affectation et praticiens référents.</p>
+    </div>
+  </div>
+
+  <!-- Alerts -->
+  @if (errorMessage()) {
+    <div class="alert alert-error">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span>{{ errorMessage() }}</span>
+    </div>
+  }
+
+  <!-- Active Hospitalization Banner (If currently hospitalized) -->
+  @if (activeHospitalization(); as activeHosp) {
+    <div class="active-hospitalization-banner">
+      <div class="banner-top">
+        <div class="pulse-indicator">
+          <span class="pulse-dot"></span>
+          <span class="pulse-text">HOSPITALISATION EN COURS</span>
+        </div>
+        <span class="entry-date">Admis le {{ formatDate(activeHosp.date_entree) }}</span>
+      </div>
+
+      <div class="banner-body">
+        <div class="hosp-info-block">
+          <h3>{{ activeHosp.motif || 'Séjour médicalisé' }}</h3>
+          <p class="doctor-line">
+            Médecin référent : <strong>{{ getDoctorName(activeHosp) }}</strong>
+            @if (activeHosp.medecin_details?.specialite) {
+              <span>({{ activeHosp.medecin_details?.specialite }})</span>
+            }
+          </p>
+        </div>
+
+        <div class="location-chips">
+          @if (activeHosp.lit_details?.chambre_detail; as ch) {
+            <div class="chip">
+              <span class="chip-lbl">Chambre</span>
+              <strong>{{ ch.numero_chambre }}</strong>
+            </div>
+            @if (ch.bureau_localisation) {
+              <div class="chip">
+                <span class="chip-lbl">Aile / Étage</span>
+                <strong>{{ ch.bureau_localisation }}</strong>
+              </div>
+            }
+          }
+          @if (activeHosp.lit_details; as lit) {
+            <div class="chip">
+              <span class="chip-lbl">Lit affecté</span>
+              <strong>Lit {{ lit.numero_lit }}</strong>
+            </div>
+          }
+        </div>
+      </div>
+
+      @if (activeHosp.observation) {
+        <div class="banner-observation">
+          <span class="obs-lbl">Instructions du service :</span>
+          <p>{{ activeHosp.observation }}</p>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="skeleton-list">
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+    </div>
+  } @else if (hospitalizations().length === 0) {
+    <!-- Empty State -->
+    <div class="empty-state">
+      <div class="empty-icon-wrap">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        </svg>
+      </div>
+      <h3>Aucun séjour hospitalier</h3>
+      <p>Vous n'avez aucun dossier de séjour ou d'hospitalisation enregistré à ce jour.</p>
+    </div>
+  } @else {
+    <!-- List of All Hospitalizations (Strictly 3 per page) -->
+    <div class="hosp-list-header">
+      <h2>Historique des séjours</h2>
+    </div>
+
+    <div class="hospitalizations-list">
+      @for (h of hospitalizations(); track h.id) {
+        <div class="hospitalization-card" [class.is-current]="h.statut === 'EN_COURS'">
+          <!-- Top info -->
+          <div class="card-header">
+            <div class="header-left">
+              <span class="hosp-badge">Dossier #{{ h.id }}</span>
+              <span class="status-tag" [ngClass]="getStatusBadgeClass(h.statut)">
+                {{ getStatusLabel(h.statut) }}
+              </span>
+            </div>
+
+            <div class="stay-duration">
+              Du <strong>{{ formatDate(h.date_entree) }}</strong> au <strong>{{ formatDate(h.date_sortie) }}</strong>
+            </div>
+          </div>
+
+          <!-- Main details -->
+          <div class="card-body">
+            <div class="detail-row">
+              <div class="motif-section">
+                <span class="lbl">Motif d’admission</span>
+                <h4>{{ h.motif || 'Observation & soins hospitaliers' }}</h4>
+              </div>
+
+              <div class="doctor-section">
+                <span class="lbl">Praticien responsable</span>
+                <p>{{ getDoctorName(h) }}</p>
+                <span class="sub-text">{{ h.medecin_details?.specialite || 'Médecine hospitalière' }}</span>
+              </div>
+            </div>
+
+            <!-- Room / Bed details if present -->
+            @if (h.lit_details) {
+              <div class="room-details-box">
+                <div class="room-item">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                  <span>Chambre <strong>{{ h.lit_details.chambre_detail?.numero_chambre || 'N/A' }}</strong></span>
+                </div>
+
+                <div class="room-item">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+                  </svg>
+                  <span>Lit <strong>{{ h.lit_details.numero_lit }}</strong></span>
+                </div>
+
+                @if (h.lit_details.chambre_detail?.bureau_localisation) {
+                  <div class="room-item">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    </svg>
+                    <span>Localisation : <strong>{{ h.lit_details.chambre_detail?.bureau_localisation }}</strong></span>
+                  </div>
+                }
+              </div>
+            }
+
+            @if (h.observation) {
+              <div class="observation-box">
+                <span class="obs-title">Notes médicales & consignes :</span>
+                <p>{{ h.observation }}</p>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Pagination Controls (Stricte 3 par page) -->
+    <div class="pagination-wrap">
+      <div class="pagination-info">
+        Total : <strong>{{ totalCount() }}</strong> séjour(s)
+        <span class="badge-page-size">3 par page</span>
+      </div>
+
+      <div class="pagination-buttons">
+        <button
+          type="button"
+          (click)="changePage(currentPage() - 1)"
+          [disabled]="currentPage() <= 1"
+          class="btn-page-nav"
+        >
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          Précédent
+        </button>
+
+        <span class="page-indicator">
+          Page <strong>{{ currentPage() }}</strong> sur <strong>{{ totalPages() }}</strong>
+        </span>
+
+        <button
+          type="button"
+          (click)="changePage(currentPage() + 1)"
+          [disabled]="currentPage() >= totalPages()"
+          class="btn-page-nav"
+        >
+          Suivant
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  }
+</div>

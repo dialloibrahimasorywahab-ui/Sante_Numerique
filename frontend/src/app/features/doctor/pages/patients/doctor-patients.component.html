@@ -1,0 +1,179 @@
+<div class="patients-page-container">
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Mes Patients</h1>
+      <p class="page-subtitle">Accédez aux dossiers médicaux, antécédents et historiques de vos patients.</p>
+    </div>
+  </div>
+
+  <!-- SEARCH BAR -->
+  <div class="search-card">
+    <div class="search-input-wrapper">
+      <svg class="search-icon w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+      <input
+        type="text"
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+        placeholder="Rechercher un patient par nom, prénom, téléphone, N° de sécurité sociale..."
+        class="search-input"
+      />
+    </div>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="error-banner">
+      <span>{{ errorMessage() }}</span>
+      <button (click)="loadPatients()" class="btn-retry">Réessayer</button>
+    </div>
+  }
+
+  <!-- PATIENTS TABLE & LIST -->
+  <div class="table-container">
+    @if (isLoading()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Chargement des dossiers patients...</p>
+      </div>
+    } @else if (filteredPatients().length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg class="w-12 h-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+          </svg>
+        </div>
+        <h3>Aucun patient trouvé</h3>
+        <p>Aucun dossier ne correspond à votre recherche.</p>
+      </div>
+    } @else {
+      <table class="desktop-table">
+        <thead>
+          <tr>
+            <th>Patient</th>
+            <th>Âge / Sexe</th>
+            <th>Groupe Sanguin</th>
+            <th>Téléphone</th>
+            <th>N° Sécurité Sociale</th>
+            <th class="text-right">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of paginatedPatients(); track (p.id_patient || p.idPatient)) {
+            <tr>
+              <td>
+                <div class="patient-cell">
+                  <div class="avatar-circle">
+                    {{ (p.nom || 'P')[0] }}
+                  </div>
+                  <div>
+                    <div class="patient-name">
+                      {{ p.prenom }} {{ p.nom }}
+                    </div>
+                    <div class="patient-email">
+                      {{ p.email || 'Sans email' }}
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="font-medium">{{ calculateAge(p.date_naissance || p.dateNaissance) }}</span>
+                <span class="text-slate-400 text-xs ml-1">({{ p.sexe || 'N/R' }})</span>
+              </td>
+              <td>
+                @if (p.groupe_sanguin || p.groupeSanguin) {
+                  <span class="badge-blood">
+                    {{ p.groupe_sanguin || p.groupeSanguin }}
+                  </span>
+                } @else {
+                  <span class="text-slate-400 text-xs">Non renseigné</span>
+                }
+              </td>
+              <td>
+                <span class="text-sm font-medium">{{ p.telephone || 'Non renseigné' }}</span>
+              </td>
+              <td>
+                <span class="text-xs font-mono text-slate-600">
+                  {{ p.numero_securite_sociale || p.numeroSecuriteSociale || 'Non renseigné' }}
+                </span>
+              </td>
+              <td class="text-right">
+                <a
+                  [routerLink]="['/medecin/patients', (p.id_patient || p.idPatient)]"
+                  class="btn-view-dossier"
+                >
+                  <span>Dossier médical</span>
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                  </svg>
+                </a>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      <!-- Mobile Cards -->
+      <div class="mobile-cards">
+        @for (p of paginatedPatients(); track (p.id_patient || p.idPatient)) {
+          <div class="mobile-card">
+            <div class="card-top">
+              <div class="patient-cell">
+                <div class="avatar-circle">
+                  {{ (p.nom || 'P')[0] }}
+                </div>
+                <div>
+                  <div class="patient-name">{{ p.prenom }} {{ p.nom }}</div>
+                  <div class="patient-email">{{ p.telephone || p.email }}</div>
+                </div>
+              </div>
+              @if (p.groupe_sanguin || p.groupeSanguin) {
+                <span class="badge-blood">{{ p.groupe_sanguin || p.groupeSanguin }}</span>
+              }
+            </div>
+
+            <div class="card-info">
+              <span class="text-xs text-slate-500">
+                Âge : <strong>{{ calculateAge(p.date_naissance || p.dateNaissance) }}</strong>
+              </span>
+              <span class="text-xs text-slate-500">
+                Sécu : <strong>{{ p.numero_securite_sociale || p.numeroSecuriteSociale || 'N/R' }}</strong>
+              </span>
+            </div>
+
+            <div class="card-bottom">
+              <a
+                [routerLink]="['/medecin/patients', (p.id_patient || p.idPatient)]"
+                class="btn-view-dossier w-full justify-center"
+              >
+                <span>Consulter le dossier médical</span>
+              </a>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- PAGINATION -->
+      @if (totalPages() > 1) {
+        <div class="pagination">
+          <button
+            (click)="setPage(currentPage() - 1)"
+            [disabled]="currentPage() === 1"
+            class="page-btn"
+          >Précédent</button>
+
+          <span class="page-info">
+            Page {{ currentPage() }} sur {{ totalPages() }} ({{ filteredPatients().length }} patients)
+          </span>
+
+          <button
+            (click)="setPage(currentPage() + 1)"
+            [disabled]="currentPage() === totalPages()"
+            class="page-btn"
+          >Suivant</button>
+        </div>
+      }
+    }
+  </div>
+</div>

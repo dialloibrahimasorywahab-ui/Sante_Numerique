@@ -112,7 +112,7 @@ def run_seed_consultations():
         pat_nom = f"{patient.idUtilisateur.prenom} {patient.idUtilisateur.nom}" if patient.idUtilisateur else f"Patient #{patient.idPatient}"
         med_nom = f"Dr. {medecin.idUtilisateur.prenom} {medecin.idUtilisateur.nom}" if medecin.idUtilisateur else f"Dr. #{medecin.idMedecin}"
 
-        print(f"   |- Cons #{cons.id} | {pat_nom} | {med_nom} | Frais #{frais.id} ({frais.montant} FCFA, {frais.get_statut_display()}){ord_info}")
+        print(f"   |- Cons #{cons.id} | {pat_nom} | {med_nom} | Frais #{frais.id} ({frais.montant} GNF, {frais.get_statut_display()}){ord_info}")
 
     print("\n=========================================================")
     print(f" SEEDING DES CONSULTATIONS TERMINE !")

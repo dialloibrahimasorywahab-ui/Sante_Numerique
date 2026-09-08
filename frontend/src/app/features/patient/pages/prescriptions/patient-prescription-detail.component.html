@@ -1,0 +1,103 @@
+<div class="prescription-detail-page">
+  <!-- Nav bar -->
+  <div class="nav-back-bar no-print">
+    <a routerLink="/patient/ordonnances" class="btn-back">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+      </svg>
+      Retour aux ordonnances
+    </a>
+
+    <button type="button" (click)="printPrescription()" class="btn-print">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+      </svg>
+      Imprimer l'ordonnance
+    </button>
+  </div>
+
+  <!-- Alerts -->
+  @if (errorMessage()) {
+    <div class="alert alert-error">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span>{{ errorMessage() }}</span>
+    </div>
+  }
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="detail-skeleton">
+      <div class="skeleton-header"></div>
+      <div class="skeleton-body"></div>
+    </div>
+  } @else if (prescription(); as ord) {
+    <!-- Medical Prescription Sheet -->
+    <div class="prescription-sheet">
+      <!-- Sheet Header: Clinic & Doctor info -->
+      <div class="sheet-header">
+        <div class="hospital-info">
+          <h3>Santé Numérique</h3>
+          <p>Centre Hospitalier Universitaire</p>
+          <span class="sub">Service de Médecine Générale & Spécialisée</span>
+        </div>
+
+        <div class="doctor-stamp">
+          <h4>{{ getDoctorName(ord) }}</h4>
+          <p>{{ getDoctorSpecialty(ord) }}</p>
+          @if (ord.consultation_details?.medecin_details?.telephone) {
+            <p>Tél : {{ ord.consultation_details?.medecin_details?.telephone }}</p>
+          }
+        </div>
+      </div>
+
+      <div class="sheet-divider"></div>
+
+      <!-- Patient & Date info -->
+      <div class="patient-date-bar">
+        <div class="patient-line">
+          <span class="lbl">Pour :</span>
+          <strong>
+            {{ ord.consultation_details?.patient_details?.prenom || '' }}
+            {{ ord.consultation_details?.patient_details?.nom || 'Patient' }}
+          </strong>
+          @if (ord.consultation_details?.patient_details?.date_naissance) {
+            <span class="age-info">(Né(e) le {{ ord.consultation_details?.patient_details?.date_naissance }})</span>
+          }
+        </div>
+
+        <div class="date-line">
+          <span class="lbl">Délivrée le :</span>
+          <strong>{{ formatDate(ord.date_ordonnance) }}</strong>
+        </div>
+      </div>
+
+      <!-- Rx / Prescription Content -->
+      <div class="prescription-body">
+        <div class="rx-symbol">℞</div>
+
+        <div class="medications-block">
+          <div class="instructions-text">
+            {{ ord.observation || 'Prescription médicale standard établie lors de la consultation.' }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Sheet Footer: Validity notice, Ref, Doctor Signature -->
+      <div class="sheet-footer">
+        <div class="footer-legal">
+          <span class="ref">Réf. ordonnance : <strong>{{ ord.reference || ('ORD-' + ord.id) }}</strong></span>
+          <p class="notice">Ordonnance valable pour une durée de 3 mois sauf mention contraire. À présenter en pharmacie.</p>
+        </div>
+
+        <div class="signature-box">
+          <span class="sig-label">Signature et cachet du médecin :</span>
+          <div class="signature-area">
+            <span class="doc-sig">{{ getDoctorName(ord) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

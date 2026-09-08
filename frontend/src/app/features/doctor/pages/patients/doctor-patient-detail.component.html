@@ -1,0 +1,247 @@
+<div class="patient-detail-container">
+  <!-- TOP BREADCRUMB & BACK -->
+  <div class="page-nav">
+    <a routerLink="/medecin/patients" class="back-link">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+      </svg>
+      <span>Retour à la liste des patients</span>
+    </a>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="error-banner">
+      <span>{{ errorMessage() }}</span>
+      <button (click)="loadPatientDossier(patientId())" class="btn-retry">Réessayer</button>
+    </div>
+  }
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Ouverture du dossier médical sécurisé...</p>
+    </div>
+  } @else if (patient()) {
+    <!-- PATIENT HERO CARD -->
+    <div class="patient-hero-card">
+      <div class="hero-left">
+        <div class="patient-avatar-large">
+          {{ (patient()?.nom || 'P')[0] }}{{ (patient()?.prenom || 'A')[0] }}
+        </div>
+        <div class="hero-identity">
+          <div class="identity-top">
+            <h1 class="patient-fullname">
+              {{ patient()?.prenom }} {{ patient()?.nom }}
+            </h1>
+            <span class="patient-id-badge">ID: #{{ patient()?.id_patient || patient()?.idPatient }}</span>
+          </div>
+
+          <div class="identity-meta">
+            <span>Âge : <strong>{{ calculateAge(patient()?.date_naissance || patient()?.dateNaissance) }}</strong></span>
+            <span>Sexe : <strong>{{ patient()?.sexe || 'Non spécifié' }}</strong></span>
+            @if (patient()?.groupe_sanguin || patient()?.groupeSanguin) {
+              <span class="badge-blood">Groupe {{ patient()?.groupe_sanguin || patient()?.groupeSanguin }}</span>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-right">
+        <a
+          [routerLink]="['/medecin/consultations/nouveau']"
+          [queryParams]="{ patient_id: patient()?.id_patient || patient()?.idPatient }"
+          class="btn-new-consult"
+        >
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          <span>Nouvelle Consultation</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- DOSSIER GRID: LEFT INFO + RIGHT MEDICAL TABS -->
+    <div class="dossier-grid">
+      <!-- LEFT: INFORMATIONS ADMINISTRATIVES ET CONTACT -->
+      <aside class="info-sidebar">
+        <div class="info-card">
+          <h2 class="card-title">Informations Personnelles</h2>
+          <div class="info-rows">
+            <div class="info-row">
+              <span class="info-label">Date de naissance</span>
+              <span class="info-val">{{ patient()?.date_naissance || patient()?.dateNaissance || 'Non renseignée' }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Téléphone</span>
+              <span class="info-val">{{ patient()?.telephone || 'Non renseigné' }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Email</span>
+              <span class="info-val">{{ patient()?.email || 'Non renseigné' }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Adresse</span>
+              <span class="info-val">{{ patient()?.adresse || 'Non renseignée' }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">N° Sécurité Sociale</span>
+              <span class="info-val font-mono">{{ patient()?.numero_securite_sociale || patient()?.numeroSecuriteSociale || 'Non renseigné' }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Personne à contacter</span>
+              <span class="info-val">{{ patient()?.personne_a_contacter || patient()?.personneAContacter || 'Non renseignée' }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Date d'inscription</span>
+              <span class="info-val">{{ patient()?.date_inscription || patient()?.dateInscription || 'Récemment' }}</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- RIGHT: MEDICAL HISTORY TABS -->
+      <main class="medical-content">
+        <!-- TABS NAV -->
+        <div class="tabs-nav">
+          <button
+            [class.active]="activeTab() === 'CONSULTATIONS'"
+            (click)="setActiveTab('CONSULTATIONS')"
+            class="tab-link"
+          >
+            <span>Consultations</span>
+            <span class="tab-count">{{ consultations().length }}</span>
+          </button>
+
+          <button
+            [class.active]="activeTab() === 'ORDONNANCES'"
+            (click)="setActiveTab('ORDONNANCES')"
+            class="tab-link"
+          >
+            <span>Ordonnances</span>
+            <span class="tab-count">{{ prescriptions().length }}</span>
+          </button>
+
+          <button
+            [class.active]="activeTab() === 'RENDEZ_VOUS'"
+            (click)="setActiveTab('RENDEZ_VOUS')"
+            class="tab-link"
+          >
+            <span>Rendez-vous</span>
+            <span class="tab-count">{{ appointments().length }}</span>
+          </button>
+        </div>
+
+        <!-- TAB CONTENT: CONSULTATIONS -->
+        @if (activeTab() === 'CONSULTATIONS') {
+          <div class="tab-panel">
+            @if (consultations().length === 0) {
+              <div class="empty-panel">
+                <p class="empty-title">Aucune consultation enregistrée</p>
+                <p class="empty-desc">Ce patient n'a pas encore de compte-rendu médical.</p>
+                <a
+                  [routerLink]="['/medecin/consultations/nouveau']"
+                  [queryParams]="{ patient_id: patient()?.id_patient || patient()?.idPatient }"
+                  class="btn-primary-small mt-3"
+                >
+                  Démarrer une première consultation
+                </a>
+              </div>
+            } @else {
+              <div class="timeline-list">
+                @for (cons of consultations(); track cons.id) {
+                  <div class="timeline-item">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-card">
+                      <div class="item-header">
+                        <span class="item-date">Consultation du {{ cons.date_cons }}</span>
+                        <a [routerLink]="['/medecin/consultations', cons.id]" class="link-detail">
+                          Consulter la fiche &rarr;
+                        </a>
+                      </div>
+
+                      <div class="item-diagnostic">
+                        <strong>Diagnostic :</strong> {{ cons.diagnostic || 'Non spécifié' }}
+                      </div>
+
+                      @if (cons.symptomes) {
+                        <div class="item-symptomes">
+                          <strong>Symptômes :</strong> {{ cons.symptomes }}
+                        </div>
+                      }
+
+                      @if (cons.observations) {
+                        <div class="item-observations">
+                          <strong>Observations :</strong> {{ cons.observations }}
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+
+        <!-- TAB CONTENT: ORDONNANCES -->
+        @if (activeTab() === 'ORDONNANCES') {
+          <div class="tab-panel">
+            @if (prescriptions().length === 0) {
+              <div class="empty-panel">
+                <p class="empty-title">Aucune ordonnance émise</p>
+                <p class="empty-desc">Aucune prescription médicale n'a été rattachée à ce dossier.</p>
+              </div>
+            } @else {
+              <div class="prescriptions-grid">
+                @for (p of prescriptions(); track p.id) {
+                  <div class="prescription-card">
+                    <div class="presc-top">
+                      <span class="presc-ref">Réf: {{ p.reference || ('#' + p.id) }}</span>
+                      <span class="presc-date">{{ p.date_ordonnance }}</span>
+                    </div>
+                    <div class="presc-body">
+                      <p class="presc-obs">{{ p.observation || 'Prescription médicale standard' }}</p>
+                    </div>
+                    <div class="presc-bottom">
+                      <a [routerLink]="['/medecin/ordonnances']" class="link-detail">
+                        Voir les ordonnances
+                      </a>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+
+        <!-- TAB CONTENT: RENDEZ-VOUS -->
+        @if (activeTab() === 'RENDEZ_VOUS') {
+          <div class="tab-panel">
+            @if (appointments().length === 0) {
+              <div class="empty-panel">
+                <p class="empty-title">Aucun rendez-vous</p>
+                <p class="empty-desc">Ce patient n'a pas de rendez-vous programmé.</p>
+              </div>
+            } @else {
+              <div class="rdvs-list">
+                @for (r of appointments(); track r.id) {
+                  <div class="rdv-row">
+                    <div class="rdv-date-time">
+                      <span class="date">{{ r.date_rdv || r.dateRdv }}</span>
+                      <span class="time">à {{ r.heure }}</span>
+                    </div>
+                    <div class="rdv-motif">
+                      {{ r.motif || 'Consultation' }}
+                    </div>
+                    <div class="rdv-status">
+                      <span class="badge">{{ r.statut }}</span>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+      </main>
+    </div>
+  }
+</div>

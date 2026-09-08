@@ -1,0 +1,481 @@
+/* ==========================================================================
+   PATIENT LAYOUT SCSS — SANTÉ NUMÉRIQUE
+   ========================================================================== */
+
+.patient-layout-root {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f1f5f9;
+  color: #0f2537;
+  position: relative;
+  font-family: var(--font-body, 'Inter', sans-serif);
+}
+
+/* --------------------------------------------------------------------------
+   BACKDROP MOBILE
+   -------------------------------------------------------------------------- */
+.mobile-sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 37, 55, 0.45);
+  backdrop-filter: blur(4px);
+  z-index: 998;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* --------------------------------------------------------------------------
+   SIDEBAR
+   -------------------------------------------------------------------------- */
+.patient-sidebar {
+  width: 280px;
+  background: #ffffff;
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  z-index: 999;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.02);
+
+  @media (max-width: 1024px) {
+    position: fixed;
+    top: 0;
+    left: 0;
+    transform: translateX(-100%);
+    box-shadow: 10px 0 25px rgba(0, 0, 0, 0.12);
+
+    &.mobile-open {
+      transform: translateX(0);
+    }
+  }
+}
+
+/* Sidebar Brand */
+.sidebar-header {
+  padding: 1.5rem 1.25rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #f1f5f9;
+
+  .brand-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-decoration: none;
+
+    .logo-icon-box {
+      width: 2.35rem;
+      height: 2.35rem;
+
+      .brand-svg {
+        width: 100%;
+        height: 100%;
+      }
+    }
+
+    .brand-text-col {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.1;
+
+      .brand-title {
+        font-size: 1.05rem;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+        color: #055a52;
+      }
+
+      .brand-sub {
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        color: #0284c7;
+      }
+    }
+  }
+
+  .btn-close-mobile {
+    display: none;
+    background: transparent;
+    border: none;
+    font-size: 1.25rem;
+    color: #64748b;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+
+    @media (max-width: 1024px) {
+      display: block;
+    }
+
+    &:hover {
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+  }
+}
+
+/* Patient Short Card */
+.patient-sidebar-badge {
+  margin: 1rem 1.25rem 0.75rem;
+  padding: 0.85rem 1rem;
+  background: linear-gradient(135deg, #f0fdf4 0%, #f0f9ff 100%);
+  border: 1px solid #dcfce7;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  .badge-avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 9999px;
+    background: #055a52;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+
+  .badge-info {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+
+    .patient-name {
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: #0f172a;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .patient-role-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #0d796f;
+
+      .status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 9999px;
+        background: #10b981;
+      }
+    }
+  }
+}
+
+/* Sidebar Nav Items */
+.sidebar-nav {
+  flex: 1;
+  padding: 0.5rem 1rem;
+  overflow-y: auto;
+
+  .nav-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+
+    .nav-item {
+      .nav-link {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        padding: 0.75rem 1rem;
+        border-radius: 10px;
+        color: #475569;
+        font-size: 0.9125rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s ease;
+
+        .nav-icon-wrap {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 1.35rem;
+          height: 1.35rem;
+          color: #64748b;
+          transition: color 0.2s ease;
+
+          .nav-svg {
+            width: 100%;
+            height: 100%;
+          }
+        }
+
+        &:hover {
+          background: #f8fafc;
+          color: #055a52;
+
+          .nav-icon-wrap {
+            color: #055a52;
+          }
+        }
+
+        &.active {
+          background: #e6f4f2;
+          color: #055a52;
+          font-weight: 700;
+
+          .nav-icon-wrap {
+            color: #055a52;
+          }
+        }
+      }
+    }
+  }
+}
+
+/* Sidebar Footer / Logout */
+.sidebar-footer {
+  padding: 1rem 1.25rem 1.25rem;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+
+  .btn-sidebar-logout {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.65rem 1rem;
+    border-radius: 8px;
+    background: #fef2f2;
+    border: 1px solid #fee2e2;
+    color: #b91c1c;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    .logout-icon {
+      width: 1rem;
+      height: 1rem;
+    }
+
+    &:hover {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+  }
+
+  .back-public-link {
+    font-size: 0.8rem;
+    color: #64748b;
+    text-align: center;
+    text-decoration: none;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: #055a52;
+      text-decoration: underline;
+    }
+  }
+}
+
+/* --------------------------------------------------------------------------
+   MAIN CONTAINER & TOPBAR
+   -------------------------------------------------------------------------- */
+.patient-main-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 100vh;
+}
+
+.patient-topbar {
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 0.75rem 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 990;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+
+  @media (max-width: 768px) {
+    padding: 0.75rem 1rem;
+  }
+
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    .btn-burger-toggle {
+      display: none;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      color: #334155;
+      padding: 0.45rem;
+      border-radius: 8px;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+
+      @media (max-width: 1024px) {
+        display: inline-flex;
+      }
+
+      .burger-icon {
+        width: 1.25rem;
+        height: 1.25rem;
+      }
+
+      &:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+      }
+    }
+
+    .portal-badge {
+      display: flex;
+      flex-direction: column;
+
+      .portal-tag {
+        font-size: 0.825rem;
+        font-weight: 700;
+        color: #055a52;
+        letter-spacing: 0.02em;
+      }
+
+      .portal-hospital {
+        font-size: 0.75rem;
+        color: #64748b;
+      }
+    }
+  }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    .btn-topbar-rdv {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.5rem 1rem;
+      background: #055a52;
+      color: #ffffff;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border-radius: 8px;
+      text-decoration: none;
+      box-shadow: 0 2px 4px rgba(5, 90, 82, 0.15);
+      transition: all 0.2s ease;
+
+      .btn-icon {
+        width: 0.95rem;
+        height: 0.95rem;
+      }
+
+      &:hover {
+        background: #03443e;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(5, 90, 82, 0.25);
+      }
+
+      @media (max-width: 580px) {
+        display: none;
+      }
+    }
+
+    .topbar-user-pill {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      padding: 0.35rem 0.65rem;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 9999px;
+      text-decoration: none;
+      transition: all 0.2s ease;
+
+      .user-avatar-circle {
+        width: 2rem;
+        height: 2rem;
+        border-radius: 9999px;
+        background: #0284c7;
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 0.875rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .user-meta-text {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.15;
+        padding-right: 0.35rem;
+
+        .user-full-name {
+          font-size: 0.8125rem;
+          font-weight: 700;
+          color: #0f172a;
+          max-width: 140px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .user-role-label {
+          font-size: 0.7rem;
+          color: #64748b;
+        }
+      }
+
+      &:hover {
+        background: #f1f5f9;
+        border-color: #cbd5e1;
+      }
+    }
+  }
+}
+
+/* --------------------------------------------------------------------------
+   VIEW CONTENT AREA
+   -------------------------------------------------------------------------- */
+.patient-view-content {
+  flex: 1;
+  padding: 1.25rem 1.5rem;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+
+  @media (max-width: 1024px) {
+    padding: 1rem 1rem;
+  }
+
+  @media (max-width: 640px) {
+    padding: 0.75rem 0.65rem;
+  }
+}

@@ -1,0 +1,322 @@
+<div class="patient-dashboard-view">
+
+  <!-- =========================================================================
+       GREETING HEADER
+       ========================================================================= -->
+  <section class="dashboard-greeting-header">
+    <div class="greeting-texts">
+      <h1 class="greeting-title">
+        Bonjour, {{ authService.currentUser()?.prenom }} 👋
+      </h1>
+      <p class="greeting-subtitle">
+        Bienvenue dans votre espace patient personnel. Suivez vos rendez-vous, vos soins et votre historique médical en toute sécurité.
+      </p>
+    </div>
+
+    <div class="greeting-actions">
+      <a routerLink="/patient/profil" [queryParams]="{ tab: 'EDIT' }" class="btn-action-profile-shortcut">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon">
+          <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+        </svg>
+        <span>Mettre à jour mes informations</span>
+      </a>
+      <a routerLink="/rendez-vous" class="btn-action-primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon">
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        <span>Nouveau RDV</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       PATIENT QUICK PROFILE & AGE BANNER
+       ========================================================================= -->
+  <div class="patient-quick-profile-card card shadow-xs">
+    <div class="quick-profile-main">
+      <div class="profile-avatar-tag">
+        {{ (authService.currentUser()?.prenom?.[0] || 'P') + (authService.currentUser()?.nom?.[0] || '') }}
+      </div>
+      <div class="profile-meta-content">
+        <div class="profile-top-line">
+          <span class="patient-full-title">
+            {{ authService.currentUser()?.prenom }} {{ authService.currentUser()?.nom }}
+          </span>
+          @if (userAge() !== null) {
+            <span class="badge-age">{{ userAge() }} ans</span>
+          } @else {
+            <span class="badge-age badge-age-missing">Âge non renseigné</span>
+          }
+        </div>
+        <div class="profile-chips-row">
+          @if (authService.currentUser()?.date_naissance || authService.currentUser()?.dateNaissance || patientRecord()?.date_naissance) {
+            <span class="chip-item">
+              📅 Né(e) le {{ formatDate(authService.currentUser()?.date_naissance || authService.currentUser()?.dateNaissance || patientRecord()?.date_naissance) }}
+            </span>
+          } @else {
+            <span class="chip-item chip-warning">
+              ⚠️ Date de naissance manquante
+            </span>
+          }
+          <span class="chip-item">
+            🩸 Groupe : <strong>{{ patientRecord()?.groupe_sanguin || 'Non renseigné' }}</strong>
+          </span>
+          <span class="chip-item">
+            📞 {{ authService.currentUser()?.telephone || 'Non renseigné' }}
+          </span>
+          @if (patientRecord()?.adresse) {
+            <span class="chip-item">
+              📍 {{ patientRecord()?.adresse }}
+            </span>
+          }
+        </div>
+      </div>
+    </div>
+    <div class="quick-profile-cta">
+      <a routerLink="/patient/profil" [queryParams]="{ tab: 'EDIT' }" class="btn-edit-profile">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon">
+          <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+        </svg>
+        <span>Mettre à jour mes informations</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Error alert if any -->
+  @if (errorMessage()) {
+    <div class="alert-banner alert-error" role="alert">
+      <span class="alert-icon">⚠️</span>
+      <div class="alert-msg">{{ errorMessage() }}</div>
+      <button type="button" class="btn-retry" (click)="loadDashboardData()">Réessayer</button>
+    </div>
+  }
+
+  <!-- Active Hospitalization Alert (if present) -->
+  @if (activeHospitalization(); as hosp) {
+    <div class="active-hospitalization-banner card shadow-sm">
+      <div class="hosp-banner-icon">🏥</div>
+      <div class="hosp-banner-content">
+        <div class="hosp-title-row">
+          <span class="badge-urgent">HOSPITALISATION EN COURS</span>
+          <strong class="hosp-lit">Chambre {{ hosp.lit_details?.chambre_detail?.numero_chambre || '—' }} — Lit {{ hosp.lit_details?.numero_lit || '—' }}</strong>
+        </div>
+        <p class="hosp-desc">
+          Admis le <strong>{{ formatDate(hosp.date_entree) }}</strong>. Médecin référent : <strong>Dr. {{ hosp.medecin_details?.prenom }} {{ hosp.medecin_details?.nom }}</strong>.
+        </p>
+      </div>
+      <a routerLink="/patient/hospitalisations" class="btn-view-hosp">Détails du séjour</a>
+    </div>
+  }
+
+  <!-- =========================================================================
+       STATS CARDS ROW
+       ========================================================================= -->
+  <section class="dashboard-stats-grid" aria-label="Statistiques du patient">
+    
+    <!-- Card 1: Rendez-vous -->
+    <a routerLink="/patient/rendez-vous" class="stat-card stat-rdv card shadow-xs">
+      <div class="stat-icon-wrap icon-calendar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="stat-svg">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+          <line x1="16" y1="2" x2="16" y2="6" />
+          <line x1="8" y1="2" x2="8" y2="6" />
+          <line x1="3" y1="10" x2="21" y2="10" />
+        </svg>
+      </div>
+      <div class="stat-meta">
+        <span class="stat-label">Prochains RDV</span>
+        @if (isLoading()) {
+          <div class="skeleton-pill skeleton-num"></div>
+        } @else {
+          <strong class="stat-number">{{ stats().upcomingAppointmentsCount }}</strong>
+        }
+      </div>
+      <span class="stat-arrow">→</span>
+    </a>
+
+    <!-- Card 2: Consultations -->
+    <a routerLink="/patient/consultations" class="stat-card stat-cons card shadow-xs">
+      <div class="stat-icon-wrap icon-stethoscope">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="stat-svg">
+          <path d="M4.5 3v5a4.5 4.5 0 0 0 9 0V3" />
+          <path d="M9 12.5v3a4 4 0 0 0 4 4h1a4 4 0 0 0 4-4v-1" />
+          <circle cx="18" cy="10" r="2" />
+        </svg>
+      </div>
+      <div class="stat-meta">
+        <span class="stat-label">Consultations</span>
+        @if (isLoading()) {
+          <div class="skeleton-pill skeleton-num"></div>
+        } @else {
+          <strong class="stat-number">{{ stats().totalConsultationsCount }}</strong>
+        }
+      </div>
+      <span class="stat-arrow">→</span>
+    </a>
+
+    <!-- Card 3: Ordonnances -->
+    <a routerLink="/patient/ordonnances" class="stat-card stat-presc card shadow-xs">
+      <div class="stat-icon-wrap icon-prescription">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="stat-svg">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <polyline points="14 2 14 8 20 8" />
+          <line x1="9" y1="15" x2="15" y2="15" />
+          <line x1="12" y1="12" x2="12" y2="18" />
+        </svg>
+      </div>
+      <div class="stat-meta">
+        <span class="stat-label">Ordonnances</span>
+        @if (isLoading()) {
+          <div class="skeleton-pill skeleton-num"></div>
+        } @else {
+          <strong class="stat-number">{{ stats().totalPrescriptionsCount }}</strong>
+        }
+      </div>
+      <span class="stat-arrow">→</span>
+    </a>
+
+    <!-- Card 4: Hospitalisations -->
+    <a routerLink="/patient/hospitalisations" class="stat-card stat-hosp card shadow-xs">
+      <div class="stat-icon-wrap icon-hospital">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="stat-svg">
+          <path d="M3 21h18" />
+          <path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16" />
+          <path d="M9 10h6" />
+          <path d="M12 7v6" />
+        </svg>
+      </div>
+      <div class="stat-meta">
+        <span class="stat-label">Hospitalisations</span>
+        @if (isLoading()) {
+          <div class="skeleton-pill skeleton-num"></div>
+        } @else {
+          <strong class="stat-number">{{ stats().activeHospitalizationsCount }}</strong>
+        }
+      </div>
+      <span class="stat-arrow">→</span>
+    </a>
+
+  </section>
+
+  <!-- =========================================================================
+       HIGHLIGHT SECTION: PROCHAIN RENDEZ-VOUS
+       ========================================================================= -->
+  <section class="dashboard-highlight-section">
+    <div class="section-title-row">
+      <h2 class="section-title">Prochain rendez-vous</h2>
+      <a routerLink="/patient/rendez-vous" class="link-more">Voir tous mes rendez-vous →</a>
+    </div>
+
+    @if (isLoading()) {
+      <div class="card next-rdv-card skeleton-card shadow-sm">
+        <div class="skeleton-box" style="height: 120px;"></div>
+      </div>
+    } @else if (nextAppointment(); as rdv) {
+      <div class="card next-rdv-card shadow-sm">
+        <div class="next-rdv-header">
+          <div class="next-rdv-status">
+            <span class="status-pill" [ngClass]="getStatusBadgeClass(rdv.statut)">
+              {{ getStatusLabel(rdv.statut) }}
+            </span>
+            <span class="rdv-ref-tag">Réf : RDV #{{ rdv.id }}</span>
+          </div>
+          <div class="next-rdv-datetime">
+            <span class="date-text">📅 {{ formatDate(rdv.date_rdv) }}</span>
+            <span class="time-text">⏰ {{ formatTime(rdv.heure) }}</span>
+          </div>
+        </div>
+
+        <div class="next-rdv-body">
+          <div class="doctor-avatar-circle">
+            {{ (rdv.medecin_nom || rdv.medecin_detail?.nom || 'D').charAt(0) }}
+          </div>
+          <div class="next-rdv-doctor-info">
+            <h3 class="doctor-name">{{ getDoctorFullName(rdv) }}</h3>
+            <span class="doctor-spec">{{ getDoctorSpecialty(rdv) }}</span>
+            @if (rdv.motif) {
+              <p class="rdv-motif"><strong>Motif :</strong> {{ rdv.motif }}</p>
+            }
+          </div>
+        </div>
+
+        <div class="next-rdv-footer">
+          <a [routerLink]="['/patient/rendez-vous', rdv.id]" class="btn-detail-rdv">
+            <span>Voir le rendez-vous</span>
+            <svg viewBox="0 0 20 20" fill="currentColor" class="arrow-svg">
+              <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+          </a>
+          <a routerLink="/rendez-vous" class="btn-new-rdv-alt">Prendre un autre RDV</a>
+        </div>
+      </div>
+    } @else {
+      <div class="card empty-rdv-card shadow-xs">
+        <div class="empty-icon">📅</div>
+        <div class="empty-texts">
+          <h3>Aucun rendez-vous à venir</h3>
+          <p>Vous n'avez pas de consultation médicale programmée pour le moment.</p>
+        </div>
+        <a routerLink="/rendez-vous" class="btn-book-empty">Planifier une consultation</a>
+      </div>
+    }
+  </section>
+
+  <!-- =========================================================================
+       SECTION: DERNIÈRES CONSULTATIONS
+       ========================================================================= -->
+  <section class="dashboard-consultations-section">
+    <div class="section-title-row">
+      <h2 class="section-title">Dernières consultations</h2>
+      <a routerLink="/patient/consultations" class="link-more">Historique complet →</a>
+    </div>
+
+    @if (isLoading()) {
+      <div class="consultations-grid">
+        <div class="card skeleton-card" style="height: 140px;"></div>
+        <div class="card skeleton-card" style="height: 140px;"></div>
+        <div class="card skeleton-card" style="height: 140px;"></div>
+      </div>
+    } @else if (recentConsultations().length > 0) {
+      <div class="consultations-grid">
+        @for (cons of recentConsultations(); track cons.id) {
+          <div class="card consultation-item-card shadow-xs">
+            <div class="cons-item-top">
+              <span class="cons-date">📅 {{ formatDate(cons.date_cons) }}</span>
+              <span class="cons-badge-role">Acte médical</span>
+            </div>
+
+            <div class="cons-item-body">
+              <h4 class="cons-doctor">
+                Dr. {{ cons.medecin_details?.prenom }} {{ cons.medecin_details?.nom }}
+              </h4>
+              <span class="cons-spec">{{ cons.medecin_details?.specialiteDisplay || cons.medecin_details?.specialite || 'Médecine' }}</span>
+
+              @if (cons.diagnostic) {
+                <p class="cons-diagnostic">
+                  <strong>Diagnostic :</strong> {{ cons.diagnostic }}
+                </p>
+              } @else if (cons.observations) {
+                <p class="cons-diagnostic">
+                  <strong>Observations :</strong> {{ cons.observations }}
+                </p>
+              }
+            </div>
+
+            <div class="cons-item-footer">
+              <a [routerLink]="['/patient/consultations', cons.id]" class="btn-cons-detail">
+                Consulter la fiche
+              </a>
+            </div>
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="card empty-state-box shadow-xs">
+        <span class="empty-icon">🩺</span>
+        <p>Aucune consultation enregistrée pour l'instant dans votre dossier médical.</p>
+      </div>
+    }
+  </section>
+
+</div>

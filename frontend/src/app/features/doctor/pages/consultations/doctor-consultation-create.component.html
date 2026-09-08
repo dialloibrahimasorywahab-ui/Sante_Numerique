@@ -1,0 +1,191 @@
+<div class="create-consultation-container">
+  <!-- NAV & TITLE -->
+  <div class="page-nav">
+    <a routerLink="/medecin/consultations" class="back-link">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+      </svg>
+      <span>Retour aux consultations</span>
+    </a>
+  </div>
+
+  <div class="form-header">
+    <h1 class="page-title">Nouvelle Consultation Médicale</h1>
+    <p class="page-subtitle">Rédigez le compte-rendu d'examen, formulez le diagnostic et prescrivez si nécessaire.</p>
+  </div>
+
+  @if (successMessage()) {
+    <div class="success-banner">
+      <svg class="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+      </svg>
+      <span>{{ successMessage() }}</span>
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="error-banner">
+      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <span>{{ errorMessage() }}</span>
+    </div>
+  }
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Chargement du formulaire...</p>
+    </div>
+  } @else {
+    <form [formGroup]="consultationForm" (ngSubmit)="onSubmit()" class="consultation-form">
+      <!-- 1. PATIENT SELECTION CARD -->
+      <div class="form-card">
+        <div class="card-title-row">
+          <div class="step-num">1</div>
+          <h2 class="card-title">Patient Concerné</h2>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group full-width">
+            <label for="patient-select">Sélectionner le patient <span class="required">*</span></label>
+            <select
+              id="patient-select"
+              formControlName="patient"
+              (change)="onPatientChange($event)"
+              class="form-control"
+            >
+              <option value="" disabled>-- Choisir un patient --</option>
+              @for (p of patients(); track (p.id_patient || p.idPatient)) {
+                <option [value]="p.id_patient || p.idPatient">
+                  {{ p.nom }} {{ p.prenom }} ({{ p.telephone || 'Sans tel' }})
+                </option>
+              }
+            </select>
+            @if (consultationForm.get('patient')?.touched && consultationForm.get('patient')?.invalid) {
+              <span class="field-error">Veuillez sélectionner un patient.</span>
+            }
+          </div>
+        </div>
+
+        @if (selectedPatient()) {
+          <div class="patient-summary-box">
+            <div class="summary-avatar">
+              {{ (selectedPatient()?.nom || 'P')[0] }}
+            </div>
+            <div class="summary-details">
+              <div class="summary-name">
+                {{ selectedPatient()?.prenom }} {{ selectedPatient()?.nom }}
+              </div>
+              <div class="summary-info">
+                <span>Groupe : <strong>{{ selectedPatient()?.groupe_sanguin || selectedPatient()?.groupeSanguin || 'N/R' }}</strong></span>
+                <span>Tél : <strong>{{ selectedPatient()?.telephone || 'N/R' }}</strong></span>
+                <span>N° Sécu : <strong>{{ selectedPatient()?.numero_securite_sociale || selectedPatient()?.numeroSecuriteSociale || 'N/R' }}</strong></span>
+              </div>
+            </div>
+            @if (linkedRdvId()) {
+              <div class="linked-rdv-badge">
+                Lié au Rendez-vous #{{ linkedRdvId() }}
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- 2. DATE & SYMPTÔMES -->
+      <div class="form-card">
+        <div class="card-title-row">
+          <div class="step-num">2</div>
+          <h2 class="card-title">Motif & Examen Clinique</h2>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="date-cons">Date de la consultation <span class="required">*</span></label>
+            <input
+              id="date-cons"
+              type="date"
+              formControlName="date_cons"
+              class="form-control"
+            />
+          </div>
+
+          <div class="form-group full-width">
+            <label for="symptomes">Symptômes / Motif de consultation <span class="required">*</span></label>
+            <textarea
+              id="symptomes"
+              rows="3"
+              formControlName="symptomes"
+              placeholder="Ex: Fièvre persistante depuis 3 jours, céphalées, fatigue intense..."
+              class="form-control"
+            ></textarea>
+            @if (consultationForm.get('symptomes')?.touched && consultationForm.get('symptomes')?.invalid) {
+              <span class="field-error">Les symptômes sont obligatoires.</span>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. DIAGNOSTIC & OBSERVATIONS -->
+      <div class="form-card">
+        <div class="card-title-row">
+          <div class="step-num">3</div>
+          <h2 class="card-title">Diagnostic & Recommandations</h2>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group full-width">
+            <label for="diagnostic">Diagnostic médical <span class="required">*</span></label>
+            <textarea
+              id="diagnostic"
+              rows="2"
+              formControlName="diagnostic"
+              placeholder="Ex: Paludisme simple à confirmer par goutte épaisse, syndrome grippal..."
+              class="form-control"
+            ></textarea>
+            @if (consultationForm.get('diagnostic')?.touched && consultationForm.get('diagnostic')?.invalid) {
+              <span class="field-error">Le diagnostic est obligatoire.</span>
+            }
+          </div>
+
+          <div class="form-group full-width">
+            <label for="observations">Observations, traitement & recommandations cliniques</label>
+            <textarea
+              id="observations"
+              rows="3"
+              formControlName="observations"
+              placeholder="Ex: Repos strict recommandé 48h, hydratation abondante, surveillance de la température..."
+              class="form-control"
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="prescription-option mt-4">
+          <label class="checkbox-label">
+            <input type="checkbox" formControlName="createPrescriptionNow" class="checkbox-input" />
+            <span class="checkbox-text">Rédiger immédiatement une ordonnance pour cette consultation</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- FORM ACTIONS -->
+      <div class="form-submit-row">
+        <a routerLink="/medecin/consultations" class="btn-cancel">Annuler</a>
+        <button
+          type="submit"
+          [disabled]="isSubmitting() || consultationForm.invalid"
+          class="btn-save"
+        >
+          @if (isSubmitting()) {
+            <span>Enregistrement en cours...</span>
+          } @else {
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            <span>Enregistrer la consultation</span>
+          }
+        </button>
+      </div>
+    </form>
+  }
+</div>

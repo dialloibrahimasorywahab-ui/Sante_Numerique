@@ -1,0 +1,142 @@
+<div class="consultations-page">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="title-group">
+      <h1>Mes Consultations Médicales</h1>
+      <p>Retrouvez l’ensemble de vos comptes-rendus cliniques, diagnostics et observations médicales.</p>
+    </div>
+  </div>
+
+  <!-- Alerts -->
+  @if (errorMessage()) {
+  <div class="alert alert-error">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <span>{{ errorMessage() }}</span>
+  </div>
+  }
+
+  <!-- Loading Skeleton -->
+  @if (isLoading()) {
+  <div class="skeleton-list">
+    <div class="skeleton-card"></div>
+    <div class="skeleton-card"></div>
+    <div class="skeleton-card"></div>
+  </div>
+  } @else if (consultations().length === 0) {
+  <!-- Empty State -->
+  <div class="empty-state">
+    <div class="empty-icon-wrap">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+    </div>
+    <h3>Aucune consultation enregistrée</h3>
+    <p>Vous n'avez pas encore d'historique de consultation médicale renseigné dans votre dossier.</p>
+    <a routerLink="/rendez-vous" class="btn-primary-action">
+      Prendre un rendez-vous
+    </a>
+  </div>
+  } @else {
+  <!-- Consultations Cards List (Strictly 3 per page) -->
+  <div class="consultations-list">
+    @for (c of consultations(); track c.id) {
+    <div class="consultation-card">
+      <!-- Card Header / Meta -->
+      <div class="card-top">
+        <div class="date-badge">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <span>{{ formatDate(c.date_cons) }}</span>
+        </div>
+
+        <div class="meta-right">
+          @if (c.frais_details) {
+          <span class="fee-pill" [class.fee-paid]="c.frais_details.statut === 'PAYE'">
+            {{ c.frais_details.montant }} GNF • {{ c.frais_details.statut === 'PAYE' ? 'Réglé' : 'En attente' }}
+          </span>
+          }
+          <span class="ref-pill">Dossier #{{ c.id }}</span>
+        </div>
+      </div>
+
+      <!-- Doctor info -->
+      <div class="doctor-row">
+        <div class="doctor-avatar">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+        </div>
+        <div class="doctor-info">
+          <h4>{{ getDoctorName(c) }}</h4>
+          <span class="specialty-label">{{ getDoctorSpecialty(c) }}</span>
+        </div>
+      </div>
+
+      <!-- Clinical Summary preview -->
+      <div class="clinical-preview">
+        @if (c.symptomes) {
+        <div class="preview-item">
+          <span class="preview-label">Symptômes rapportés :</span>
+          <p class="preview-text">{{ c.symptomes }}</p>
+        </div>
+        }
+
+        @if (c.diagnostic) {
+        <div class="preview-item diagnostic-item">
+          <span class="preview-label">Diagnostic clinique :</span>
+          <p class="preview-text highlight">{{ c.diagnostic }}</p>
+        </div>
+        }
+      </div>
+
+      <!-- Card Bottom Action -->
+      <div class="card-bottom">
+        <a [routerLink]="['/patient/consultations', c.id]" class="btn-view-detail">
+          <span>Consulter le compte-rendu complet</span>
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </a>
+      </div>
+    </div>
+    }
+  </div>
+
+  <!-- Pagination Controls (Stricte 3 par page) -->
+  <div class="pagination-wrap">
+    <div class="pagination-info">
+      Total : <strong>{{ totalCount() }}</strong> consultation(s)
+      <span class="badge-page-size">3 par page</span>
+    </div>
+
+    <div class="pagination-buttons">
+      <button type="button" (click)="changePage(currentPage() - 1)" [disabled]="currentPage() <= 1"
+        class="btn-page-nav">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+        </svg>
+        Précédent
+      </button>
+
+      <span class="page-indicator">
+        Page <strong>{{ currentPage() }}</strong> sur <strong>{{ totalPages() }}</strong>
+      </span>
+
+      <button type="button" (click)="changePage(currentPage() + 1)" [disabled]="currentPage() >= totalPages()"
+        class="btn-page-nav">
+        Suivant
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+    </div>
+  </div>
+  }
+</div>

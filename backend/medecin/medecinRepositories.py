@@ -1,3 +1,4 @@
+from django.db.models import Q
 from .models import Medecin
 
 
@@ -23,7 +24,22 @@ class MedecinRepository:
 
     # Rechercher les médecins par spécialité / service
     def get_medecins_by_specialite(self, specialite, actif_only: bool = True):
-        qs = Medecin.objects.filter(specialite__iexact=specialite).select_related('id_utilisateur')
+        spec_clean = str(specialite).strip().upper()
+
+        # Mappings pour équivalence service hospitalier / spécialité médicale
+        spec_list = [spec_clean]
+        if spec_clean in ["MEDECINE_GENERALE", "GENERALISTE", "URGENCES"]:
+            spec_list = ["GENERALISTE", "MEDECINE_GENERALE"]
+        elif spec_clean in ["GYNECOLOGIE", "MATERNITE"]:
+            spec_list = ["GYNECOLOGIE", "MATERNITE"]
+        elif spec_clean in ["CHIRURGIE", "CHIRURGIE_GENERALE"]:
+            spec_list = ["CHIRURGIE", "CHIRURGIE_GENERALE"]
+
+        q_filter = Q()
+        for s in spec_list:
+            q_filter |= Q(specialite__iexact=s)
+
+        qs = Medecin.objects.filter(q_filter).select_related('id_utilisateur')
         if actif_only:
             qs = qs.filter(id_utilisateur__actif=True)
         return qs
@@ -32,7 +48,6 @@ class MedecinRepository:
     def search_medecins(self, query, actif_only: bool = True):
         if not query:
             return self.get_all_medecin(actif_only=actif_only)
-        from django.db.models import Q
         clean_q = str(query).strip()
         qs = Medecin.objects.filter(
             Q(id_utilisateur__nom__icontains=clean_q) |

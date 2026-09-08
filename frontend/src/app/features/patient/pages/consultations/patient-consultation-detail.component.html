@@ -1,0 +1,152 @@
+<div class="consultation-detail-page">
+  <!-- Nav Bar -->
+  <div class="nav-back-bar no-print">
+    <a routerLink="/patient/consultations" class="btn-back">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+      </svg>
+      Retour à mes consultations
+    </a>
+
+    <button type="button" (click)="printReport()" class="btn-print">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+      </svg>
+      Imprimer le compte-rendu
+    </button>
+  </div>
+
+  <!-- Alerts -->
+  @if (errorMessage()) {
+  <div class="alert alert-error">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <span>{{ errorMessage() }}</span>
+  </div>
+  }
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+  <div class="detail-skeleton">
+    <div class="skeleton-header"></div>
+    <div class="skeleton-body"></div>
+  </div>
+  } @else if (consultation(); as cons) {
+  <!-- Medical Report Sheet -->
+  <div class="report-sheet">
+    <!-- Sheet Header / Clinic identity -->
+    <div class="report-header">
+      <div class="clinic-brand">
+        <div class="brand-logo">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+        </div>
+        <div>
+          <h3>Santé Numérique — Dossier Médical</h3>
+          <p>Centre Hospitalier Universitaire</p>
+        </div>
+      </div>
+
+      <div class="report-meta">
+        <span class="report-number">Consultation #{{ cons.id }}</span>
+        <span class="report-date">{{ formatDate(cons.date_cons) }}</span>
+      </div>
+    </div>
+
+    <!-- Doctor & Patient Row -->
+    <div class="parties-grid">
+      <!-- Doctor -->
+      <div class="party-card">
+        <span class="party-label">Praticien examinateur</span>
+        <div class="party-title">{{ getDoctorName(cons) }}</div>
+        <div class="party-sub">{{ cons.medecin_details?.specialite || 'Médecine générale' }}</div>
+        @if (cons.medecin_details?.telephone) {
+        <div class="party-contact">Tél : {{ cons.medecin_details?.telephone }}</div>
+        }
+      </div>
+
+      <!-- Patient Details if populated -->
+      <div class="party-card">
+        <span class="party-label">Patient</span>
+        <div class="party-title">
+          {{ cons.patient_details?.prenom || '' }} {{ cons.patient_details?.nom || '' }}
+        </div>
+        @if (cons.patient_details?.date_naissance) {
+        <div class="party-sub">Né(e) le : {{ cons.patient_details?.date_naissance }}</div>
+        }
+        @if (cons.patient_details?.groupe_sanguin) {
+        <div class="party-contact">Groupe sanguin : <strong>{{ cons.patient_details?.groupe_sanguin }}</strong></div>
+        }
+      </div>
+    </div>
+
+    <!-- Clinical Observations Sections -->
+    <div class="clinical-content">
+      <!-- Symptomes -->
+      <div class="report-section">
+        <div class="section-badge">1. Motifs & Symptômes observés</div>
+        <div class="section-box">
+          {{ cons.symptomes || 'Aucun symptôme spécifique consigné.' }}
+        </div>
+      </div>
+
+      <!-- Diagnostic -->
+      <div class="report-section">
+        <div class="section-badge diagnostic-badge">2. Diagnostic Médical</div>
+        <div class="section-box diagnostic-box">
+          {{ cons.diagnostic || 'Diagnostic clinique non renseigné.' }}
+        </div>
+      </div>
+
+      <!-- Observations -->
+      <div class="report-section">
+        <div class="section-badge">3. Observations Cliniques & Recommandations</div>
+        <div class="section-box">
+          {{ cons.observations || 'Aucune recommandation particulière consignée.' }}
+        </div>
+      </div>
+
+      <!-- Frais & Règlement -->
+      @if (cons.frais_details) {
+      <div class="report-section">
+        <div class="section-badge">4. Honoraires & Facturation</div>
+        <div class="fee-box">
+          <div class="fee-row">
+            <span>Montant de la consultation :</span>
+            <strong>{{ cons.frais_details.montant }} GNF</strong>
+          </div>
+          <div class="fee-row">
+            <span>Statut du paiement :</span>
+            <span class="status-tag" [class.paid]="cons.frais_details.statut === 'PAYE'">
+              {{ cons.frais_details.statut === 'PAYE' ? 'RÉGLÉ' : 'EN ATTENTE DE RÈGLEMENT' }}
+            </span>
+          </div>
+          @if (cons.frais_details.date_paiement) {
+          <div class="fee-row">
+            <span>Date de règlement :</span>
+            <span>{{ cons.frais_details.date_paiement }}</span>
+          </div>
+          }
+        </div>
+      </div>
+      }
+    </div>
+
+    <!-- Related Navigation Links -->
+    <div class="related-links no-print">
+      <a routerLink="/patient/ordonnances" class="related-pill">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        Voir mes ordonnances associées
+      </a>
+    </div>
+  </div>
+  }
+</div>

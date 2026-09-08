@@ -16,37 +16,41 @@ from .rendezvousSerializers import RendezVousSerializer
 from .rendezvousServices import ConflictError, RendezVousService
 from .models import RendezVous
 from patients.models import Patient
-from medecin.models import Medecin
+from medecin.models import Medecin, DisponibiliteMedecin, IndisponibiliteMedecin
 import datetime
 
 rendezvous_service = RendezVousService()
 
 
 def _rendezvous_action_response(message_example):
-    """Sérialiseur de réponse commun aux actions confirmer/annuler/terminer."""
     return inline_serializer(
-        name=f"RendezVousAction_{message_example}",
+        name=f"RendezVousActionResponse_{message_example}",
         fields={
-            "message": serializers.CharField(),
+            "message": serializers.CharField(default=f"Rendez-vous {message_example} avec succès."),
             "rendezvous": RendezVousSerializer(),
-        },
+        }
     )
 
 
-# Créneau availability endpoint
+# Créneaux disponibles pour un médecin à une date donnée
 @extend_schema(
     tags=["Rendez-vous"],
-    summary="Obtenir les créneaux disponibles d'un médecin",
-    description="Retourne la liste des créneaux horaires (libres vs occupés) pour un médecin et une date donnés.",
+    summary="Obtenir les créneaux disponibles pour un médecin",
+    description="Retourne les créneaux horaires d'une journée en tenant compte des disponibilités hebdomadaires, des indisponibilités/congés du praticien et des rendez-vous déjà réservés.",
     parameters=[
-        OpenApiParameter(name="medecin_id", type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=True, description="ID du médecin"),
-        OpenApiParameter(name="date", type=OpenApiTypes.DATE, location=OpenApiParameter.QUERY, required=False, description="Date au format YYYY-MM-DD (défaut: aujourd'hui)"),
+        OpenApiParameter(name="medecin_id", type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=True,
+                          description="Identifiant du médecin."),
+        OpenApiParameter(name="date", type=OpenApiTypes.DATE, location=OpenApiParameter.QUERY, required=False,
+                          description="Date souhaitée (format YYYY-MM-DD). Défaut : aujourd'hui."),
     ],
     responses={200: inline_serializer(
         name="CreneauxResponse",
         fields={
             "medecin_id": serializers.IntegerField(),
             "date": serializers.CharField(),
+            "jour_semaine": serializers.IntegerField(),
+            "est_indisponible": serializers.BooleanField(),
+            "motif_indisponibilite": serializers.CharField(allow_null=True),
             "creneaux": serializers.ListField(child=serializers.DictField()),
         }
     )},
@@ -76,33 +80,89 @@ def get_creneaux_disponibles(request):
     if target_date < today:
         return Response({"error": "Impossible de consulter des créneaux dans le passé."}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Standard clinical consultation slots
-    standard_slots = [
-        "08:30", "09:15", "10:00", "10:45", "11:30",
-        "14:00", "14:45", "15:30", "16:15"
-    ]
+    # 1. Vérification des indisponibilités (congés, formations, absences)
+    active_indispos = IndisponibiliteMedecin.objects.filter(
+        medecin_id=medecin_id,
+        actif=True,
+        date_debut__lte=target_date,
+        date_fin__gte=target_date
+    )
+    all_day_indispo = active_indispos.filter(toute_la_journee=True).first()
 
-    # Fetch booked slots excluding cancelled
+    # 2. Détermination des créneaux de travail du médecin pour ce jour de la semaine
+    weekday = target_date.weekday()  # 0=Lundi, ..., 6=Dimanche
+    has_custom_schedule = DisponibiliteMedecin.objects.filter(medecin_id=medecin_id).exists()
+
+    generated_slots = []
+    if has_custom_schedule:
+        day_dispo = DisponibiliteMedecin.objects.filter(
+            medecin_id=medecin_id,
+            jour_semaine=weekday,
+            actif=True
+        ).first()
+
+        if day_dispo:
+            # Génération par pas de durée_créneau
+            duree = datetime.timedelta(minutes=max(15, day_dispo.duree_creneau or 45))
+            cur_time = datetime.datetime.combine(target_date, day_dispo.heure_debut)
+            end_time = datetime.datetime.combine(target_date, day_dispo.heure_fin)
+            pause_deb = datetime.datetime.combine(target_date, day_dispo.pause_debut) if day_dispo.pause_debut else None
+            pause_fin = datetime.datetime.combine(target_date, day_dispo.pause_fin) if day_dispo.pause_fin else None
+
+            while cur_time + duree <= end_time:
+                slot_time = cur_time.time()
+                # Sauter la pause déjeuner
+                in_pause = False
+                if pause_deb and pause_fin:
+                    if pause_deb <= cur_time < pause_fin:
+                        in_pause = True
+                if not in_pause:
+                    generated_slots.append(slot_time.strftime("%H:%M"))
+                cur_time += duree
+        else:
+            # Médecin ne consulte pas ce jour
+            generated_slots = []
+    else:
+        # Fallback standard si aucun créneau personnalisé n'a encore été configuré
+        generated_slots = [
+            "08:30", "09:15", "10:00", "10:45", "11:30",
+            "14:00", "14:45", "15:30", "16:15"
+        ]
+
+    # 3. Récupérer les rendez-vous existants déjà pris
     existing_rdvs = RendezVous.objects.filter(
         medecin_id=medecin_id,
         date_rdv=target_date
     ).exclude(statut=RendezVous.StatutRendezVous.ANNULE)
 
-    taken_times = set()
-    for rdv in existing_rdvs:
-        taken_times.add(rdv.heure.strftime("%H:%M"))
-
+    taken_times = {rdv.heure.strftime("%H:%M") for rdv in existing_rdvs}
     now_time = datetime.datetime.now().time()
     creneaux_result = []
 
-    for slot_str in standard_slots:
+    for slot_str in generated_slots:
         slot_time = datetime.datetime.strptime(slot_str, "%H:%M").time()
         is_past = (target_date == today and slot_time <= now_time)
         is_booked = slot_str in taken_times
 
-        disponible = not is_past and not is_booked
+        # Vérifier si ce créneau tombe dans une indisponibilité
+        is_indispo = False
+        indispo_motif = None
+        if all_day_indispo:
+            is_indispo = True
+            indispo_motif = all_day_indispo.motif or "Médecin absent / indisponible"
+        else:
+            for ind in active_indispos.filter(toute_la_journee=False):
+                if ind.heure_debut and ind.heure_fin:
+                    if ind.heure_debut <= slot_time < ind.heure_fin:
+                        is_indispo = True
+                        indispo_motif = ind.motif or "Médecin indisponible sur ce créneau"
+                        break
+
+        disponible = not is_past and not is_booked and not is_indispo
         raison = None
-        if is_booked:
+        if is_indispo:
+            raison = indispo_motif or "Médecin indisponible"
+        elif is_booked:
             raison = "Créneau déjà réservé"
         elif is_past:
             raison = "Heure passée"
@@ -116,6 +176,9 @@ def get_creneaux_disponibles(request):
     return Response({
         "medecin_id": medecin_id,
         "date": target_date.strftime("%Y-%m-%d"),
+        "jour_semaine": weekday,
+        "est_indisponible": bool(all_day_indispo),
+        "motif_indisponibilite": all_day_indispo.motif if all_day_indispo else None,
         "creneaux": creneaux_result
     }, status=status.HTTP_200_OK)
 

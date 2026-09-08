@@ -1,4 +1,6 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './core/guards/auth.guard';
+import { roleGuard } from './core/guards/role.guard';
 
 export const routes: Routes = [
   {
@@ -46,18 +48,24 @@ export const routes: Routes = [
     pathMatch: 'full'
   },
   {
-    path: 'patient/dashboard',
-    redirectTo: 'rendez-vous/mes-rendez-vous',
-    pathMatch: 'full'
+    path: 'patient',
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['PATIENT'] },
+    loadChildren: () => import('./features/patient/patient.routes').then(m => m.patientRoutes)
   },
   {
-    path: 'medecin/dashboard',
-    redirectTo: 'medecins',
-    pathMatch: 'full'
+    path: 'medecin',
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['MEDECIN'] },
+    loadChildren: () => import('./features/doctor/doctor.routes').then(m => m.doctorRoutes)
+  },
+  {
+    path: 'personnel',
+    redirectTo: 'medecin/dashboard'
   },
   {
     path: 'personnel/dashboard',
-    redirectTo: 'services',
+    redirectTo: 'medecin/dashboard',
     pathMatch: 'full'
   },
   {

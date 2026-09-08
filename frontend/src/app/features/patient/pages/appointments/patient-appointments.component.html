@@ -1,0 +1,391 @@
+<div class="patient-appointments-page">
+
+  <!-- =========================================================================
+       PAGE HEADER & SUMMARY COUNTERS
+       ========================================================================= -->
+  <header class="appointments-page-header">
+    <div class="header-main-row">
+      <div class="header-titles">
+        <h1 class="page-title">Mes Rendez-vous médicaux</h1>
+        <p class="page-subtitle">Suivez vos consultations médicales programmées, consultez vos comptes-rendus et gérez vos rendez-vous.</p>
+      </div>
+
+      <div class="header-actions">
+        <a routerLink="/rendez-vous" class="btn-book-new">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon-svg">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          <span>Prendre un rendez-vous</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Summary Metrics -->
+    <div class="summary-metrics-grid">
+      <div class="metric-card" (click)="setTab('UPCOMING')" [class.active-metric]="activeTab() === 'UPCOMING'">
+        <div class="metric-icon-wrap icon-upcoming">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="metric-svg">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
+        </div>
+        <div class="metric-info">
+          <span class="metric-label">À venir</span>
+          <strong class="metric-number">{{ upcomingAppointments().length }}</strong>
+        </div>
+      </div>
+
+      <div class="metric-card" (click)="setTab('PAST')" [class.active-metric]="activeTab() === 'PAST'">
+        <div class="metric-icon-wrap icon-past">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="metric-svg">
+            <path d="M12 8v4l3 3" />
+            <circle cx="12" cy="12" r="9" />
+          </svg>
+        </div>
+        <div class="metric-info">
+          <span class="metric-label">Historique / Passés</span>
+          <strong class="metric-number">{{ pastAppointments().length }}</strong>
+        </div>
+      </div>
+
+      <div class="metric-card" (click)="setTab('ALL')" [class.active-metric]="activeTab() === 'ALL'">
+        <div class="metric-icon-wrap icon-total">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="metric-svg">
+            <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
+            <rect x="9" y="3" width="6" height="4" rx="1" />
+            <path d="M9 14l2 2 4-4" />
+          </svg>
+        </div>
+        <div class="metric-info">
+          <span class="metric-label">Total des réservations</span>
+          <strong class="metric-number">{{ appointments().length }}</strong>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- =========================================================================
+       SUCCESS & ERROR ALERTS
+       ========================================================================= -->
+  @if (successMessage()) {
+    <div class="alert-banner alert-success" role="alert">
+      <span class="alert-icon">✓</span>
+      <span class="alert-text">{{ successMessage() }}</span>
+      <button type="button" class="btn-alert-close" (click)="successMessage.set(null)">✕</button>
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="alert-banner alert-error" role="alert">
+      <span class="alert-icon">⚠️</span>
+      <span class="alert-text">{{ errorMessage() }}</span>
+      <button type="button" class="btn-alert-close" (click)="errorMessage.set(null)">✕</button>
+    </div>
+  }
+
+  <!-- =========================================================================
+       SEARCH & FILTERS TOOLBAR
+       ========================================================================= -->
+  <div class="appointments-filter-bar card shadow-xs">
+    <!-- Search Box -->
+    <div class="search-field-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="search-icon">
+        <circle cx="11" cy="11" r="8" />
+        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+      </svg>
+      <input
+        type="text"
+        [(ngModel)]="searchQuery"
+        (ngModelChange)="onSearchChange()"
+        placeholder="Rechercher par médecin, spécialité, motif, date..."
+        class="search-input"
+      />
+      @if (searchQuery()) {
+        <button type="button" class="btn-clear-search" (click)="searchQuery.set(''); onSearchChange()">✕</button>
+      }
+    </div>
+
+    <!-- Status Tabs -->
+    <div class="filter-tabs-group">
+      <button
+        type="button"
+        class="tab-filter-btn"
+        [class.active]="activeTab() === 'UPCOMING'"
+        (click)="setTab('UPCOMING')"
+      >
+        <span>À venir</span>
+        <span class="pill-count">{{ upcomingAppointments().length }}</span>
+      </button>
+
+      <button
+        type="button"
+        class="tab-filter-btn"
+        [class.active]="activeTab() === 'PAST'"
+        (click)="setTab('PAST')"
+      >
+        <span>Historique</span>
+        <span class="pill-count">{{ pastAppointments().length }}</span>
+      </button>
+
+      <button
+        type="button"
+        class="tab-filter-btn"
+        [class.active]="activeTab() === 'ALL'"
+        (click)="setTab('ALL')"
+      >
+        <span>Tous</span>
+        <span class="pill-count">{{ appointments().length }}</span>
+      </button>
+    </div>
+
+    <!-- Specific Status Selector -->
+    <div class="status-select-wrap">
+      <label for="statusFilter" class="select-label">Statut :</label>
+      <select
+        id="statusFilter"
+        [ngModel]="statusFilter()"
+        (ngModelChange)="setStatusFilter($event)"
+        class="filter-select"
+      >
+        <option value="ALL">Tous les statuts</option>
+        <option value="CONFIRME">Confirmé</option>
+        <option value="PLANIFIE">Planifié</option>
+        <option value="EN_ATTENTE">En attente</option>
+        <option value="TERMINE">Terminé</option>
+        <option value="ANNULE">Annulé</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       APPOINTMENTS LIST CONTENT
+       ========================================================================= -->
+  @if (isLoading()) {
+    <div class="appointments-list-grid">
+      <div class="card skeleton-card"></div>
+      <div class="card skeleton-card"></div>
+      <div class="card skeleton-card"></div>
+    </div>
+  } @else if (filteredAppointments().length === 0) {
+    <!-- Empty State -->
+    <div class="card empty-state-box shadow-xs">
+      <div class="empty-icon-circle">📅</div>
+      <h3>
+        @if (searchQuery()) {
+          Aucun résultat pour « {{ searchQuery() }} »
+        } @else if (activeTab() === 'UPCOMING') {
+          Aucun rendez-vous à venir
+        } @else {
+          Aucun rendez-vous trouvé
+        }
+      </h3>
+      <p>
+        @if (searchQuery()) {
+          Essayez de modifier vos termes de recherche ou de réinitialiser vos filtres.
+        } @else if (activeTab() === 'UPCOMING') {
+          Vous n'avez pas de consultation médicale programmée. Vous pouvez prendre rendez-vous en quelques clics.
+        } @else {
+          Votre historique de consultations est actuellement vide.
+        }
+      </p>
+
+      <div class="empty-state-actions">
+        @if (searchQuery() || statusFilter() !== 'ALL') {
+          <button type="button" class="btn-reset-filters" (click)="resetFilters()">
+            Réinitialiser les filtres
+          </button>
+        }
+        <a routerLink="/rendez-vous" class="btn-book-from-empty">
+          Prendre un rendez-vous
+        </a>
+      </div>
+    </div>
+  } @else {
+    <!-- List of Appointments -->
+    <div class="appointments-list-grid">
+      @for (rdv of paginatedAppointments(); track rdv.id) {
+        <div class="card appointment-card shadow-xs" [class.cancelled-card]="rdv.statut === 'ANNULE'">
+
+          <!-- Left Date Column -->
+          <div class="card-date-col">
+            <div class="date-calendar-box">
+              <span class="cal-day">{{ rdv.date_rdv?.split('-')?.[2] || '—' }}</span>
+              <span class="cal-month">{{ formatDate(rdv.date_rdv)?.split(' ')?.[2] || 'Mois' }}</span>
+              <span class="cal-year">{{ rdv.date_rdv?.split('-')?.[0] || '' }}</span>
+            </div>
+            <div class="cal-time-badge">
+              ⏰ {{ formatTime(rdv.heure) }}
+            </div>
+          </div>
+
+          <!-- Central Details Column -->
+          <div class="card-details-col">
+            <div class="details-header-row">
+              <span class="status-badge" [ngClass]="getStatusBadgeClass(rdv.statut)">
+                <span class="status-dot"></span>
+                {{ getStatusLabel(rdv.statut) }}
+              </span>
+              <span class="type-pill">
+                {{ (rdv.typeConsultation === 'TELECONSULTATION' || rdv.type_consultation === 'TELECONSULTATION') ? '💻 Téléconsultation' : '🏥 Présentiel' }}
+              </span>
+              <span class="ref-id-tag">Réf #{{ rdv.id }}</span>
+            </div>
+
+            <!-- Doctor Profile Row -->
+            <div class="doctor-row">
+              <div class="doctor-avatar-circle">
+                {{ (rdv.medecin_prenom?.[0] || rdv.medecin_nom?.[0] || 'D').toUpperCase() }}
+              </div>
+              <div class="doctor-meta">
+                <h3 class="doctor-name">{{ getDoctorFullName(rdv) }}</h3>
+                <span class="doctor-spec">{{ getDoctorSpecialty(rdv) }}</span>
+                @if (getServiceNom(rdv); as serviceName) {
+                  <span class="service-tag">Pôle {{ serviceName }}</span>
+                }
+              </div>
+            </div>
+
+            <!-- Motif & Lieu -->
+            <div class="info-chips-row">
+              @if (rdv.motif) {
+                <div class="chip-motif">
+                  <strong>Motif :</strong> {{ rdv.motif }}
+                </div>
+              }
+              <div class="chip-location">
+                📍 {{ rdv.bureau || 'Pavillon Central / Cabinet' }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Actions Column -->
+          <div class="card-actions-col">
+            <a [routerLink]="['/patient/rendez-vous', rdv.id]" class="btn-detail-action">
+              <span>Voir la fiche</span>
+              <svg viewBox="0 0 20 20" fill="currentColor" class="arrow-icon">
+                <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+            </a>
+
+            @if (activeTab() !== 'PAST' && rdv.statut !== 'ANNULE' && rdv.statut !== 'TERMINE') {
+              <button
+                type="button"
+                class="btn-cancel-action"
+                (click)="openCancelModal(rdv, $event)"
+              >
+                Annuler
+              </button>
+            }
+          </div>
+
+        </div>
+      }
+    </div>
+
+    <!-- =========================================================================
+         PAGINATION CONTROLS
+         ========================================================================= -->
+    @if (totalPages() > 1) {
+      <nav class="pagination-container" aria-label="Pagination des rendez-vous">
+        <div class="pagination-info">
+          Affichage de <strong>{{ (currentPage() - 1) * pageSize() + 1 }}</strong> à <strong>{{ Math.min(currentPage() * pageSize(), filteredAppointments().length) }}</strong> sur <strong>{{ filteredAppointments().length }}</strong> rendez-vous
+        </div>
+
+        <div class="pagination-buttons">
+          <button
+            type="button"
+            class="btn-page-nav"
+            [disabled]="currentPage() === 1"
+            (click)="changePage(currentPage() - 1)"
+          >
+            ← Précédent
+          </button>
+
+          <div class="page-numbers-list">
+            @for (p of [].constructor(totalPages()); track $index) {
+              <button
+                type="button"
+                class="btn-page-num"
+                [class.active]="currentPage() === ($index + 1)"
+                (click)="changePage($index + 1)"
+              >
+                {{ $index + 1 }}
+              </button>
+            }
+          </div>
+
+          <button
+            type="button"
+            class="btn-page-nav"
+            [disabled]="currentPage() === totalPages()"
+            (click)="changePage(currentPage() + 1)"
+          >
+            Suivant →
+          </button>
+        </div>
+      </nav>
+    }
+  }
+
+  <!-- =========================================================================
+       MODAL DE CONFIRMATION D'ANNULATION
+       ========================================================================= -->
+  @if (appointmentToCancel(); as rdv) {
+    <div class="modal-backdrop-overlay" (click)="closeCancelModal()">
+      <div class="modal-card card shadow-lg" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <span class="modal-icon-alert">⚠️</span>
+            <h3>Annuler votre rendez-vous</h3>
+          </div>
+          <button type="button" class="btn-close-modal" (click)="closeCancelModal()">✕</button>
+        </div>
+
+        <div class="modal-content-body">
+          <p>
+            Êtes-vous certain de vouloir annuler votre consultation avec le <strong>{{ getDoctorFullName(rdv) }}</strong> ?
+          </p>
+
+          <div class="modal-appointment-summary">
+            <div class="summary-row">
+              <span class="lbl">Date & Heure :</span>
+              <strong class="val">📅 {{ formatDate(rdv.date_rdv) }} à {{ formatTime(rdv.heure) }}</strong>
+            </div>
+            <div class="summary-row">
+              <span class="lbl">Spécialité :</span>
+              <span class="val">{{ getDoctorSpecialty(rdv) }}</span>
+            </div>
+            @if (rdv.motif) {
+              <div class="summary-row">
+                <span class="lbl">Motif :</span>
+                <span class="val">{{ rdv.motif }}</span>
+              </div>
+            }
+          </div>
+
+          <div class="modal-warning-notice">
+            Cette action est irréversible. Le créneau horaire sera immédiatement libéré pour les autres patients.
+          </div>
+        </div>
+
+        <div class="modal-footer-actions">
+          <button type="button" class="btn-modal-back" (click)="closeCancelModal()" [disabled]="isCancelling()">
+            Conserver le rendez-vous
+          </button>
+          <button type="button" class="btn-modal-confirm" (click)="confirmCancel()" [disabled]="isCancelling()">
+            @if (isCancelling()) {
+              <span class="spinner"></span>
+              Annulation en cours...
+            } @else {
+              Confirmer l'annulation
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+</div>

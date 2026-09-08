@@ -7,9 +7,14 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from config.pagination import paginate_response
-from config.permissions import IsAdmin, deny_unless_owner_or_staff
+from config.permissions import IsAdmin, IsMedecinOuAdmin, deny_unless_owner_or_staff
 from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer, PAGINATION_PARAMS, SEARCH_PARAM
-from .medecinSerializers import MedecinSerializer
+from .models import Medecin, DisponibiliteMedecin, IndisponibiliteMedecin
+from .medecinSerializers import (
+    MedecinSerializer,
+    DisponibiliteMedecinSerializer,
+    IndisponibiliteMedecinSerializer,
+)
 from .medecinServices import MedecinService
 
 
@@ -232,3 +237,224 @@ def delete_medecin(request, medecin_id):
         {"message": "Compte médecin désactivé (archivé) avec succès."},
         status=status.HTTP_200_OK
     )
+
+
+# ==========================================
+# GESTION DES DISPONIBILITÉS & CRÉNEAUX
+# ==========================================
+
+def _get_target_medecin(request):
+    """Helper pour récupérer le profil médecin associé à la requête."""
+    user_role = getattr(request.user, "role", None)
+    if user_role == "MEDECIN":
+        return getattr(request.user, "medecin", None)
+    elif user_role == "ADMINISTRATEUR":
+        medecin_id = request.query_params.get("medecin_id") or request.data.get("medecin")
+        if medecin_id:
+            try:
+                return Medecin.objects.filter(id_medecin=int(medecin_id)).first()
+            except (ValueError, TypeError):
+                return None
+    return None
+
+
+@extend_schema(
+    tags=["Médecins"],
+    summary="Lister ou configurer les disponibilités",
+    description="GET: Retourne les créneaux réguliers de la semaine pour le médecin connecté ou par ?medecin_id=.\nPOST: Crée ou met à jour la disponibilité pour un jour de la semaine.",
+    request=DisponibiliteMedecinSerializer,
+    responses={200: DisponibiliteMedecinSerializer(many=True), 201: DisponibiliteMedecinSerializer, 400: ErrorResponseSerializer},
+)
+@api_view(["GET", "POST"])
+@permission_classes([IsAuthenticated])
+def disponibilites_list_create_view(request):
+    medecin = _get_target_medecin(request)
+    if not medecin:
+        # En GET, permettre la consultation publique par paramètre medecin_id
+        m_id = request.query_params.get("medecin_id") or request.query_params.get("id_medecin")
+        if m_id:
+            try:
+                medecin = Medecin.objects.filter(id_medecin=int(m_id)).first()
+            except (ValueError, TypeError):
+                pass
+        if not medecin:
+            return Response(
+                {"error": "Médecin introuvable ou profil praticien non associé à ce compte."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+    if request.method == "GET":
+        dispos = DisponibiliteMedecin.objects.filter(medecin=medecin).order_by("jour_semaine")
+        serializer = DisponibiliteMedecinSerializer(dispos, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    elif request.method == "POST":
+        if getattr(request.user, "role", None) not in ["MEDECIN", "ADMINISTRATEUR"]:
+            return Response({"error": "Action réservée aux médecins."}, status=status.HTTP_403_FORBIDDEN)
+
+        data = request.data.copy()
+        data["medecin"] = medecin.idMedecin
+        jour = data.get("jour_semaine") or data.get("jourSemaine")
+        if jour is None:
+            return Response({"error": "Le champ jour_semaine est requis."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Si une règle existe déjà pour ce jour, la mettre à jour, sinon créer
+        existing = DisponibiliteMedecin.objects.filter(medecin=medecin, jour_semaine=jour).first()
+        serializer = DisponibiliteMedecinSerializer(existing, data=data, partial=bool(existing))
+        if serializer.is_valid():
+            dispo = serializer.save(medecin=medecin)
+            return Response(
+                DisponibiliteMedecinSerializer(dispo).data,
+                status=status.HTTP_200_OK if existing else status.HTTP_201_CREATED
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@extend_schema(
+    tags=["Médecins"],
+    summary="Mettre à jour l'ensemble de la semaine en une seule requête",
+    description="Reçoit une liste d'objets jourSemaine / horaires et configure tout le planning hebdomadaire.",
+    request=DisponibiliteMedecinSerializer(many=True),
+    responses={200: DisponibiliteMedecinSerializer(many=True), 400: ErrorResponseSerializer},
+)
+@api_view(["POST"])
+@permission_classes([IsMedecinOuAdmin])
+def disponibilites_bulk_view(request):
+    medecin = _get_target_medecin(request)
+    if not medecin:
+        return Response({"error": "Profil praticien non trouvé."}, status=status.HTTP_404_NOT_FOUND)
+
+    days_data = request.data if isinstance(request.data, list) else request.data.get("disponibilites", [])
+    if not isinstance(days_data, list):
+        return Response({"error": "Format invalide. Une liste d'objets est attendue."}, status=status.HTTP_400_BAD_REQUEST)
+
+    saved_items = []
+    from django.db import transaction
+    with transaction.atomic():
+        for item in days_data:
+            if not isinstance(item, dict):
+                continue
+            jour = item.get("jour_semaine") if "jour_semaine" in item else item.get("jourSemaine")
+            if jour is None:
+                continue
+            item_data = item.copy()
+            item_data["medecin"] = medecin.idMedecin
+            existing = DisponibiliteMedecin.objects.filter(medecin=medecin, jour_semaine=jour).first()
+            serializer = DisponibiliteMedecinSerializer(existing, data=item_data, partial=bool(existing))
+            if serializer.is_valid():
+                obj = serializer.save(medecin=medecin)
+                saved_items.append(obj)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    all_dispos = DisponibiliteMedecin.objects.filter(medecin=medecin).order_by("jour_semaine")
+    return Response(DisponibiliteMedecinSerializer(all_dispos, many=True).data, status=status.HTTP_200_OK)
+
+
+@extend_schema(
+    tags=["Médecins"],
+    summary="Modifier ou supprimer une disponibilité",
+    responses={200: DisponibiliteMedecinSerializer, 204: None, 404: MessageResponseSerializer},
+)
+@api_view(["GET", "PUT", "PATCH", "DELETE"])
+@permission_classes([IsMedecinOuAdmin])
+def disponibilite_detail_view(request, pk):
+    medecin = _get_target_medecin(request)
+    dispo = DisponibiliteMedecin.objects.filter(pk=pk).first()
+    if not dispo:
+        return Response({"message": "Créneau de disponibilité introuvable"}, status=status.HTTP_404_NOT_FOUND)
+
+    if getattr(request.user, "role", None) != "ADMINISTRATEUR" and dispo.medecin != medecin:
+        return Response({"error": "Accès refusé."}, status=status.HTTP_403_FORBIDDEN)
+
+    if request.method == "GET":
+        return Response(DisponibiliteMedecinSerializer(dispo).data, status=status.HTTP_200_OK)
+
+    elif request.method in ["PUT", "PATCH"]:
+        serializer = DisponibiliteMedecinSerializer(dispo, data=request.data, partial=(request.method == "PATCH"))
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    elif request.method == "DELETE":
+        dispo.delete()
+        return Response({"message": "Créneau supprimé avec succès."}, status=status.HTTP_200_OK)
+
+
+# ==========================================
+# GESTION DES INDISPONIBILITÉS & CONGÉS
+# ==========================================
+
+@extend_schema(
+    tags=["Médecins"],
+    summary="Lister ou enregistrer une indisponibilité",
+    description="GET: Retourne les indisponibilités / congés du médecin connecté.\nPOST: Enregistre une absence ponctuelle ou une période de congés.",
+    request=IndisponibiliteMedecinSerializer,
+    responses={200: IndisponibiliteMedecinSerializer(many=True), 201: IndisponibiliteMedecinSerializer, 400: ErrorResponseSerializer},
+)
+@api_view(["GET", "POST"])
+@permission_classes([IsAuthenticated])
+def indisponibilites_list_create_view(request):
+    medecin = _get_target_medecin(request)
+    if not medecin:
+        m_id = request.query_params.get("medecin_id") or request.query_params.get("id_medecin")
+        if m_id:
+            try:
+                medecin = Medecin.objects.filter(id_medecin=int(m_id)).first()
+            except (ValueError, TypeError):
+                pass
+        if not medecin:
+            return Response(
+                {"error": "Médecin introuvable ou profil praticien non associé."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+    if request.method == "GET":
+        indispos = IndisponibiliteMedecin.objects.filter(medecin=medecin, actif=True).order_by("-date_debut")
+        serializer = IndisponibiliteMedecinSerializer(indispos, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    elif request.method == "POST":
+        if getattr(request.user, "role", None) not in ["MEDECIN", "ADMINISTRATEUR"]:
+            return Response({"error": "Action réservée aux médecins."}, status=status.HTTP_403_FORBIDDEN)
+
+        data = request.data.copy()
+        data["medecin"] = medecin.idMedecin
+        serializer = IndisponibiliteMedecinSerializer(data=data)
+        if serializer.is_valid():
+            indispo = serializer.save(medecin=medecin)
+            return Response(IndisponibiliteMedecinSerializer(indispo).data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@extend_schema(
+    tags=["Médecins"],
+    summary="Modifier ou supprimer une indisponibilité",
+    responses={200: IndisponibiliteMedecinSerializer, 404: MessageResponseSerializer},
+)
+@api_view(["GET", "PUT", "PATCH", "DELETE"])
+@permission_classes([IsMedecinOuAdmin])
+def indisponibilite_detail_view(request, pk):
+    medecin = _get_target_medecin(request)
+    indispo = IndisponibiliteMedecin.objects.filter(pk=pk).first()
+    if not indispo:
+        return Response({"message": "Indisponibilité introuvable"}, status=status.HTTP_404_NOT_FOUND)
+
+    if getattr(request.user, "role", None) != "ADMINISTRATEUR" and indispo.medecin != medecin:
+        return Response({"error": "Accès refusé."}, status=status.HTTP_403_FORBIDDEN)
+
+    if request.method == "GET":
+        return Response(IndisponibiliteMedecinSerializer(indispo).data, status=status.HTTP_200_OK)
+
+    elif request.method in ["PUT", "PATCH"]:
+        serializer = IndisponibiliteMedecinSerializer(indispo, data=request.data, partial=(request.method == "PATCH"))
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    elif request.method == "DELETE":
+        indispo.delete()
+        return Response({"message": "Indisponibilité supprimée avec succès."}, status=status.HTTP_200_OK)
+

@@ -49,11 +49,18 @@ hospitalisation_service = HospitalisationService()
 @permission_classes([IsAuthenticated])
 def hospitalisation_list_create_view(request):
     if request.method == "GET":
-        if getattr(request.user, "role", None) not in ["MEDECIN", "INFIRMIER", "ADMINISTRATEUR"]:
-            return Response({"error": "Accès réservé au personnel soignant et administrateurs."}, status=status.HTTP_403_FORBIDDEN)
-
+        user_role = getattr(request.user, "role", None)
         actif_only = request.query_params.get("all", "false").lower() != "true"
         qs = hospitalisation_service.repository.get_all_hospitalisations(actif_only=actif_only)
+
+        if user_role == "ADMINISTRATEUR":
+            pass
+        elif user_role in ["MEDECIN", "INFIRMIER"]:
+            pass
+        elif user_role == "PATIENT":
+            qs = qs.filter(patient__id_utilisateur=request.user)
+        else:
+            return Response({"error": "Accès réservé au personnel soignant, administrateurs et patients autorisés."}, status=status.HTTP_403_FORBIDDEN)
 
         patient_id = request.query_params.get("patient_id") or request.query_params.get("id_patient")
         if patient_id:

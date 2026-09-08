@@ -1,0 +1,189 @@
+<div class="doctor-profile-container">
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <h1 class="page-title">Mon Profil Praticien</h1>
+    <p class="page-subtitle">Consultez votre identification médicale officielle et mettez à jour vos coordonnées de contact.</p>
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Chargement de votre profil professionnel...</p>
+    </div>
+  } @else {
+    <div class="profile-grid">
+      <!-- LEFT COLUMN: IDENTIFICATION OFFICIELLE (LECTURE SEULE) -->
+      <div class="left-col">
+        <div class="card id-card">
+          <div class="id-card-header">
+            <div class="doctor-avatar-large">
+              <span>Dr</span>
+            </div>
+            <div class="id-title">
+              <h2>Dr. {{ authService.currentUser()?.nom }} {{ authService.currentUser()?.prenom }}</h2>
+              <span class="role-badge">Médecin Spécialiste</span>
+            </div>
+          </div>
+
+          <div class="card-divider"></div>
+
+          <div class="official-data-list">
+            <div class="data-item">
+              <span class="label">Spécialité</span>
+              <span class="value">{{ doctorProfile()?.specialiteDisplay || doctorProfile()?.specialite || 'Non renseignée' }}</span>
+            </div>
+
+            <div class="data-item">
+              <span class="label">N° Ordre National</span>
+              <span class="value font-mono">{{ doctorProfile()?.numeroOrdre || 'En cours d’attribution' }}</span>
+            </div>
+
+            <div class="data-item">
+              <span class="label">Matricule Hospitalier</span>
+              <span class="value font-mono">{{ doctorProfile()?.matricule || 'N/A' }}</span>
+            </div>
+
+            <div class="data-item">
+              <span class="label">Date d'embauche</span>
+              <span class="value">{{ doctorProfile()?.dateEmbauche || 'Non renseignée' }}</span>
+            </div>
+
+            <div class="data-item">
+              <span class="label">Identifiant de connexion</span>
+              <span class="value font-mono">{{ authService.currentUser()?.login }}</span>
+            </div>
+
+            <div class="data-item">
+              <span class="label">Statut du compte</span>
+              <span class="badge-active">Actif & Certifié</span>
+            </div>
+          </div>
+
+          <div class="admin-notice">
+            <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span>Les données administratives et ordinales ne sont modifiables que par l’administration du centre hospitalier.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN: MODIFICATIONS AUTORISÉES & MOT DE PASSE -->
+      <div class="right-col">
+        <!-- COORDONNÉES PROFESSIONNELLES -->
+        <div class="card">
+          <h2 class="section-title">Coordonnées Professionnelles</h2>
+          <p class="section-desc">Ces coordonnées sont utilisées pour vous contacter au sein du cabinet et par vos confrères.</p>
+
+          @if (profileSuccess()) {
+            <div class="alert-success">{{ profileSuccess() }}</div>
+          }
+          @if (profileError()) {
+            <div class="alert-error">{{ profileError() }}</div>
+          }
+
+          <form [formGroup]="profileForm" (ngSubmit)="onSubmitProfile()" class="form-body">
+            <div class="form-group">
+              <label for="telephonePro">Téléphone professionnel <span class="required">*</span></label>
+              <input
+                id="telephonePro"
+                type="text"
+                formControlName="telephonePro"
+                placeholder="+224 620 00 00 00"
+                class="form-control"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="emailPro">Email professionnel</label>
+              <input
+                id="emailPro"
+                type="email"
+                formControlName="emailPro"
+                placeholder="dr.nom@santenumerique.com"
+                class="form-control"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="bureau">Bureau / Localisation</label>
+              <input
+                id="bureau"
+                type="text"
+                formControlName="bureau"
+                placeholder="Ex: Bâtiment A, 2ème étage, Bureau 204"
+                class="form-control"
+              />
+            </div>
+
+            <div class="flex justify-end">
+              <button
+                type="submit"
+                [disabled]="isSavingProfile() || profileForm.invalid"
+                class="btn-save"
+              >
+                {{ isSavingProfile() ? 'Enregistrement...' : 'Mettre à jour mes coordonnées' }}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- CHANGEMENT DE MOT DE PASSE -->
+        <div class="card mt-6">
+          <h2 class="section-title">Sécurité & Mot de Passe</h2>
+          <p class="section-desc">Assurez la sécurité de vos accès cliniques en modifiant périodiquement votre mot de passe.</p>
+
+          @if (passwordSuccess()) {
+            <div class="alert-success">{{ passwordSuccess() }}</div>
+          }
+          @if (passwordError()) {
+            <div class="alert-error">{{ passwordError() }}</div>
+          }
+
+          <form [formGroup]="passwordForm" (ngSubmit)="onSubmitPassword()" class="form-body">
+            <div class="form-group">
+              <label for="ancienMotDePasse">Mot de passe actuel <span class="required">*</span></label>
+              <input
+                id="ancienMotDePasse"
+                type="password"
+                formControlName="ancienMotDePasse"
+                class="form-control"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="nouveauMotDePasse">Nouveau mot de passe <span class="required">*</span></label>
+              <input
+                id="nouveauMotDePasse"
+                type="password"
+                formControlName="nouveauMotDePasse"
+                placeholder="Minimum 8 caractères"
+                class="form-control"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="confirmationMotDePasse">Confirmer le nouveau mot de passe <span class="required">*</span></label>
+              <input
+                id="confirmationMotDePasse"
+                type="password"
+                formControlName="confirmationMotDePasse"
+                class="form-control"
+              />
+            </div>
+
+            <div class="flex justify-end">
+              <button
+                type="submit"
+                [disabled]="isChangingPassword() || passwordForm.invalid"
+                class="btn-save-pwd"
+              >
+                {{ isChangingPassword() ? 'Modification...' : 'Changer mon mot de passe' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  }
+</div>

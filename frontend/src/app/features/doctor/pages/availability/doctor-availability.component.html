@@ -1,0 +1,290 @@
+<div class="availability-page-container">
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Mes Créneaux & Disponibilités</h1>
+      <p class="page-subtitle">Configurez vos jours et heures de consultation, vos pauses et vos périodes d'indisponibilité.</p>
+    </div>
+  </div>
+
+  @if (successMessage()) {
+    <div class="success-banner">
+      <svg class="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+      </svg>
+      <span>{{ successMessage() }}</span>
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="error-banner">
+      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <span>{{ errorMessage() }}</span>
+    </div>
+  }
+
+  <!-- TABS NAV -->
+  <div class="tabs-nav-card">
+    <div class="tabs-container">
+      <button
+        [class.active]="activeTab() === 'CRENEAUX'"
+        (click)="activeTab.set('CRENEAUX')"
+        class="tab-btn"
+      >
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+        <span>Créneaux Hebdomadaires Réguliers</span>
+      </button>
+
+      <button
+        [class.active]="activeTab() === 'INDISPONIBILITES'"
+        (click)="activeTab.set('INDISPONIBILITES')"
+        class="tab-btn"
+      >
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+        </svg>
+        <span>Périodes d'Indisponibilité & Congés</span>
+        @if (unavailabilities().length > 0) {
+          <span class="badge-count">{{ unavailabilities().length }}</span>
+        }
+      </button>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Chargement de vos disponibilités...</p>
+    </div>
+  } @else {
+    <!-- TAB 1: CRÉNEAUX HEBDOMADAIRES -->
+    @if (activeTab() === 'CRENEAUX') {
+      <div class="schedule-tab-content">
+        <div class="content-header-row">
+          <div>
+            <h2 class="section-title">Semaine type de consultation</h2>
+            <p class="section-desc">Activez les jours ouvrés, définissez vos plages de travail et la durée moyenne d'une consultation.</p>
+          </div>
+          <button (click)="saveWeeklySchedule()" [disabled]="isSaving()" class="btn-save-schedule">
+            @if (isSaving()) {
+              <span>Enregistrement...</span>
+            } @else {
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              <span>Enregistrer le planning</span>
+            }
+          </button>
+        </div>
+
+        <div class="days-list">
+          @for (day of weeklySchedule(); track day.jour_semaine) {
+            <div class="day-card" [class.inactive]="!day.actif">
+              <div class="day-toggle-col">
+                <label class="toggle-switch">
+                  <input type="checkbox" [(ngModel)]="day.actif" />
+                  <span class="slider"></span>
+                </label>
+                <div class="day-name">
+                  <span class="name">{{ day.label }}</span>
+                  <span class="status-indicator">{{ day.actif ? 'Ouvert' : 'Fermé' }}</span>
+                </div>
+              </div>
+
+              @if (day.actif) {
+                <div class="day-fields-grid">
+                  <div class="field-item">
+                    <label>Heure de début</label>
+                    <input type="time" [(ngModel)]="day.heure_debut" class="time-input" />
+                  </div>
+
+                  <div class="field-item">
+                    <label>Heure de fin</label>
+                    <input type="time" [(ngModel)]="day.heure_fin" class="time-input" />
+                  </div>
+
+                  <div class="field-item">
+                    <label>Début pause</label>
+                    <input type="time" [(ngModel)]="day.pause_debut" class="time-input" placeholder="Optionnel" />
+                  </div>
+
+                  <div class="field-item">
+                    <label>Fin pause</label>
+                    <input type="time" [(ngModel)]="day.pause_fin" class="time-input" placeholder="Optionnel" />
+                  </div>
+
+                  <div class="field-item">
+                    <label>Durée par créneau</label>
+                    <select [(ngModel)]="day.duree_creneau" class="time-input">
+                      <option [value]="15">15 minutes</option>
+                      <option [value]="30">30 minutes</option>
+                      <option [value]="45">45 minutes</option>
+                      <option [value]="60">60 minutes</option>
+                    </select>
+                  </div>
+                </div>
+              } @else {
+                <div class="day-closed-msg">
+                  <span class="text-slate-400 text-sm italic">Aucune consultation programmée ce jour-là.</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- PREVIEW BOX -->
+        <div class="preview-box">
+          <div class="preview-header">
+            <h3 class="preview-title">Aperçu des créneaux en direct</h3>
+            <div class="preview-date-picker">
+              <label for="preview-date">Tester la date :</label>
+              <input
+                id="preview-date"
+                type="date"
+                [value]="previewDate()"
+                (change)="onPreviewDateChange($event)"
+                class="date-input"
+              />
+            </div>
+          </div>
+
+          @if (previewSlots()) {
+            @if (previewSlots()?.est_indisponible) {
+              <div class="preview-unavailable-banner">
+                <svg class="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                <span>Vous êtes indisponible ce jour-là : <strong>{{ previewSlots()?.motif_indisponibilite || 'Absence' }}</strong></span>
+              </div>
+            } @else if (previewSlots()?.creneaux?.length === 0) {
+              <p class="text-sm text-slate-500 italic my-2">Aucun créneau disponible pour cette journée (fermeture ou jour non travaillé).</p>
+            } @else {
+              <div class="slots-chips-grid">
+                @for (slot of previewSlots()?.creneaux; track slot.heure) {
+                  <div
+                    class="slot-chip"
+                    [class.slot-free]="slot.disponible"
+                    [class.slot-booked]="!slot.disponible"
+                    [title]="slot.raison || 'Créneau disponible'"
+                  >
+                    <span class="slot-time">{{ slot.heure }}</span>
+                    <span class="slot-label">{{ slot.disponible ? 'Libre' : (slot.raison || 'Occupé') }}</span>
+                  </div>
+                }
+              </div>
+            }
+          }
+        </div>
+      </div>
+    }
+
+    <!-- TAB 2: INDISPONIBILITÉS & CONGÉS -->
+    @if (activeTab() === 'INDISPONIBILITES') {
+      <div class="indispo-tab-content">
+        <!-- ADD INDISPO CARD -->
+        <div class="add-indispo-card">
+          <h2 class="section-title">Poser une indisponibilité ou une absence</h2>
+          <p class="section-desc">Pendant ces dates, vos créneaux de rendez-vous seront automatiquement bloqués pour les patients.</p>
+
+          <div class="indispo-form-grid">
+            <div class="field-group">
+              <label>Date de début <span class="required">*</span></label>
+              <input type="date" [(ngModel)]="newIndispo.date_debut" class="form-control" />
+            </div>
+
+            <div class="field-group">
+              <label>Date de fin <span class="required">*</span></label>
+              <input type="date" [(ngModel)]="newIndispo.date_fin" class="form-control" />
+            </div>
+
+            <div class="field-group">
+              <label>Motif de l'absence</label>
+              <input
+                type="text"
+                [(ngModel)]="newIndispo.motif"
+                placeholder="Ex: Congé annuel, Formation médicale, Garde..."
+                class="form-control"
+              />
+            </div>
+
+            <div class="field-group full-width">
+              <label class="checkbox-wrapper">
+                <input type="checkbox" [(ngModel)]="newIndispo.toute_la_journee" />
+                <span class="check-text">Toute la journée</span>
+              </label>
+            </div>
+
+            @if (!newIndispo.toute_la_journee) {
+              <div class="field-group">
+                <label>Heure de début</label>
+                <input type="time" [(ngModel)]="newIndispo.heure_debut" class="form-control" />
+              </div>
+              <div class="field-group">
+                <label>Heure de fin</label>
+                <input type="time" [(ngModel)]="newIndispo.heure_fin" class="form-control" />
+              </div>
+            }
+          </div>
+
+          <div class="mt-4 flex justify-end">
+            <button (click)="addUnavailability()" [disabled]="isSaving()" class="btn-add-indispo">
+              @if (isSaving()) {
+                <span>Enregistrement...</span>
+              } @else {
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                <span>Ajouter cette indisponibilité</span>
+              }
+            </button>
+          </div>
+        </div>
+
+        <!-- LIST OF INDISPOS -->
+        <div class="indispos-list-card">
+          <h3 class="card-title">Indisponibilités & Absences programmées</h3>
+
+          @if (unavailabilities().length === 0) {
+            <div class="empty-indispo">
+              <p class="text-sm text-slate-500">Aucune indisponibilité programmée. Vous êtes actuellement disponible selon votre planning habituel.</p>
+            </div>
+          } @else {
+            <div class="indispo-items-list">
+              @for (ind of unavailabilities(); track ind.id) {
+                <div class="indispo-row">
+                  <div class="indispo-dates">
+                    <div class="date-range">
+                      Du <strong>{{ ind.date_debut || ind.dateDebut }}</strong> au <strong>{{ ind.date_fin || ind.dateFin }}</strong>
+                    </div>
+                    @if (ind.toute_la_journee || ind.touteLaJournee) {
+                      <span class="time-detail text-emerald-700">Toute la journée</span>
+                    } @else {
+                      <span class="time-detail text-slate-600">De {{ ind.heure_debut || ind.heureDebut }} à {{ ind.heure_fin || ind.heureFin }}</span>
+                    }
+                  </div>
+
+                  <div class="indispo-motif">
+                    <span class="motif-tag">{{ ind.motif || 'Absence exceptionnelle' }}</span>
+                  </div>
+
+                  <div class="indispo-action">
+                    <button (click)="deleteUnavailability(ind.id)" class="btn-delete-indispo" title="Supprimer l'indisponibilité">
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                      </svg>
+                      <span>Supprimer</span>
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    }
+  }
+</div>

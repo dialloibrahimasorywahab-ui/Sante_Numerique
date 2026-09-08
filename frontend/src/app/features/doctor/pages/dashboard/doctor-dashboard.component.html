@@ -1,0 +1,257 @@
+<div class="doctor-dashboard-container">
+  <!-- HEADER WELCOME -->
+  <div class="dashboard-header">
+    <div class="welcome-text">
+      <div class="date-badge">
+        <svg class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+        <span>{{ todayDateFormatted }}</span>
+      </div>
+      <h1 class="welcome-title">
+        Bonjour Dr. {{ authService.currentUser()?.nom || 'Confrère' }} 👋
+      </h1>
+      <p class="welcome-subtitle">
+        {{ doctorProfile()?.specialiteDisplay || doctorProfile()?.specialite || 'Cabinet médical' }} — Voici l'activité médicale de votre journée.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <a routerLink="/medecin/consultations/nouveau" class="btn-primary">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        <span>Nouvelle Consultation</span>
+      </a>
+      <a routerLink="/medecin/disponibilites" class="btn-secondary">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <span>Gérer mes créneaux</span>
+      </a>
+    </div>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="error-banner">
+      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <span>{{ errorMessage() }}</span>
+      <button (click)="loadDashboardData()" class="btn-retry">Réessayer</button>
+    </div>
+  }
+
+  <!-- STATS CARDS -->
+  <div class="stats-grid">
+    <!-- Stat 1 -->
+    <div class="stat-card stat-today">
+      <div class="stat-icon-wrapper">
+        <svg class="w-6 h-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <div class="stat-content">
+        <span class="stat-label">Rendez-vous aujourd'hui</span>
+        @if (isLoading()) {
+          <div class="skeleton stat-skeleton"></div>
+        } @else {
+          <span class="stat-value">{{ stats().appointmentsTodayCount }}</span>
+        }
+        <span class="stat-hint">Programmés ce jour</span>
+      </div>
+    </div>
+
+    <!-- Stat 2 -->
+    <div class="stat-card stat-upcoming">
+      <div class="stat-icon-wrapper">
+        <svg class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+      </div>
+      <div class="stat-content">
+        <span class="stat-label">Rendez-vous à venir</span>
+        @if (isLoading()) {
+          <div class="skeleton stat-skeleton"></div>
+        } @else {
+          <span class="stat-value">{{ stats().appointmentsUpcomingCount }}</span>
+        }
+        <span class="stat-hint">Confirmés & en attente</span>
+      </div>
+    </div>
+
+    <!-- Stat 3 -->
+    <div class="stat-card stat-consultations">
+      <div class="stat-icon-wrapper">
+        <svg class="w-6 h-6 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+        </svg>
+      </div>
+      <div class="stat-content">
+        <span class="stat-label">Consultations réalisées</span>
+        @if (isLoading()) {
+          <div class="skeleton stat-skeleton"></div>
+        } @else {
+          <span class="stat-value">{{ stats().consultationsTotalCount }}</span>
+        }
+        <span class="stat-hint">Total des actes médicaux</span>
+      </div>
+    </div>
+
+    <!-- Stat 4 -->
+    <div class="stat-card stat-patients">
+      <div class="stat-icon-wrapper">
+        <svg class="w-6 h-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+        </svg>
+      </div>
+      <div class="stat-content">
+        <span class="stat-label">Patients enregistrés</span>
+        @if (isLoading()) {
+          <div class="skeleton stat-skeleton"></div>
+        } @else {
+          <span class="stat-value">{{ stats().patientsFollowedCount }}</span>
+        }
+        <span class="stat-hint">Dossiers accessibles</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN SECTIONS GRID -->
+  <div class="sections-grid">
+    <!-- LEFT: RENDEZ-VOUS DU JOUR -->
+    <section class="card-section">
+      <div class="section-header">
+        <div class="title-with-badge">
+          <h2 class="section-title">Prochains rendez-vous</h2>
+          <span class="count-pill">{{ todayAppointments().length }}</span>
+        </div>
+        <a routerLink="/medecin/rendez-vous" class="link-more">Voir tous les RDV &rarr;</a>
+      </div>
+
+      @if (isLoading()) {
+        <div class="skeleton-list">
+          <div class="skeleton skeleton-row"></div>
+          <div class="skeleton skeleton-row"></div>
+          <div class="skeleton skeleton-row"></div>
+        </div>
+      } @else if (todayAppointments().length === 0) {
+        <div class="empty-state">
+          <div class="empty-icon">
+            <svg class="w-10 h-10 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+          </div>
+          <p class="empty-title">Aucun rendez-vous aujourd'hui</p>
+          <p class="empty-desc">Aucune consultation n'est planifiée pour cette journée.</p>
+        </div>
+      } @else {
+        <div class="appointments-list">
+          @for (rdv of todayAppointments(); track rdv.id) {
+            <div class="appointment-item">
+              <div class="time-block">
+                <span class="time-text">{{ rdv.heure }}</span>
+                <span class="status-badge" [ngClass]="getStatusClass(rdv.statut)">
+                  {{ getStatusLabel(rdv.statut) }}
+                </span>
+              </div>
+
+              <div class="patient-block">
+                <div class="patient-name">
+                  {{ rdv.patient_details?.prenom }} {{ rdv.patient_details?.nom }}
+                </div>
+                <div class="rdv-motif">
+                  {{ rdv.motif || 'Consultation générale' }}
+                </div>
+                @if (rdv.patient_details?.telephone) {
+                  <div class="patient-phone">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                    </svg>
+                    <span>{{ rdv.patient_details?.telephone }}</span>
+                  </div>
+                }
+              </div>
+
+              <div class="actions-block">
+                <a
+                  [routerLink]="['/medecin/consultations/nouveau']"
+                  [queryParams]="{ patient_id: rdv.patient, rdv_id: rdv.id }"
+                  class="action-btn-primary"
+                  title="Commencer la consultation médicale"
+                >
+                  <span>Consulter</span>
+                </a>
+                @if (rdv.statut === 'EN_ATTENTE') {
+                  <button (click)="confirmAppointment(rdv)" class="action-btn-confirm" title="Confirmer le RDV">
+                    Confirmer
+                  </button>
+                }
+                @if (rdv.statut === 'CONFIRME') {
+                  <button (click)="completeAppointment(rdv)" class="action-btn-complete" title="Marquer terminé">
+                    Terminer
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </section>
+
+    <!-- RIGHT: PATIENTS RÉCENTS / DERNIÈRES CONSULTATIONS -->
+    <section class="card-section">
+      <div class="section-header">
+        <div class="title-with-badge">
+          <h2 class="section-title">Patients récents</h2>
+          <span class="count-pill">{{ recentConsultations().length }}</span>
+        </div>
+        <a routerLink="/medecin/consultations" class="link-more">Historique &rarr;</a>
+      </div>
+
+      @if (isLoading()) {
+        <div class="skeleton-list">
+          <div class="skeleton skeleton-row"></div>
+          <div class="skeleton skeleton-row"></div>
+          <div class="skeleton skeleton-row"></div>
+        </div>
+      } @else if (recentConsultations().length === 0) {
+        <div class="empty-state">
+          <div class="empty-icon">
+            <svg class="w-10 h-10 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+            </svg>
+          </div>
+          <p class="empty-title">Aucune consultation récente</p>
+          <p class="empty-desc">Vos consultations enregistrées apparaîtront ici.</p>
+        </div>
+      } @else {
+        <div class="recent-list">
+          @for (cons of recentConsultations(); track cons.id) {
+            <div class="recent-item">
+              <div class="patient-avatar-letter">
+                {{ (cons.patient_details?.nom || 'P')[0] }}
+              </div>
+              <div class="recent-details">
+                <div class="recent-name">
+                  {{ cons.patient_details?.prenom }} {{ cons.patient_details?.nom }}
+                </div>
+                <div class="recent-diagnostic">
+                  {{ cons.diagnostic || cons.symptomes || 'Examen clinique' }}
+                </div>
+                <div class="recent-date">
+                  {{ cons.date_cons }}
+                </div>
+              </div>
+              <div class="recent-actions">
+                <a [routerLink]="['/medecin/consultations', cons.id]" class="view-btn">
+                  Compte-rendu
+                </a>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </section>
+  </div>
+</div>

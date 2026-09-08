@@ -45,6 +45,8 @@ export class BookAppointmentComponent implements OnInit {
   servicesList = signal<ServiceHospitalier[]>([]);
   doctorsList = signal<MedecinDto[]>([]);
   availableSlots = signal<TimeSlot[]>([]);
+  selectedServiceId = signal<string>('');
+  selectedDoctorId = signal<string>('');
 
   // Min date (today)
   todayString = this.hospitalService.getTodayString();
@@ -54,44 +56,86 @@ export class BookAppointmentComponent implements OnInit {
 
   // Doctors filtered according to selected service
   filteredDoctors = computed(() => {
-    const sId = this.bookingForm?.get('serviceId')?.value;
+    const sId = this.selectedServiceId();
     const docs = this.doctorsList();
     if (!sId) return docs;
 
     const serv = this.servicesList().find(s => String(s.id_service || s.idService) === String(sId));
-    if (!serv) return docs;
+    if (!serv) return [];
 
-    const servCode = (serv.nom_service || serv.nomService || '').toUpperCase();
-    const servName = (serv.displayNom || serv.nom_service || serv.nomService || '').toLowerCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-
-    const matched = docs.filter(doc => {
-      const specCode = (doc.specialite || '').toUpperCase();
-      const specDisplay = (doc.specialiteDisplay || doc.specialite || '').toLowerCase()
-        .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-
-      // Direct code match
-      if (servCode && specCode && servCode === specCode) return true;
-      if (servCode === 'MEDECINE_GENERALE' && specCode === 'GENERALISTE') return true;
-      if (servCode === 'GENERALISTE' && specCode === 'MEDECINE_GENERALE') return true;
-
-      // Substring keyword matching
-      if (servName.includes('cardio') && specDisplay.includes('cardio')) return true;
-      if (servName.includes('pedia') && specDisplay.includes('pedia')) return true;
-      if (servName.includes('gyneco') && (specDisplay.includes('gyneco') || specDisplay.includes('mater'))) return true;
-      if (servName.includes('neuro') && specDisplay.includes('neuro')) return true;
-      if (servName.includes('chirurg') && specDisplay.includes('chirurg')) return true;
-      if (servName.includes('dermat') && specDisplay.includes('dermat')) return true;
-      if (servName.includes('general') && (specDisplay.includes('general') || specDisplay.includes('urgence'))) return true;
-      if (servName.includes('ophtalmo') && specDisplay.includes('ophtalmo')) return true;
-      if (servName.includes('psychiat') && specDisplay.includes('psychiat')) return true;
-      if (servName.includes('radio') && specDisplay.includes('radio')) return true;
-
-      return false;
-    });
-
-    return matched.length > 0 ? matched : docs;
+    return docs.filter(doc => this.isDoctorInService(doc, serv));
   });
+
+  /**
+   * Determine whether a doctor strictly belongs to a hospital service / department
+   */
+  isDoctorInService(doc: MedecinDto, serv: ServiceHospitalier): boolean {
+    if (!doc || !serv) return false;
+
+    const servCode = (serv.nom_service || serv.nomService || '').toUpperCase().trim();
+    const specCode = (doc.specialite || '').toUpperCase().trim();
+
+    // 1. Direct code equality
+    if (servCode && specCode && servCode === specCode) return true;
+
+    // 2. Specific canonical aliases
+    if (
+      (servCode === 'MEDECINE_GENERALE' || servCode === 'URGENCES' || servCode === 'GENERALISTE') &&
+      (specCode === 'GENERALISTE' || specCode === 'MEDECINE_GENERALE')
+    ) {
+      return true;
+    }
+    if (
+      (servCode === 'MATERNITE' || servCode === 'GYNECOLOGIE') &&
+      (specCode === 'GYNECOLOGIE' || specCode === 'MATERNITE')
+    ) {
+      return true;
+    }
+    if (
+      (servCode === 'CHIRURGIE' || servCode === 'CHIRURGIE_GENERALE') &&
+      (specCode === 'CHIRURGIE' || specCode === 'CHIRURGIE_GENERALE')
+    ) {
+      return true;
+    }
+
+    // 3. String normalization / keyword match
+    const normServName = this.normalizeStr(serv.displayNom || serv.nom_service_display || serv.nom_service || serv.nomService || '');
+    const normSpecName = this.normalizeStr(doc.specialiteDisplay || doc.specialiteLabel || doc.specialite || '');
+
+    const rootMatches: [RegExp, RegExp][] = [
+      [/general|urgence/, /general/],
+      [/cardio/, /cardio/],
+      [/pedia/, /pedia/],
+      [/gyneco|mater/, /gyneco|mater/],
+      [/neuro/, /neuro/],
+      [/dermat/, /dermat/],
+      [/chirurg/, /chirurg/],
+      [/ophtalm/, /ophtalm/],
+      [/psychiat/, /psychiat/],
+      [/radio|imager/, /radio|imager/]
+    ];
+
+    for (const [servRegex, specRegex] of rootMatches) {
+      if (servRegex.test(normServName) && specRegex.test(normSpecName)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private normalizeStr(str: string): string {
+    return (str || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim();
+  }
+
+  findServiceForDoctor(doc: MedecinDto): ServiceHospitalier | undefined {
+    if (!doc) return undefined;
+    return this.servicesList().find(serv => this.isDoctorInService(doc, serv));
+  }
 
   ngOnInit(): void {
     this.initForm();
@@ -111,10 +155,12 @@ export class BookAppointmentComponent implements OnInit {
 
     // Listen to form value changes
     this.bookingForm.get('serviceId')?.valueChanges.subscribe(sId => {
+      this.selectedServiceId.set(sId || '');
       this.onServiceChange(sId);
     });
 
     this.bookingForm.get('doctorId')?.valueChanges.subscribe(dId => {
+      this.selectedDoctorId.set(dId || '');
       this.onDoctorChange(dId);
     });
 
@@ -139,7 +185,7 @@ export class BookAppointmentComponent implements OnInit {
 
     // 2. Load Doctors
     this.isLoadingDoctors.set(true);
-    this.medecinService.getMedecins({ page_size: 50 }).subscribe({
+    this.medecinService.getMedecins({ page_size: 100 }).subscribe({
       next: (res: { results?: MedecinDto[] }) => {
         const docs = res.results || [];
         this.doctorsList.set(docs);
@@ -164,23 +210,31 @@ export class BookAppointmentComponent implements OnInit {
       if (medId) {
         const targetDoc = docs.find((d: MedecinDto) => String(d.idMedecin) === String(medId));
         if (targetDoc) {
-          // Auto select corresponding service if possible
-          const matchedService = services.find(s =>
-            (s.nom_service || '').toUpperCase() === (targetDoc.specialite || '').toUpperCase() ||
-            ((s.nom_service || '').toUpperCase() === 'MEDECINE_GENERALE' && targetDoc.specialite === 'GENERALISTE')
-          );
+          const matchedService = this.findServiceForDoctor(targetDoc);
           if (matchedService) {
-            this.bookingForm.patchValue({ serviceId: String(matchedService.id_service || matchedService.idService) }, { emitEvent: false });
+            const sIdStr = String(matchedService.id_service || matchedService.idService);
+            this.selectedServiceId.set(sIdStr);
+            this.bookingForm.patchValue({ serviceId: sIdStr }, { emitEvent: false });
           }
+          this.selectedDoctorId.set(String(targetDoc.idMedecin));
           this.bookingForm.patchValue({ doctorId: String(targetDoc.idMedecin) });
         }
       } else if (servId) {
-        this.bookingForm.patchValue({ serviceId: String(servId) });
+        const foundServ = services.find(s =>
+          String(s.id_service || s.idService) === String(servId) ||
+          (s.nom_service || s.nomService || '').toUpperCase() === String(servId).toUpperCase()
+        );
+        if (foundServ) {
+          const sIdStr = String(foundServ.id_service || foundServ.idService);
+          this.selectedServiceId.set(sIdStr);
+          this.bookingForm.patchValue({ serviceId: sIdStr });
+        }
       }
     });
   }
 
   onServiceChange(serviceId: string): void {
+    this.selectedServiceId.set(serviceId || '');
     this.errorMessage.set(null);
     const currentDocId = this.bookingForm.get('doctorId')?.value;
     const availableDocs = this.filteredDoctors();
@@ -188,6 +242,7 @@ export class BookAppointmentComponent implements OnInit {
     // If currently selected doctor does not belong to new service, reset doctor and slots
     if (currentDocId && !availableDocs.some(d => String(d.idMedecin) === String(currentDocId))) {
       this.bookingForm.patchValue({ doctorId: '', time: '' });
+      this.selectedDoctorId.set('');
       this.availableSlots.set([]);
     } else if (currentDocId) {
       this.loadSlotsForDoctor(Number(currentDocId), this.bookingForm.get('date')?.value);
@@ -195,9 +250,23 @@ export class BookAppointmentComponent implements OnInit {
   }
 
   onDoctorChange(doctorId: string): void {
+    this.selectedDoctorId.set(doctorId || '');
     this.errorMessage.set(null);
     this.bookingForm.patchValue({ time: '' });
     if (doctorId) {
+      const doc = this.doctorsList().find(d => String(d.idMedecin) === String(doctorId));
+      if (doc) {
+        const currentServiceId = this.selectedServiceId();
+        const currentService = this.servicesList().find(s => String(s.id_service || s.idService) === String(currentServiceId));
+        if (!currentService || !this.isDoctorInService(doc, currentService)) {
+          const matchedService = this.findServiceForDoctor(doc);
+          if (matchedService) {
+            const matchedId = String(matchedService.id_service || matchedService.idService);
+            this.selectedServiceId.set(matchedId);
+            this.bookingForm.patchValue({ serviceId: matchedId }, { emitEvent: false });
+          }
+        }
+      }
       const date = this.bookingForm.get('date')?.value;
       this.loadSlotsForDoctor(Number(doctorId), date);
     } else {
@@ -359,6 +428,8 @@ export class BookAppointmentComponent implements OnInit {
     this.isSuccess.set(false);
     this.confirmedAppointment.set(null);
     this.errorMessage.set(null);
+    this.selectedServiceId.set('');
+    this.selectedDoctorId.set('');
     this.bookingForm.reset({
       serviceId: '',
       doctorId: '',
