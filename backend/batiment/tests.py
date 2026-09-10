@@ -143,7 +143,7 @@ class BatimentAPITests(TestCase):
 
         response_hard = self.client.delete(f"/batiments/{self.batiment.idBatiment}/delete/?hard=true")
         self.assertEqual(response_hard.status_code, 200)
-        self.assertFalse(Batiment.objects.filter(idBatiment=self.batiment.idBatiment).exists())
+        self.assertFalse(Batiment.objects.filter(pk=self.batiment.id_batiment).exists())
 
     def test_batiment_soft_deleted_hidden_by_default_and_visible_with_all(self):
         """Un bâtiment désactivé n'apparaît pas par défaut mais réapparaît avec ?all=true."""

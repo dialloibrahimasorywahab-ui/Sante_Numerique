@@ -1,16 +1,21 @@
+import secrets
 from django.db import transaction
 from django.utils import timezone
+from common.services import BaseService
 from users.models import User
 from users.usersServices import UserService
+from .models import Patient
 from .patientRepositories import PatientRepository
 
 
-class PatientService:
-
-    # Instanciation du repository et du service utilisateur
+class PatientService(BaseService[Patient]):
+    """
+    Service métier pour la gestion des patients et la synchronisation avec le compte utilisateur.
+    """
     def __init__(self):
         self.repository = PatientRepository()
         self.user_service = UserService()
+        super().__init__(repository=self.repository)
 
     # Enregistrement d'un patient (prend en charge la création combinée User + Patient)
     def createPatient(self, **data):
@@ -21,7 +26,7 @@ class PatientService:
         elif isinstance(id_user_data, dict):
             user_info = id_user_data
             login = data.pop("login", user_info.get("login", ""))
-            password = data.pop("motDePasse", data.pop("mot_de_passe", "DefaultPass123!"))
+            password = data.pop("motDePasse", data.pop("mot_de_passe", None)) or secrets.token_urlsafe(16)
 
             user_payload = {
                 "nom": user_info.get("nom", ""),
@@ -36,13 +41,14 @@ class PatientService:
             with transaction.atomic():
                 user = self.user_service.createUser(**user_payload)
         elif id_user_data is None and ("nom" in data or "login" in data):
+            password = data.pop("motDePasse", data.pop("mot_de_passe", None)) or secrets.token_urlsafe(16)
             user_payload = {
                 "nom": data.pop("nom", ""),
                 "prenom": data.pop("prenom", ""),
                 "email": data.pop("email", ""),
                 "telephone": data.pop("telephone", ""),
                 "login": data.pop("login", ""),
-                "mot_de_passe_hash": data.pop("motDePasse", data.pop("mot_de_passe", "DefaultPass123!")),
+                "mot_de_passe_hash": password,
                 "role": User.Role.PATIENT,
                 "actif": True,
             }

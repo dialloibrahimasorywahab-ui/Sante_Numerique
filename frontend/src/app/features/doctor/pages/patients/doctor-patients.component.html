@@ -1,11 +1,39 @@
 <div class="patients-page-container">
   <!-- PAGE HEADER -->
   <div class="page-header">
-    <div>
+    <div class="header-text">
       <h1 class="page-title">Mes Patients</h1>
       <p class="page-subtitle">Accédez aux dossiers médicaux, antécédents et historiques de vos patients.</p>
     </div>
+    <div class="header-actions">
+      <button (click)="openCreateModal()" class="btn-create-patient" id="btn-open-create-patient">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+        </svg>
+        <span>Nouveau Patient</span>
+      </button>
+    </div>
   </div>
+
+  <!-- SUCCESS NOTIFICATION -->
+  @if (successNotification()) {
+    <div class="success-banner animate-fade-in">
+      <div class="success-icon">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+      </div>
+      <div class="success-content">
+        <p class="success-title">Enregistrement réussi</p>
+        <p class="success-desc">{{ successNotification() }}</p>
+      </div>
+      <button (click)="successNotification.set(null)" class="btn-close-banner" aria-label="Fermer">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+  }
 
   <!-- SEARCH BAR -->
   <div class="search-card">
@@ -19,6 +47,7 @@
         (ngModelChange)="searchQuery.set($event)"
         placeholder="Rechercher un patient par nom, prénom, téléphone, N° de sécurité sociale..."
         class="search-input"
+        id="input-search-patients"
       />
     </div>
   </div>
@@ -45,7 +74,13 @@
           </svg>
         </div>
         <h3>Aucun patient trouvé</h3>
-        <p>Aucun dossier ne correspond à votre recherche.</p>
+        <p>Aucun dossier ne correspond à votre recherche ou aucun patient n'est encore enregistré.</p>
+        <button (click)="openCreateModal()" class="btn-create-patient mt-4">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+          </svg>
+          <span>Enregistrer un patient</span>
+        </button>
       </div>
     } @else {
       <table class="desktop-table">
@@ -177,3 +212,298 @@
     }
   </div>
 </div>
+
+<!-- MODAL CREATION PATIENT -->
+@if (isCreateModalOpen()) {
+  <div class="modal-backdrop" (click)="closeCreateModal()">
+    <div class="modal-dialog animate-scale-up" (click)="$event.stopPropagation()">
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <div class="modal-title-box">
+          <div class="icon-wrap">
+            <svg class="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+            </svg>
+          </div>
+          <div>
+            <h2 class="modal-title">Enregistrer un nouveau patient</h2>
+            <p class="modal-subtitle">Création du dossier médical et rattachement hospitalier</p>
+          </div>
+        </div>
+        <button (click)="closeCreateModal()" class="btn-close-modal" aria-label="Fermer" [disabled]="isSubmitting()">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+        @if (formError()) {
+          <div class="modal-error-alert animate-shake">
+            <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span>{{ formError() }}</span>
+          </div>
+        }
+
+        <form (ngSubmit)="submitCreatePatient()" class="patient-form">
+          <!-- SECTION 1: IDENTITÉ -->
+          <div class="form-section">
+            <h3 class="section-heading">
+              <span class="section-num">1</span>
+              <span>Identité & État civil</span>
+            </h3>
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label for="patient-nom" class="form-label">Nom de famille <span class="required">*</span></label>
+                <input
+                  id="patient-nom"
+                  type="text"
+                  [(ngModel)]="newPatient.nom"
+                  (ngModelChange)="onNameOrEmailChange()"
+                  name="nom"
+                  placeholder="Ex: Diallo"
+                  class="form-control"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="patient-prenom" class="form-label">Prénom <span class="required">*</span></label>
+                <input
+                  id="patient-prenom"
+                  type="text"
+                  [(ngModel)]="newPatient.prenom"
+                  (ngModelChange)="onNameOrEmailChange()"
+                  name="prenom"
+                  placeholder="Ex: Mamadou"
+                  class="form-control"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="patient-sexe" class="form-label">Sexe biologique</label>
+                <select id="patient-sexe" [(ngModel)]="newPatient.sexe" name="sexe" class="form-control form-select">
+                  <option value="M">Masculin (M)</option>
+                  <option value="F">Féminin (F)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="patient-dob" class="form-label">Date de naissance</label>
+                <input
+                  id="patient-dob"
+                  type="date"
+                  [(ngModel)]="newPatient.dateNaissance"
+                  name="dateNaissance"
+                  class="form-control"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- SECTION 2: CONTACT -->
+          <div class="form-section">
+            <h3 class="section-heading">
+              <span class="section-num">2</span>
+              <span>Coordonnées & Contact</span>
+            </h3>
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label for="patient-email" class="form-label">Adresse Email <span class="required">*</span></label>
+                <input
+                  id="patient-email"
+                  type="email"
+                  [(ngModel)]="newPatient.email"
+                  (ngModelChange)="onNameOrEmailChange()"
+                  name="email"
+                  placeholder="Ex: mamadou.diallo@example.com"
+                  class="form-control"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="patient-tel" class="form-label">Numéro de Téléphone <span class="required">*</span></label>
+                <input
+                  id="patient-tel"
+                  type="tel"
+                  [(ngModel)]="newPatient.telephone"
+                  name="telephone"
+                  placeholder="Ex: +224 620 12 34 56"
+                  class="form-control"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="patient-adresse" class="form-label">Adresse de résidence</label>
+                <input
+                  id="patient-adresse"
+                  type="text"
+                  [(ngModel)]="newPatient.adresse"
+                  name="adresse"
+                  placeholder="Ex: Quartier Minière, Dixinn, Conakry"
+                  class="form-control"
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="patient-urgence" class="form-label">Contact d'urgence / Tuteur</label>
+                <input
+                  id="patient-urgence"
+                  type="text"
+                  [(ngModel)]="newPatient.personneAContacter"
+                  name="personneAContacter"
+                  placeholder="Ex: Fatou Diallo (Épouse) - 622 99 88 77"
+                  class="form-control"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- SECTION 3: DOSSIER MÉDICAL -->
+          <div class="form-section">
+            <h3 class="section-heading">
+              <span class="section-num">3</span>
+              <span>Informations Médicales</span>
+            </h3>
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label for="patient-groupe" class="form-label">Groupe Sanguin</label>
+                <select id="patient-groupe" [(ngModel)]="newPatient.groupeSanguin" name="groupeSanguin" class="form-control form-select">
+                  <option value="">Sélectionner un groupe</option>
+                  <option value="A+">A+</option>
+                  <option value="A-">A-</option>
+                  <option value="B+">B+</option>
+                  <option value="B-">B-</option>
+                  <option value="AB+">AB+</option>
+                  <option value="AB-">AB-</option>
+                  <option value="O+">O+</option>
+                  <option value="O-">O-</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="patient-secu" class="form-label">N° Sécurité Sociale / Matricule Santé</label>
+                <input
+                  id="patient-secu"
+                  type="text"
+                  [(ngModel)]="newPatient.numeroSecuriteSociale"
+                  name="numeroSecuriteSociale"
+                  placeholder="Ex: 1 92 06 15 000 111"
+                  class="form-control font-mono"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- SECTION 4: COMPTE D'ACCÈS PATIENT -->
+          <div class="form-section access-section">
+            <div class="section-header-row">
+              <h3 class="section-heading">
+                <span class="section-num">4</span>
+                <span>Accès au portail patient en ligne</span>
+              </h3>
+              <label class="auto-login-toggle">
+                <input
+                  type="checkbox"
+                  [(ngModel)]="newPatient.autoLogin"
+                  (ngModelChange)="onNameOrEmailChange()"
+                  name="autoLogin"
+                />
+                <span>Génération automatique</span>
+              </label>
+            </div>
+
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label for="patient-login" class="form-label">Identifiant de connexion (Login)</label>
+                <input
+                  id="patient-login"
+                  type="text"
+                  [(ngModel)]="newPatient.login"
+                  [disabled]="newPatient.autoLogin"
+                  name="login"
+                  placeholder="Identifiant auto-calculé"
+                  class="form-control"
+                />
+              </div>
+
+              <div class="form-group">
+                <div class="password-label-row">
+                  <label for="patient-pass" class="form-label">Mot de passe temporaire</label>
+                  <button type="button" (click)="generateRandomPassword()" class="btn-gen-pwd">
+                    Générer sécurisé
+                  </button>
+                </div>
+                <div class="password-input-wrap">
+                  <input
+                    id="patient-pass"
+                    [type]="showPassword() ? 'text' : 'password'"
+                    [(ngModel)]="newPatient.motDePasse"
+                    name="motDePasse"
+                    class="form-control"
+                  />
+                  <button
+                    type="button"
+                    (click)="showPassword.set(!showPassword())"
+                    class="btn-toggle-pwd"
+                    tabindex="-1"
+                  >
+                    @if (showPassword()) {
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18"/>
+                      </svg>
+                    } @else {
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                      </svg>
+                    }
+                  </button>
+                </div>
+              </div>
+            </div>
+            <p class="section-help-text">
+              Un mot de passe temporaire sera attribué au patient pour sa première connexion. Il pourra le modifier à tout moment.
+            </p>
+          </div>
+        </form>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+        <button
+          type="button"
+          (click)="closeCreateModal()"
+          class="btn-cancel"
+          [disabled]="isSubmitting()"
+        >
+          Annuler
+        </button>
+        <button
+          type="button"
+          (click)="submitCreatePatient()"
+          class="btn-submit"
+          [disabled]="isSubmitting()"
+          id="btn-submit-create-patient"
+        >
+          @if (isSubmitting()) {
+            <div class="btn-spinner"></div>
+            <span>Enregistrement en cours...</span>
+          } @else {
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            <span>Enregistrer le patient</span>
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+

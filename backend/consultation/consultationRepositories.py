@@ -1,9 +1,13 @@
 from typing import Optional
 from django.utils import timezone
+from common.repositories import BaseRepository
 from .models import Consultation
 
 
-class ConsultationRepository:
+class ConsultationRepository(BaseRepository[Consultation]):
+
+    def __init__(self):
+        super().__init__(model=Consultation)
 
     def create_consultation(
         self,
@@ -16,7 +20,7 @@ class ConsultationRepository:
         diagnostic: Optional[str] = None,
         observations: Optional[str] = None,
     ) -> Consultation:
-        return Consultation.objects.create(
+        return self.create(
             patient=patient,
             medecin=medecin,
             rdv=rdv,
@@ -29,26 +33,28 @@ class ConsultationRepository:
         )
 
     def get_consultation_by_id(self, consultation_id: int) -> Optional[Consultation]:
-        try:
-            return Consultation.objects.select_related(
+        return self.get_by_id(
+            consultation_id,
+            select_related=[
                 'patient__id_utilisateur',
                 'medecin__id_utilisateur',
                 'rdv',
                 'frais'
-            ).prefetch_related('ordonnances').get(pk=consultation_id)
-        except Consultation.DoesNotExist:
-            return None
+            ],
+            prefetch_related=['ordonnances']
+        )
 
     def get_all_consultations(self, actif_only: bool = True):
-        qs = Consultation.objects.select_related(
-            'patient__id_utilisateur',
-            'medecin__id_utilisateur',
-            'rdv',
-            'frais'
-        ).prefetch_related('ordonnances').all()
-        if actif_only:
-            qs = qs.filter(actif=True)
-        return qs
+        return self.get_all(
+            actif_only=actif_only,
+            select_related=[
+                'patient__id_utilisateur',
+                'medecin__id_utilisateur',
+                'rdv',
+                'frais'
+            ],
+            prefetch_related=['ordonnances']
+        )
 
     def get_consultations_by_patient(self, patient_id: int, actif_only: bool = True):
         return self.get_all_consultations(actif_only=actif_only).filter(patient_id=patient_id)
@@ -60,19 +66,10 @@ class ConsultationRepository:
         cons = self.get_consultation_by_id(consultation_id)
         if not cons:
             return None
-        for key, value in kwargs.items():
-            if hasattr(cons, key):
-                setattr(cons, key, value)
-        cons.save()
-        return cons
+        return self.update(cons, **kwargs)
 
     def delete_consultation(self, consultation_id: int, hard: bool = False) -> bool:
         cons = self.get_consultation_by_id(consultation_id)
         if not cons:
             return False
-        if hard:
-            cons.delete()
-        else:
-            cons.actif = False
-            cons.save()
-        return True
+        return self.delete(cons, hard=hard)

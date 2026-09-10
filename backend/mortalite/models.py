@@ -41,5 +41,10 @@ class Mortalite(models.Model):
         return f"Décès #{self.id_deces} - {patient_nom} le {self.date_deces}"
 
     @property
+    def id(self):
+        return self.id_deces
+
+    @property
     def idDeces(self):
         return self.id_deces
+

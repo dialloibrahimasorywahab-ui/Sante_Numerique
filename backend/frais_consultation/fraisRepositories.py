@@ -1,9 +1,12 @@
 from typing import Optional
-from django.utils import timezone
+from common.repositories import BaseRepository
 from .models import FraisConsultation
 
 
-class FraisConsultationRepository:
+class FraisConsultationRepository(BaseRepository[FraisConsultation]):
+
+    def __init__(self):
+        super().__init__(model=FraisConsultation)
 
     def create_frais(
         self,
@@ -12,7 +15,7 @@ class FraisConsultationRepository:
         statut: str = FraisConsultation.StatutPaiement.EN_ATTENTE,
         date_paiement=None,
     ) -> FraisConsultation:
-        return FraisConsultation.objects.create(
+        return self.create(
             montant=montant,
             description=description,
             statut=statut,
@@ -21,35 +24,25 @@ class FraisConsultationRepository:
         )
 
     def get_frais_by_id(self, frais_id: int) -> Optional[FraisConsultation]:
-        try:
-            return FraisConsultation.objects.get(pk=frais_id)
-        except FraisConsultation.DoesNotExist:
-            return None
+        return self.get_by_id(frais_id)
 
     def get_all_frais(self, actif_only: bool = True):
-        qs = FraisConsultation.objects.all()
-        if actif_only:
-            qs = qs.filter(actif=True)
-        return qs
+        return self.get_all(actif_only=actif_only)
 
     def update_frais(self, frais_id: int, **kwargs) -> Optional[FraisConsultation]:
         frais = self.get_frais_by_id(frais_id)
         if not frais:
             return None
-        for key, value in kwargs.items():
-            if hasattr(frais, key):
-                setattr(frais, key, value)
-        frais.save()
-        return frais
+        return self.update(frais, **kwargs)
 
     def delete_frais(self, frais_id: int, hard: bool = False) -> bool:
         frais = self.get_frais_by_id(frais_id)
         if not frais:
             return False
         if hard:
-            frais.delete()
+            return self.delete(frais, hard=True)
         else:
             frais.actif = False
             frais.statut = FraisConsultation.StatutPaiement.ANNULE
             frais.save()
-        return True
+            return True

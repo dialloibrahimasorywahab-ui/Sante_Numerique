@@ -1,5 +1,7 @@
 from django.db import models
+from simple_history.models import HistoricalRecords
 from users.models import User
+
 
 
 class Patient(models.Model):
@@ -55,8 +57,15 @@ class Patient(models.Model):
 
     date_inscription = models.DateField()
 
+    history = HistoricalRecords()
+
     class Meta:
         ordering = ['id_patient']
+
+    @property
+    def id(self):
+        return self.id_patient
+
 
     # Propriétés de compatibilité camelCase
     @property

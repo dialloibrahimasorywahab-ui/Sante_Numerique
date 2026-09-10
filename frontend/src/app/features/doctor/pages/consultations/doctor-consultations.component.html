@@ -74,22 +74,26 @@
           @for (c of paginatedConsultations(); track (c.id || c.idConsultation)) {
             <tr>
               <td>
-                <div class="patient-cell">
+                <a
+                  [routerLink]="['/medecin/patients', getPatientId(c)]"
+                  class="patient-cell patient-link"
+                  title="Voir le dossier médical complet de ce patient"
+                >
                   <div class="avatar-circle">
-                    {{ (c.patient_details?.nom || 'P')[0] }}
+                    {{ ((c.patient_details?.nom || c.patient_detail?.nom || 'P')[0]) }}
                   </div>
                   <div>
                     <div class="patient-name">
-                      {{ c.patient_details?.prenom }} {{ c.patient_details?.nom }}
+                      {{ c.patient_details?.prenom || c.patient_detail?.prenom }} {{ c.patient_details?.nom || c.patient_detail?.nom }}
                     </div>
                     <div class="patient-sub">
-                      {{ c.patient_details?.telephone || 'Sans téléphone' }}
+                      {{ c.patient_details?.telephone || c.patient_detail?.telephone || 'Sans téléphone' }}
                     </div>
                   </div>
-                </div>
+                </a>
               </td>
               <td>
-                <span class="date-badge">{{ c.date_cons }}</span>
+                <span class="date-badge">{{ formatDate(c.date_cons) }}</span>
               </td>
               <td>
                 <span class="diagnostic-text">{{ c.diagnostic || 'Non spécifié' }}</span>
@@ -98,12 +102,22 @@
                 <span class="obs-preview">{{ c.observations || c.symptomes || 'Examen clinique standard' }}</span>
               </td>
               <td class="text-right">
-                <a
-                  [routerLink]="['/medecin/consultations', (c.id || c.idConsultation)]"
-                  class="btn-view"
-                >
-                  Compte-rendu
-                </a>
+                <div class="actions-group">
+                  <a
+                    [routerLink]="['/medecin/patients', getPatientId(c)]"
+                    class="btn-dossier"
+                    title="Voir le dossier médical"
+                  >
+                    Dossier
+                  </a>
+                  <a
+                    [routerLink]="['/medecin/consultations', (c.id || c.idConsultation)]"
+                    class="btn-view"
+                    title="Voir le compte-rendu médical"
+                  >
+                    Compte-rendu
+                  </a>
+                </div>
               </td>
             </tr>
           }
@@ -115,10 +129,24 @@
         @for (c of paginatedConsultations(); track (c.id || c.idConsultation)) {
           <div class="mobile-card">
             <div class="card-top">
-              <span class="font-bold text-slate-900">
-                {{ c.patient_details?.prenom }} {{ c.patient_details?.nom }}
-              </span>
-              <span class="date-badge">{{ c.date_cons }}</span>
+              <a
+                [routerLink]="['/medecin/patients', getPatientId(c)]"
+                class="patient-mobile-link"
+                title="Voir le dossier médical de ce patient"
+              >
+                <div class="avatar-circle-sm">
+                  {{ ((c.patient_details?.nom || c.patient_detail?.nom || 'P')[0]) }}
+                </div>
+                <div>
+                  <span class="font-bold text-slate-900 block">
+                    {{ c.patient_details?.prenom || c.patient_detail?.prenom }} {{ c.patient_details?.nom || c.patient_detail?.nom }}
+                  </span>
+                  <span class="text-xs text-slate-500 font-normal">
+                    {{ c.patient_details?.telephone || c.patient_detail?.telephone || 'Sans tél' }}
+                  </span>
+                </div>
+              </a>
+              <span class="date-badge">{{ formatDate(c.date_cons) }}</span>
             </div>
 
             <div class="card-body">
@@ -128,12 +156,18 @@
               }
             </div>
 
-            <div class="card-bottom">
+            <div class="card-bottom flex gap-2">
+              <a
+                [routerLink]="['/medecin/patients', getPatientId(c)]"
+                class="btn-dossier flex-1 justify-center text-center"
+              >
+                Dossier
+              </a>
               <a
                 [routerLink]="['/medecin/consultations', (c.id || c.idConsultation)]"
-                class="btn-view w-full justify-center"
+                class="btn-view flex-1 justify-center text-center"
               >
-                Voir le compte-rendu complet
+                Compte-rendu
               </a>
             </div>
           </div>

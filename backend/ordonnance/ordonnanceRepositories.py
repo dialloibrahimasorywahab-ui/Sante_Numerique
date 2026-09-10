@@ -1,12 +1,13 @@
-# pyrefly: ignore [missing-import]
 from typing import Optional
-# pyrefly: ignore [missing-import]
 from django.utils import timezone
-# pyrefly: ignore [missing-import]
+from common.repositories import BaseRepository
 from .models import Ordonnance
 
 
-class OrdonnanceRepository:
+class OrdonnanceRepository(BaseRepository[Ordonnance]):
+
+    def __init__(self):
+        super().__init__(model=Ordonnance)
 
     def create_ordonnance(
         self,
@@ -20,7 +21,7 @@ class OrdonnanceRepository:
             count = Ordonnance.objects.filter(reference__startswith=f"ORD-{today_str}").count() + 1
             reference = f"ORD-{today_str}-{count:03d}"
 
-        return Ordonnance.objects.create(
+        return self.create(
             consultation=consultation,
             reference=reference,
             date_ordonnance=date_ordonnance or timezone.now().date(),
@@ -29,22 +30,24 @@ class OrdonnanceRepository:
         )
 
     def get_ordonnance_by_id(self, ordonnance_id: int) -> Optional[Ordonnance]:
-        try:
-            return Ordonnance.objects.select_related(
+        return self.get_by_id(
+            ordonnance_id,
+            select_related=[
                 'consultation__patient__id_utilisateur',
                 'consultation__medecin__id_utilisateur'
-            ).get(pk=ordonnance_id)
-        except Ordonnance.DoesNotExist:
-            return None
+            ],
+            prefetch_related=['lignes']
+        )
 
     def get_all_ordonnances(self, actif_only: bool = True):
-        qs = Ordonnance.objects.select_related(
-            'consultation__patient__id_utilisateur',
-            'consultation__medecin__id_utilisateur'
-        ).all()
-        if actif_only:
-            qs = qs.filter(actif=True)
-        return qs
+        return self.get_all(
+            actif_only=actif_only,
+            select_related=[
+                'consultation__patient__id_utilisateur',
+                'consultation__medecin__id_utilisateur'
+            ],
+            prefetch_related=['lignes']
+        )
 
     def get_ordonnances_by_consultation(self, consultation_id: int, actif_only: bool = True):
         return self.get_all_ordonnances(actif_only=actif_only).filter(consultation_id=consultation_id)
@@ -53,19 +56,10 @@ class OrdonnanceRepository:
         ord_obj = self.get_ordonnance_by_id(ordonnance_id)
         if not ord_obj:
             return None
-        for key, value in kwargs.items():
-            if hasattr(ord_obj, key):
-                setattr(ord_obj, key, value)
-        ord_obj.save()
-        return ord_obj
+        return self.update(ord_obj, **kwargs)
 
     def delete_ordonnance(self, ordonnance_id: int, hard: bool = False) -> bool:
         ord_obj = self.get_ordonnance_by_id(ordonnance_id)
         if not ord_obj:
             return False
-        if hard:
-            ord_obj.delete()
-        else:
-            ord_obj.actif = False
-            ord_obj.save()
-        return True
+        return self.delete(ord_obj, hard=hard)

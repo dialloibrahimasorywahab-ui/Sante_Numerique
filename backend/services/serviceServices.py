@@ -1,55 +1,47 @@
+from common.services import BaseService
 from .models import Service
 from .serviceRepositories import ServiceRepository
 
 
-class ServiceService:
+class ServiceService(BaseService[Service]):
 
     def __init__(self):
         self.repository = ServiceRepository()
+        super().__init__(repository=self.repository)
 
-    # Création d'un service
     def createService(self, **data):
         return self.repository.createService(**data)
 
-    # Récupérer un service par son ID
     def get_service(self, service_id):
         return self.repository.get_service(service_id)
 
-    # Récupérer ou créer un service par son nom
     def get_or_create_service_by_nom(self, nom_service):
         if not nom_service:
             return None
         service = self.repository.get_service_by_nom(nom_service)
         if service:
             return service
-        
-        # Correspondance avec le dictionnaire NomService
+
         valid_choices = {choice[0]: choice[0] for choice in Service.NomService.choices}
         matched_choice = valid_choices.get(str(nom_service).upper(), Service.NomService.MEDECINE_GENERALE)
-        
+
         try:
             return self.repository.createService(nom_service=matched_choice)
         except Exception:
             return self.repository.get_service_by_nom(matched_choice)
 
-    # Récupérer tous les services
     def get_all_services(self, actif_only: bool = True):
         return self.repository.get_all_services(actif_only=actif_only)
 
-    # Rechercher des services
     def search_services(self, query, actif_only: bool = True):
         return self.repository.search_services(query, actif_only=actif_only)
 
-    # Mettre à jour un service
     def update_service(self, service, **data):
         return self.repository.update_service(service, **data)
 
-    # Désactiver ou supprimer un service
     def delete_service(self, service, hard=False):
         return self.repository.delete_service(service, hard=hard)
 
-
-    # Initialisation de tous les services du dictionnaire s'ils n'existent pas
     def seed_default_services(self):
         created_services = []
         for choice_key, choice_label in Service.NomService.choices:

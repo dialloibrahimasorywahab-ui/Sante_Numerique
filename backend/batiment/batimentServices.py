@@ -1,11 +1,13 @@
+from common.services import BaseService
 from .batimentRepositories import BatimentRepository
 from .models import Batiment
 
 
-class BatimentService:
+class BatimentService(BaseService[Batiment]):
 
     def __init__(self):
         self.repository = BatimentRepository()
+        super().__init__(repository=self.repository)
 
     def create_batiment(self, **data):
         return self.repository.create_batiment(**data)
@@ -40,7 +42,6 @@ class BatimentService:
     def delete_batiment(self, batiment, hard=False):
         return self.repository.delete_batiment(batiment, hard=hard)
 
-
     def sync_nombre_chambres(self, batiment_id):
         batiment = self.get_batiment(batiment_id)
         if batiment:
@@ -66,4 +67,3 @@ class BatimentService:
             )
             created.append(bat)
         return created
-

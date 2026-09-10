@@ -74,4 +74,30 @@ export class DoctorPrescriptionsComponent implements OnInit {
       this.currentPage.set(p);
     }
   }
+
+  getPatientId(p: DoctorPrescriptionDto): number {
+    return Number(
+      p.consultation_details?.patient ||
+      p.consultation_details?.patient_details?.id_patient ||
+      p.consultation_details?.patient_details?.idPatient ||
+      0
+    );
+  }
+
+  formatDate(dateStr?: string): string {
+    if (!dateStr) return '—';
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) {
+        return dateStr.split('T')[0] || dateStr;
+      }
+      return d.toLocaleDateString('fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    } catch {
+      return dateStr;
+    }
+  }
 }

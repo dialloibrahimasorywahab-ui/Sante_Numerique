@@ -130,11 +130,30 @@ class PatientSerializer(serializers.ModelSerializer):
         id_user = attrs.get("id_utilisateur")
         if not self.instance and (not id_user or isinstance(id_user, dict)):
             errors = {}
-            for field in ["nom", "prenom", "email", "telephone", "login"]:
+            for field in ["nom", "prenom", "email", "telephone"]:
                 if not self.initial_data.get(field):
                     errors[field] = ["Ce champ est obligatoire."]
-            if not self.initial_data.get("motDePasse") and not self.initial_data.get("mot_de_passe") and not self.initial_data.get("password"):
-                errors["motDePasse"] = ["Ce champ est obligatoire."]
+            
+            # Gestion intelligente du login
+            if not self.initial_data.get("login") and not attrs.get("login"):
+                email = self.initial_data.get("email") or ""
+                nom = self.initial_data.get("nom") or ""
+                prenom = self.initial_data.get("prenom") or ""
+                if email:
+                    attrs["login"] = email.split("@")[0].lower()
+                elif nom and prenom:
+                    attrs["login"] = f"{prenom.lower()}_{nom.lower()}"
+                else:
+                    errors["login"] = ["Ce champ est obligatoire."]
+            elif self.initial_data.get("login"):
+                attrs["login"] = self.initial_data.get("login")
+
+            # Gestion du mot de passe
+            if not self.initial_data.get("motDePasse") and not self.initial_data.get("mot_de_passe") and not self.initial_data.get("password") and not attrs.get("mot_de_passe"):
+                attrs["mot_de_passe"] = "PatientPass123!"
+            elif self.initial_data.get("motDePasse"):
+                attrs["mot_de_passe"] = self.initial_data.get("motDePasse")
+
             if errors:
                 raise serializers.ValidationError(errors)
         return attrs

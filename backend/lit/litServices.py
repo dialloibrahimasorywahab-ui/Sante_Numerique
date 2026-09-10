@@ -1,11 +1,13 @@
+from common.services import BaseService
 from .litRepositories import LitRepository
 from .models import Lit
 
 
-class LitService:
+class LitService(BaseService[Lit]):
 
     def __init__(self):
         self.repository = LitRepository()
+        super().__init__(repository=self.repository)
 
     def create_lit(self, **data):
         lit = self.repository.create_lit(**data)
@@ -41,8 +43,6 @@ class LitService:
             chambre.sync_statut()
         return res
 
-
-
     def generate_lits_pour_chambre(self, chambre):
         """Génère automatiquement les lits d'une chambre selon sa capacité (nombre de lits)."""
         from django.db import transaction
@@ -62,4 +62,3 @@ class LitService:
                     )
                     lits_crees.append(lit)
         return lits_crees
-

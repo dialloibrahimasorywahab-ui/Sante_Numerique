@@ -6,6 +6,7 @@ from chambre.chambreSerializers import ChambreSerializer
 
 
 class LitSerializer(serializers.ModelSerializer):
+    idLit = serializers.IntegerField(source="id", read_only=True)
     id_chambre = serializers.PrimaryKeyRelatedField(
         queryset=Chambre.objects.all(),
         source='chambre',

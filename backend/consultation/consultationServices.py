@@ -1,15 +1,17 @@
 from typing import Optional
 from django.db import transaction
 from django.utils import timezone
+from common.services import BaseService
 from rendezvous.models import RendezVous
 from .models import Consultation
 from .consultationRepositories import ConsultationRepository
 
 
-class ConsultationService:
+class ConsultationService(BaseService[Consultation]):
 
     def __init__(self, repository: Optional[ConsultationRepository] = None):
         self.repository = repository or ConsultationRepository()
+        super().__init__(repository=self.repository)
 
     def creer_consultation(
         self,

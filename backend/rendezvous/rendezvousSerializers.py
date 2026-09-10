@@ -11,18 +11,19 @@ class RendezVousSerializer(serializers.ModelSerializer):
     id_patient = serializers.PrimaryKeyRelatedField(
         queryset=Patient.objects.all(),
         source='patient',
-        write_only=True,
         required=False
     )
     id_medecin = serializers.PrimaryKeyRelatedField(
         queryset=Medecin.objects.all(),
         source='medecin',
-        write_only=True,
         required=False
     )
-
+    patient = serializers.IntegerField(source='patient.id_patient', read_only=True)
+    medecin = serializers.IntegerField(source='medecin.id_medecin', read_only=True)
     patient_detail = PatientSerializer(source='patient', read_only=True)
+    patient_details = PatientSerializer(source='patient', read_only=True)
     medecin_detail = MedecinSerializer(source='medecin', read_only=True)
+    medecin_details = MedecinSerializer(source='medecin', read_only=True)
     statutDisplay = serializers.CharField(source="get_statut_display", read_only=True)
 
     class Meta:
@@ -31,9 +32,13 @@ class RendezVousSerializer(serializers.ModelSerializer):
             'id',
             'idRendezVous',
             'id_patient',
+            'patient',
             'patient_detail',
+            'patient_details',
             'id_medecin',
+            'medecin',
             'medecin_detail',
+            'medecin_details',
             'date_rdv',
             'heure',
             'motif',

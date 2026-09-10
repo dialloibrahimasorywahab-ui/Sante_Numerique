@@ -125,14 +125,14 @@
               <td>
                 <div class="patient-cell">
                   <div class="avatar-circle">
-                    {{ (rdv.patient_details?.nom || 'P')[0] }}
+                    {{ ((rdv.patient_details?.nom || rdv.patient_detail?.nom || 'P')[0]) }}
                   </div>
                   <div>
                     <div class="cell-title">
-                      {{ rdv.patient_details?.prenom }} {{ rdv.patient_details?.nom }}
+                      {{ rdv.patient_details?.prenom || rdv.patient_detail?.prenom }} {{ rdv.patient_details?.nom || rdv.patient_detail?.nom }}
                     </div>
                     <div class="cell-sub">
-                      {{ rdv.patient_details?.telephone || 'Pas de téléphone' }}
+                      {{ rdv.patient_details?.telephone || rdv.patient_detail?.telephone || 'Pas de téléphone' }}
                     </div>
                   </div>
                 </div>
@@ -155,8 +155,8 @@
 
               <!-- Statut -->
               <td>
-                <span class="badge" [ngClass]="getStatusClass(rdv.statut)">
-                  {{ getStatusLabel(rdv.statut) }}
+                <span class="badge" [ngClass]="getStatusClass(rdv)">
+                  {{ getStatusLabel(rdv) }}
                 </span>
               </td>
 
@@ -185,7 +185,7 @@
                   </a>
 
                   <!-- Confirmer -->
-                  @if (rdv.statut === 'EN_ATTENTE') {
+                  @if (rdv.statut === 'EN_ATTENTE' && !isPastAppointment(rdv)) {
                     <button
                       (click)="confirmAppointment(rdv)"
                       class="btn-action btn-confirm"
@@ -230,19 +230,19 @@
             <div class="card-top">
               <div class="patient-cell">
                 <div class="avatar-circle">
-                  {{ (rdv.patient_details?.nom || 'P')[0] }}
+                  {{ ((rdv.patient_details?.nom || rdv.patient_detail?.nom || 'P')[0]) }}
                 </div>
                 <div>
                   <div class="cell-title">
-                    {{ rdv.patient_details?.prenom }} {{ rdv.patient_details?.nom }}
+                    {{ rdv.patient_details?.prenom || rdv.patient_detail?.prenom }} {{ rdv.patient_details?.nom || rdv.patient_detail?.nom }}
                   </div>
                   <div class="cell-sub">
-                    {{ rdv.patient_details?.telephone || 'Sans tél' }}
+                    {{ rdv.patient_details?.telephone || rdv.patient_detail?.telephone || 'Sans tél' }}
                   </div>
                 </div>
               </div>
-              <span class="badge" [ngClass]="getStatusClass(rdv.statut)">
-                {{ getStatusLabel(rdv.statut) }}
+              <span class="badge" [ngClass]="getStatusClass(rdv)">
+                {{ getStatusLabel(rdv) }}
               </span>
             </div>
 
@@ -266,7 +266,7 @@
                 >Consulter</a>
               }
               <a [routerLink]="['/medecin/patients', rdv.patient]" class="btn-action btn-patient">Dossier</a>
-              @if (rdv.statut === 'EN_ATTENTE') {
+              @if (rdv.statut === 'EN_ATTENTE' && !isPastAppointment(rdv)) {
                 <button (click)="confirmAppointment(rdv)" class="btn-action btn-confirm">Confirmer</button>
               }
               @if (rdv.statut === 'CONFIRME') {

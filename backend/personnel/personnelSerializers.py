@@ -5,16 +5,19 @@ from .models import Personnel
 
 
 class PersonnelSerializer(serializers.ModelSerializer):
-    nom = serializers.CharField(source="idUtilisateur.nom", required=False)
-    prenom = serializers.CharField(source="idUtilisateur.prenom", required=False)
-    email = serializers.EmailField(source="idUtilisateur.email", required=False)
-    telephone = serializers.CharField(source="idUtilisateur.telephone", required=False)
-    dateNaissance = serializers.DateField(source="idUtilisateur.dateNaissance", required=False, allow_null=True)
+    idPersonnel = serializers.IntegerField(source="id_personnel", read_only=True)
+    idUtilisateur = serializers.PrimaryKeyRelatedField(source="id_utilisateur", read_only=True)
+    idService = serializers.PrimaryKeyRelatedField(source="id_service", read_only=True)
+    nom = serializers.CharField(source="id_utilisateur.nom", required=False)
+    prenom = serializers.CharField(source="id_utilisateur.prenom", required=False)
+    email = serializers.EmailField(source="id_utilisateur.email", required=False)
+    telephone = serializers.CharField(source="id_utilisateur.telephone", required=False)
+    dateNaissance = serializers.DateField(source="id_utilisateur.date_naissance", required=False, allow_null=True)
 
     login = serializers.CharField(write_only=True, required=False)
     motDePasse = serializers.CharField(write_only=True, required=False)
 
-    nomService = serializers.CharField(source="idService.get_nomService_display", read_only=True, required=False)
+    nomService = serializers.CharField(source="id_service.get_nom_service_display", read_only=True, required=False)
 
     class Meta:
         model = Personnel

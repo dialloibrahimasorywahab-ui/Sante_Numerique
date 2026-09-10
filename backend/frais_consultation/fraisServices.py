@@ -1,13 +1,15 @@
 from typing import Optional
 from django.utils import timezone
+from common.services import BaseService
 from .models import FraisConsultation
 from .fraisRepositories import FraisConsultationRepository
 
 
-class FraisConsultationService:
+class FraisConsultationService(BaseService[FraisConsultation]):
 
     def __init__(self, repository: Optional[FraisConsultationRepository] = None):
         self.repository = repository or FraisConsultationRepository()
+        super().__init__(repository=self.repository)
 
     def creer_frais(
         self,

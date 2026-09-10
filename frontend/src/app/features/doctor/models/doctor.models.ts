@@ -40,13 +40,38 @@ export interface DoctorPatientDto {
   dateInscription?: string;
 }
 
+export interface CreatePatientDto {
+  nom: string;
+  prenom: string;
+  email: string;
+  telephone: string;
+  dateNaissance?: string | null;
+  date_naissance?: string | null;
+  sexe?: 'M' | 'F' | string;
+  adresse?: string;
+  groupeSanguin?: string;
+  groupe_sanguin?: string;
+  numeroSecuriteSociale?: string | null;
+  numero_securite_sociale?: string | null;
+  personneAContacter?: string | null;
+  personne_a_contacter?: string | null;
+  login?: string;
+  motDePasse?: string;
+  mot_de_passe?: string;
+}
+
+
 export interface DoctorAppointmentDto {
   id: number;
   idRendezVous?: number;
   patient: number;
+  id_patient?: number;
   patient_details?: DoctorPatientDto;
+  patient_detail?: DoctorPatientDto;
   medecin: number;
+  id_medecin?: number;
   medecin_details?: DoctorProfileDto;
+  medecin_detail?: DoctorProfileDto;
   date_rdv: string;
   dateRdv?: string;
   heure: string;
@@ -58,9 +83,13 @@ export interface DoctorConsultationDto {
   id: number;
   idConsultation?: number;
   patient: number;
+  id_patient?: number;
   patient_details?: DoctorPatientDto;
+  patient_detail?: DoctorPatientDto;
   medecin: number;
+  id_medecin?: number;
   medecin_details?: DoctorProfileDto;
+  medecin_detail?: DoctorProfileDto;
   rdv?: number | null;
   rdv_details?: DoctorAppointmentDto | null;
   frais?: number | null;

@@ -155,6 +155,38 @@
   color: #0f172a;
 }
 
+.patient-name-link {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #0f172a;
+  text-decoration: none;
+  transition: color 0.15s ease;
+
+  &:hover {
+    color: #059669;
+    text-decoration: underline;
+  }
+}
+
+.btn-dossier {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.65rem;
+  border-radius: 6px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: #1d4ed8;
+    color: #ffffff;
+  }
+}
+
 .consultation-link {
   font-size: 0.82rem;
   font-weight: 600;

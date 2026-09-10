@@ -1,12 +1,14 @@
 from typing import Optional
+from common.services import BaseService
 from .models import Ordonnance
 from .ordonnanceRepositories import OrdonnanceRepository
 
 
-class OrdonnanceService:
+class OrdonnanceService(BaseService[Ordonnance]):
 
     def __init__(self, repository: Optional[OrdonnanceRepository] = None):
         self.repository = repository or OrdonnanceRepository()
+        super().__init__(repository=self.repository)
 
     def prescrire_ordonnance(
         self,

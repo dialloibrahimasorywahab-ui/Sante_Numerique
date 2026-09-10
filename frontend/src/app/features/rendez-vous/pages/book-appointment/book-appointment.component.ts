@@ -447,6 +447,21 @@ export class BookAppointmentComponent implements OnInit {
     window.print();
   }
 
+  getStatusDisplay(): string {
+    const rdv = this.confirmedAppointment();
+    if (!rdv) return 'En attente de confirmation';
+    if (rdv.statutDisplay) return rdv.statutDisplay;
+    switch (rdv.statut) {
+      case 'CONFIRME': return 'Confirmé';
+      case 'PROGRAMME': return 'Programmé';
+      case 'EN_ATTENTE': return 'En attente de confirmation';
+      case 'EN_COURS': return 'En cours';
+      case 'TERMINE': return 'Terminé';
+      case 'ANNULE': return 'Annulé';
+      default: return 'En attente de confirmation';
+    }
+  }
+
   private isPastDateTime(date: string, time: string): boolean {
     return this.hospitalService.isSlotPast(date, time);
   }

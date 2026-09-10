@@ -46,7 +46,12 @@ class Service(models.Model):
     class Meta:
         ordering = ['id_service']
 
+    @property
+    def id(self):
+        return self.id_service
+
     # Propriétés de compatibilité camelCase
+
     @property
     def idService(self):
         return self.id_service

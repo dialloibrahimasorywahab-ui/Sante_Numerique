@@ -5,11 +5,11 @@ from .models import Service
 class ServiceSerializer(serializers.ModelSerializer):
     idService = serializers.IntegerField(source="id_service", read_only=True)
     nom_service = serializers.CharField(required=False)
-    nomService = serializers.CharField(source="nom_service", required=False)
+    nomService = serializers.CharField(source="nom_service", read_only=True)
     nom_service_display = serializers.CharField(source="get_nom_service_display", read_only=True)
     nomServiceDisplay = serializers.CharField(source="get_nom_service_display", read_only=True)
     bureau_localisation = serializers.CharField(required=False, allow_blank=True, allow_null=True)
-    bureauLocalisation = serializers.CharField(source="bureau_localisation", required=False, allow_blank=True, allow_null=True)
+    bureauLocalisation = serializers.CharField(source="bureau_localisation", read_only=True)
 
     class Meta:
         model = Service
@@ -59,5 +59,16 @@ class ServiceSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         if not self.instance:
             if not attrs.get("nom_service") and not self.initial_data.get("nom_service") and not self.initial_data.get("nomService"):
-                raise serializers.ValidationError({"nom_service": ["Ce champ est obligatoire."]})
+                raise serializers.ValidationError({
+                    "nom_service": ["Ce champ est obligatoire."],
+                    "nomService": ["Ce champ est obligatoire."]
+                })
         return attrs
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        ret["nomService"] = instance.nom_service
+        ret["nom_service"] = instance.nom_service
+        ret["nomServiceDisplay"] = instance.get_nom_service_display()
+        ret["nom_service_display"] = instance.get_nom_service_display()
+        return ret

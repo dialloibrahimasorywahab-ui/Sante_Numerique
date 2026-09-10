@@ -67,7 +67,12 @@ class Personnel(models.Model):
     class Meta:
         ordering = ['id_personnel']
 
+    @property
+    def id(self):
+        return self.id_personnel
+
     # Propriétés de compatibilité camelCase
+
     @property
     def idPersonnel(self):
         return self.id_personnel

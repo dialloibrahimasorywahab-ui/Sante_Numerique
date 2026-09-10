@@ -6,6 +6,7 @@ from batiment.batimentSerializers import BatimentSerializer
 
 
 class ChambreSerializer(serializers.ModelSerializer):
+    idChambre = serializers.IntegerField(source="id", read_only=True)
     id_batiment = serializers.PrimaryKeyRelatedField(
         queryset=Batiment.objects.all(),
         source='batiment',

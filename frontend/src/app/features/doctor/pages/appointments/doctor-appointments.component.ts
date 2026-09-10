@@ -59,6 +59,29 @@ export class DoctorAppointmentsComponent implements OnInit {
     });
   }
 
+  isPastAppointment(rdv: DoctorAppointmentDto): boolean {
+    const rDate = rdv.date_rdv || rdv.dateRdv;
+    if (!rDate) return false;
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const todayStr = `${year}-${month}-${day}`;
+
+    if (rDate < todayStr) return true;
+    if (rDate === todayStr && rdv.heure) {
+      const parts = rdv.heure.split(':');
+      const h = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10);
+      const currentH = now.getHours();
+      const currentM = now.getMinutes();
+      if (!isNaN(h) && !isNaN(m)) {
+        return (h < currentH || (h === currentH && m <= currentM));
+      }
+    }
+    return false;
+  }
+
   // Filtered Appointments
   filteredAppointments = computed(() => {
     let list = this.appointments();
@@ -96,6 +119,8 @@ export class DoctorAppointmentsComponent implements OnInit {
       list = list.filter(r => {
         const rDate = r.date_rdv || r.dateRdv;
         if (!rDate) return true;
+        const isPast = this.isPastAppointment(r);
+
         switch (timeFilter) {
           case 'AUJOURDHUI':
             return rDate === todayStr;
@@ -104,9 +129,10 @@ export class DoctorAppointmentsComponent implements OnInit {
           case 'SEMAINE':
             return rDate >= todayStr && rDate <= weekLaterStr;
           case 'A_VENIR':
-            return rDate >= todayStr;
+            return !isPast && r.statut !== 'TERMINE' && r.statut !== 'ANNULE';
           case 'PASSES':
-            return rDate < todayStr;
+            // Pour l'onglet "Passés", on affiche les rendez-vous passés/terminés et on exclut les demandes EN_ATTENTE non confirmées
+            return (isPast || r.statut === 'TERMINE') && r.statut !== 'EN_ATTENTE';
           default:
             return true;
         }
@@ -183,24 +209,32 @@ export class DoctorAppointmentsComponent implements OnInit {
     });
   }
 
-  getStatusClass(statut: string): string {
-    switch (statut) {
+  getStatusClass(rdv: DoctorAppointmentDto): string {
+    if (rdv.statut === 'EN_ATTENTE' && this.isPastAppointment(rdv)) {
+      return 'status-expired';
+    }
+    switch (rdv.statut) {
       case 'CONFIRME': return 'status-confirmed';
       case 'TERMINE': return 'status-completed';
       case 'ANNULE': return 'status-cancelled';
       case 'EN_COURS': return 'status-in-progress';
+      case 'EN_ATTENTE': return 'status-pending';
       default: return 'status-pending';
     }
   }
 
-  getStatusLabel(statut: string): string {
-    switch (statut) {
+  getStatusLabel(rdv: DoctorAppointmentDto): string {
+    if (rdv.statut === 'EN_ATTENTE' && this.isPastAppointment(rdv)) {
+      return 'Expiré';
+    }
+    switch (rdv.statut) {
       case 'CONFIRME': return 'Confirmé';
       case 'TERMINE': return 'Terminé';
       case 'ANNULE': return 'Annulé';
       case 'EN_COURS': return 'En cours';
       case 'EN_ATTENTE': return 'En attente';
-      default: return statut;
+      default: return rdv.statut;
     }
   }
 }
+

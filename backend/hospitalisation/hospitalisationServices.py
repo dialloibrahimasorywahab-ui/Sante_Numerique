@@ -1,15 +1,17 @@
 from typing import Optional
 from django.db import transaction
 from django.utils import timezone
+from common.services import BaseService
 from lit.models import Lit
 from .models import Hospitalisation
 from .hospitalisationRepositories import HospitalisationRepository
 
 
-class HospitalisationService:
+class HospitalisationService(BaseService[Hospitalisation]):
 
     def __init__(self, repository: Optional[HospitalisationRepository] = None):
         self.repository = repository or HospitalisationRepository()
+        super().__init__(repository=self.repository)
 
     def admettre_patient(
         self,

@@ -137,9 +137,6 @@ def get_medecins_by_specialite(request, specialite):
 @permission_classes([AllowAny])
 def get_medecin(request, medecin_id):
     if request.method in ["PUT", "PATCH"]:
-        deny = deny_unless_owner_or_staff(request, medecin_id, id_field="id_medecin")
-        if deny:
-            return deny
         return update_medecin(request, medecin_id)
     elif request.method == "DELETE":
         if not request.user.is_authenticated or getattr(request.user, "role", None) != "ADMINISTRATEUR":

@@ -192,57 +192,52 @@ def get_creneaux_disponibles(request):
     responses={200: RendezVousSerializer(many=True)},
 )
 @api_view(["GET"])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def get_mes_rendezvous(request):
-    if request.user.is_authenticated:
-        if getattr(request.user, "role", None) == "PATIENT" and hasattr(request.user, "patient"):
-            rdvs = RendezVous.objects.filter(patient=request.user.patient).select_related("patient", "medecin", "patient__id_utilisateur", "medecin__id_utilisateur").order_by("-date_rdv", "-heure")
-            return paginate_response(rdvs, request, RendezVousSerializer)
-        elif getattr(request.user, "role", None) == "MEDECIN" and hasattr(request.user, "medecin"):
-            rdvs = RendezVous.objects.filter(medecin=request.user.medecin).select_related("patient", "medecin", "patient__id_utilisateur", "medecin__id_utilisateur").order_by("-date_rdv", "-heure")
-            return paginate_response(rdvs, request, RendezVousSerializer)
-        elif getattr(request.user, "role", None) in ["ADMINISTRATEUR", "INFIRMIER"]:
-            patient_id = request.query_params.get("patient_id") or request.query_params.get("id_patient")
-            if patient_id:
-                try:
-                    pid = int(patient_id)
-                    rdvs = RendezVous.objects.filter(patient_id=pid).select_related("patient", "medecin", "patient__id_utilisateur", "medecin__id_utilisateur").order_by("-date_rdv", "-heure")
-                    return paginate_response(rdvs, request, RendezVousSerializer)
-                except (ValueError, TypeError):
-                    pass
-            rdvs = RendezVous.objects.all().select_related("patient", "medecin", "patient__id_utilisateur", "medecin__id_utilisateur").order_by("-date_rdv", "-heure")
-            return paginate_response(rdvs, request, RendezVousSerializer)
+    if not request.user or not request.user.is_authenticated:
+        return Response({"detail": "Authentification requise."}, status=status.HTTP_401_UNAUTHORIZED)
 
-    # Guest lookup by patient_id, phone or email parameter
-    patient_id = request.query_params.get("patient_id") or request.query_params.get("id_patient")
-    phone = request.query_params.get("telephone") or request.query_params.get("phone")
-    email = request.query_params.get("email")
-    if patient_id or phone or email:
-        from django.db.models import Q
-        q_filter = Q()
+    role = getattr(request.user, "role", None)
+
+    if role == "PATIENT":
+        if hasattr(request.user, "patient"):
+            rdvs = RendezVous.objects.filter(patient=request.user.patient).select_related(
+                "patient", "medecin", "patient__id_utilisateur", "medecin__id_utilisateur"
+            ).order_by("-date_rdv", "-heure")
+            return paginate_response(rdvs, request, RendezVousSerializer)
+        return Response({
+            "count": 0, "total_pages": 1, "current_page": 1, "page_size": 20,
+            "next": None, "previous": None, "results": []
+        }, status=status.HTTP_200_OK)
+
+    elif role == "MEDECIN":
+        if hasattr(request.user, "medecin"):
+            rdvs = RendezVous.objects.filter(medecin=request.user.medecin).select_related(
+                "patient", "medecin", "patient__id_utilisateur", "medecin__id_utilisateur"
+            ).order_by("-date_rdv", "-heure")
+            return paginate_response(rdvs, request, RendezVousSerializer)
+        return Response({
+            "count": 0, "total_pages": 1, "current_page": 1, "page_size": 20,
+            "next": None, "previous": None, "results": []
+        }, status=status.HTTP_200_OK)
+
+    elif role in ["ADMINISTRATEUR", "INFIRMIER"]:
+        patient_id = request.query_params.get("patient_id") or request.query_params.get("id_patient")
         if patient_id:
             try:
                 pid = int(patient_id)
-                q_filter |= Q(patient_id=pid) | Q(patient__id_utilisateur_id=pid)
+                rdvs = RendezVous.objects.filter(patient_id=pid).select_related(
+                    "patient", "medecin", "patient__id_utilisateur", "medecin__id_utilisateur"
+                ).order_by("-date_rdv", "-heure")
+                return paginate_response(rdvs, request, RendezVousSerializer)
             except (ValueError, TypeError):
                 pass
-        if phone:
-            q_filter |= Q(patient__id_utilisateur__telephone=phone)
-        if email:
-            q_filter |= Q(patient__id_utilisateur__email=email)
-        rdvs = RendezVous.objects.filter(q_filter).select_related("patient", "medecin", "patient__id_utilisateur", "medecin__id_utilisateur").order_by("-date_rdv", "-heure")
+        rdvs = RendezVous.objects.all().select_related(
+            "patient", "medecin", "patient__id_utilisateur", "medecin__id_utilisateur"
+        ).order_by("-date_rdv", "-heure")
         return paginate_response(rdvs, request, RendezVousSerializer)
 
-    # Retourner une liste vide si aucun patient n'est identifié (ne pas exposer les données des autres patients)
-    return Response({
-        "count": 0,
-        "total_pages": 1,
-        "current_page": 1,
-        "page_size": 20,
-        "next": None,
-        "previous": None,
-        "results": []
-    }, status=status.HTTP_200_OK)
+    return Response({"detail": "Accès non autorisé."}, status=status.HTTP_403_FORBIDDEN)
 
 
 @extend_schema(
@@ -253,8 +248,11 @@ def get_mes_rendezvous(request):
     responses={201: RendezVousSerializer, 400: ErrorResponseSerializer, 409: ErrorResponseSerializer},
 )
 @api_view(["POST"])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def create_rendezvous(request):
+    if not request.user or not request.user.is_authenticated:
+        return Response({"detail": "Authentification requise."}, status=status.HTTP_401_UNAUTHORIZED)
+
     data = request.data.copy()
 
     # Enforce mandatory motif or reason
@@ -262,58 +260,57 @@ def create_rendezvous(request):
     if not motif or not str(motif).strip():
         return Response({"motif": ["Le motif du rendez-vous est obligatoire."]}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Auto-associate patient if authenticated patient and prevent spoofing
-    if request.user.is_authenticated:
-        if getattr(request.user, "role", None) == "PATIENT" or hasattr(request.user, "patient"):
-            if hasattr(request.user, "patient"):
-                patient_rec = request.user.patient
-            else:
-                from django.utils import timezone
-                patient_rec, _ = Patient.objects.get_or_create(
-                    id_utilisateur=request.user,
-                    defaults={
-                        "sexe": "M",
-                        "adresse": "Conakry",
-                        "groupe_sanguin": "O+",
-                        "personne_a_contacter": request.user.telephone or "Non renseigné",
-                        "date_inscription": timezone.now().date(),
-                    }
-                )
-            data["id_patient"] = patient_rec.id_patient
-            data.pop("patient_id", None)
-            data.pop("patient", None)
-
-    # Si id_patient, patient_id ou patient est fourni (pour admin ou personnel médical)
-    pid = data.get("id_patient") or data.get("patient_id") or data.get("patient")
-    if pid:
-        try:
-            pid_int = int(pid)
-            if not Patient.objects.filter(id_patient=pid_int).exists():
-                user_match = User.objects.filter(id_user=pid_int).first()
-                if user_match:
-                    if hasattr(user_match, "patient"):
+    # Auto-associate patient if authenticated user is PATIENT
+    role = getattr(request.user, "role", None)
+    if role == "PATIENT" or hasattr(request.user, "patient"):
+        if hasattr(request.user, "patient"):
+            patient_rec = request.user.patient
+        else:
+            from django.utils import timezone
+            patient_rec, _ = Patient.objects.get_or_create(
+                id_utilisateur=request.user,
+                defaults={
+                    "sexe": "M",
+                    "adresse": "Non renseignée",
+                    "groupe_sanguin": "O+",
+                    "personne_a_contacter": request.user.telephone or "Non renseigné",
+                    "date_inscription": timezone.now().date(),
+                }
+            )
+        data["id_patient"] = patient_rec.id_patient
+        data.pop("patient_id", None)
+        data.pop("patient", None)
+    else:
+        # Pour les admins / infirmiers / médecins créant un rendez-vous pour un patient
+        pid = data.get("id_patient") or data.get("patient_id") or data.get("patient")
+        if pid:
+            try:
+                pid_int = int(pid)
+                if Patient.objects.filter(id_patient=pid_int).exists():
+                    data["id_patient"] = pid_int
+                else:
+                    user_match = User.objects.filter(id_user=pid_int).first()
+                    if user_match and hasattr(user_match, "patient"):
                         data["id_patient"] = user_match.patient.id_patient
-                    else:
+                    elif user_match:
                         from django.utils import timezone
                         p, _ = Patient.objects.get_or_create(
                             id_utilisateur=user_match,
                             defaults={
                                 "sexe": "M",
-                                "adresse": "Conakry",
+                                "adresse": "Non renseignée",
                                 "groupe_sanguin": "O+",
                                 "personne_a_contacter": user_match.telephone or "Non renseigné",
                                 "date_inscription": timezone.now().date(),
                             }
                         )
                         data["id_patient"] = p.id_patient
-        except (ValueError, TypeError):
-            pass
-
-    if not data.get("id_patient") and not data.get("patient_id"):
-        # If guest, pick or attach patient record (e.g. first patient or demo patient)
-        first_patient = Patient.objects.first()
-        if first_patient:
-            data["id_patient"] = first_patient.id_patient
+                    else:
+                        return Response({"error": f"Patient avec l'identifiant #{pid} introuvable."}, status=status.HTTP_400_BAD_REQUEST)
+            except (ValueError, TypeError):
+                return Response({"error": "Identifiant patient invalide."}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({"error": "L'identifiant du patient est obligatoire pour créer un rendez-vous."}, status=status.HTTP_400_BAD_REQUEST)
 
     serializer = RendezVousSerializer(data=data)
     if serializer.is_valid():

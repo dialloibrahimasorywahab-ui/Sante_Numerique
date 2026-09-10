@@ -77,16 +77,20 @@
                 <span class="ref-badge">{{ p.reference || ('ORD-#' + (p.id || p.idOrdonnance)) }}</span>
               </td>
               <td>
-                <span class="date-text">{{ p.date_ordonnance }}</span>
+                <span class="date-text">{{ formatDate(p.date_ordonnance) }}</span>
               </td>
               <td>
-                <div class="patient-name">
-                  {{ p.consultation_details?.patient_details?.prenom || 'Patient' }}
-                  {{ p.consultation_details?.patient_details?.nom || '' }}
-                </div>
+                <a
+                  [routerLink]="['/medecin/patients', getPatientId(p)]"
+                  class="patient-name-link"
+                  title="Voir le dossier de ce patient"
+                >
+                  {{ p.consultation_details?.patient_details?.prenom || p.consultation_details?.patient_detail?.prenom || 'Patient' }}
+                  {{ p.consultation_details?.patient_details?.nom || p.consultation_details?.patient_detail?.nom || '' }}
+                </a>
               </td>
               <td>
-                <a [routerLink]="['/medecin/consultations', p.consultation]" class="consultation-link">
+                <a [routerLink]="['/medecin/consultations', p.consultation]" class="consultation-link" title="Voir la consultation">
                   Consultation #{{ p.consultation }}
                 </a>
               </td>
@@ -104,17 +108,34 @@
           <div class="mobile-card">
             <div class="card-top">
               <span class="ref-badge">{{ p.reference || ('ORD-#' + (p.id || p.idOrdonnance)) }}</span>
-              <span class="date-text">{{ p.date_ordonnance }}</span>
+              <span class="date-text">{{ formatDate(p.date_ordonnance) }}</span>
             </div>
             <div class="patient-name">
-              Patient : {{ p.consultation_details?.patient_details?.prenom }} {{ p.consultation_details?.patient_details?.nom }}
+              Patient :
+              <a
+                [routerLink]="['/medecin/patients', getPatientId(p)]"
+                class="font-bold text-emerald-700 hover:underline ml-1"
+                title="Voir le dossier médical"
+              >
+                {{ p.consultation_details?.patient_details?.prenom || p.consultation_details?.patient_detail?.prenom }}
+                {{ p.consultation_details?.patient_details?.nom || p.consultation_details?.patient_detail?.nom }}
+              </a>
             </div>
             <div class="obs-box">
               {{ p.observation || 'Prescription standard' }}
             </div>
-            <div class="card-bottom">
-              <a [routerLink]="['/medecin/consultations', p.consultation]" class="consultation-link">
-                Voir la consultation liée #{{ p.consultation }} &rarr;
+            <div class="card-bottom flex gap-2">
+              <a
+                [routerLink]="['/medecin/patients', getPatientId(p)]"
+                class="btn-dossier flex-1 justify-center text-center"
+              >
+                Dossier
+              </a>
+              <a
+                [routerLink]="['/medecin/consultations', p.consultation]"
+                class="consultation-link flex-1 justify-center text-center"
+              >
+                Consultation #{{ p.consultation }}
               </a>
             </div>
           </div>

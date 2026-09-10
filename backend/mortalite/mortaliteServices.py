@@ -1,9 +1,12 @@
+from common.services import BaseService
+from .models import Mortalite
 from .mortaliteRepositories import MortaliteRepository
 
 
-class MortaliteService:
+class MortaliteService(BaseService[Mortalite]):
     def __init__(self):
         self.repository = MortaliteRepository()
+        super().__init__(repository=self.repository)
 
     def create_deces(self, **data):
         return self.repository.createDeces(**data)
@@ -31,4 +34,3 @@ class MortaliteService:
 
     def delete_deces(self, deces_or_id, hard=False):
         return self.repository.delete_deces(deces_or_id, hard=hard)
-

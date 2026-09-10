@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from simple_history.models import HistoricalRecords
 from patients.models import Patient
 from medecin.models import Medecin
 from lit.models import Lit
@@ -74,7 +75,10 @@ class Hospitalisation(models.Model):
 
     actif = models.BooleanField(default=True)
 
+    history = HistoricalRecords()
+
     class Meta:
+
         verbose_name = "Hospitalisation"
         verbose_name_plural = "Hospitalisations"
         ordering = ['-date_entree', '-id']

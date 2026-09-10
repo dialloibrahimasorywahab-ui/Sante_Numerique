@@ -7,7 +7,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from config.pagination import paginate_response
-from config.permissions import IsAdmin, IsStaffOrAdmin, deny_unless_owner_or_staff
+from config.permissions import (
+    IsAdmin,
+    IsStaffOrAdmin,
+    IsStaffOrAdminReadOnly_IsMedecinOuAdminWrite,
+    deny_unless_owner_or_staff,
+)
 from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer, PAGINATION_PARAMS, SEARCH_PARAM
 from .patientSerializers import PatientSerializer
 from .patientServices import PatientService
@@ -31,7 +36,7 @@ patient_service = PatientService()
     responses={200: PatientSerializer(many=True), 201: PatientSerializer, 400: ErrorResponseSerializer},
 )
 @api_view(["GET", "POST"])
-@permission_classes([IsStaffOrAdmin])
+@permission_classes([IsStaffOrAdminReadOnly_IsMedecinOuAdminWrite])
 def create_patient(request):
     if request.method == "GET":
         actif_only = request.query_params.get("all", "false").lower() != "true"
@@ -42,14 +47,8 @@ def create_patient(request):
             patients = patient_service.get_all_patient(actif_only=actif_only)
         return paginate_response(patients, request, PatientSerializer)
 
-    if request.method == "POST":
-        if getattr(request.user, "role", None) not in ["ADMINISTRATEUR", "MEDECIN"]:
-            return Response(
-                {"error": "Accès refusé. Seul un médecin ou un administrateur peut enregistrer un patient."},
-                status=status.HTTP_403_FORBIDDEN
-            )
-
     serializer = PatientSerializer(data=request.data)
+
 
     if serializer.is_valid():
         try:

@@ -1,55 +1,38 @@
-# pyrefly: ignore [missing-import]
-from django.db.models import Q
+from common.repositories import BaseRepository
 from .models import Batiment
 
 
-class BatimentRepository:
+class BatimentRepository(BaseRepository[Batiment]):
+
+    def __init__(self):
+        super().__init__(model=Batiment)
 
     def create_batiment(self, **data):
-        return Batiment.objects.create(**data)
+        return self.create(**data)
 
     def get_batiment(self, batiment_id):
-        try:
-            return Batiment.objects.get(pk=batiment_id)
-        except Batiment.DoesNotExist:
-            return None
+        return self.get_by_id(batiment_id)
 
     def get_batiment_by_nom(self, nom):
         if not nom:
             return None
         try:
-            return Batiment.objects.get(nom__iexact=nom.strip())
-        except Batiment.DoesNotExist:
+            return self.model.objects.get(nom__iexact=nom.strip())
+        except self.model.DoesNotExist:
             return None
 
     def get_all_batiments(self, actif_only: bool = True):
-        qs = Batiment.objects.all()
-        if actif_only:
-            qs = qs.filter(actif=True)
-        return qs
+        return self.get_all(actif_only=actif_only)
 
     def search_batiments(self, query, actif_only: bool = True):
-        if not query:
-            return self.get_all_batiments(actif_only=actif_only)
-        clean_query = query.strip()
-        qs = Batiment.objects.filter(
-            Q(nom__icontains=clean_query) | Q(description__icontains=clean_query)
+        return self.search(
+            query=query,
+            search_fields=['nom', 'description'],
+            actif_only=actif_only
         )
-        if actif_only:
-            qs = qs.filter(actif=True)
-        return qs
 
     def update_batiment(self, batiment, **data):
-        for field, value in data.items():
-            setattr(batiment, field, value)
-        batiment.save()
-        return batiment
+        return self.update(batiment, **data)
 
     def delete_batiment(self, batiment, hard=False):
-        if hard:
-            batiment.delete()
-        else:
-            batiment.actif = False
-            batiment.save()
-
-
+        return self.delete(batiment, hard=hard)

@@ -64,9 +64,14 @@ class Medecin(models.Model):
     class Meta:
         ordering = ["id_medecin"]
 
+    @property
+    def id(self):
+        return self.id_medecin
+
     # Propriétés de compatibilité camelCase
     @property
     def idMedecin(self):
+
         return self.id_medecin
 
     @idMedecin.setter

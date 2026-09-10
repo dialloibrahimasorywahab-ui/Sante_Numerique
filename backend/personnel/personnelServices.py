@@ -1,26 +1,28 @@
-# pyrefly: ignore [missing-import]
 import random
-# pyrefly: ignore [missing-import]
+import secrets
 from django.db import transaction
-# pyrefly: ignore [missing-import]
 from django.utils import timezone
+from common.services import BaseService
 from users.models import User
 from users.usersServices import UserService
+from .models import Personnel
 from .personnelRepositories import PersonnelRepository
 
 
-class PersonnelService:
-
-    # Instanciation des services et repositories
+class PersonnelService(BaseService[Personnel]):
+    """
+    Service métier pour la gestion du personnel hospitalier et soignant.
+    """
     def __init__(self):
         self.repository = PersonnelRepository()
         self.user_service = UserService()
+        super().__init__(repository=self.repository)
         from services.serviceServices import ServiceService
         self.service_service = ServiceService()
 
     # Enregistrement d'un membre du personnel (prend en charge la création combinée User + Personnel)
     def createPersonnel(self, **data):
-        id_user_data = data.pop("idUtilisateur", None)
+        id_user_data = data.pop("id_utilisateur", None) or data.pop("idUtilisateur", None)
 
         def resolve_role(provided_role, type_personnel):
             if provided_role in User.Role.values:
@@ -37,19 +39,19 @@ class PersonnelService:
                 clean_p = prenom.lower().replace(" ", "") if prenom else "staff"
                 clean_n = nom.lower().replace(" ", "") if nom else "soignant"
                 login = f"staff_{clean_p}_{clean_n}_{random.randint(100, 999)}"
-            email = u_info.get("email") or data.pop("email", None) or data.get("emailPro") or f"{login}@santenumerique.com"
-            telephone = u_info.get("telephone") or data.pop("telephone", None) or data.get("telephonePro") or f"+22462{random.randint(1000000, 9999999)}"
-            password = data.pop("motDePasse", "PersonnelPass123!")
-            role_user = resolve_role(u_info.get("role") or data.get("role"), data.get("typePersonnel"))
+            email = u_info.get("email") or data.pop("email", None) or data.get("emailPro") or data.get("email_pro") or f"{login}@santenumerique.com"
+            telephone = u_info.get("telephone") or data.pop("telephone", None) or data.get("telephonePro") or data.get("telephone_pro") or f"+22462{random.randint(1000000, 9999999)}"
+            password = data.pop("motDePasse", data.pop("mot_de_passe", None)) or secrets.token_urlsafe(16)
+            role_user = resolve_role(u_info.get("role") or data.get("role") or data.get("type_personnel") or data.get("typePersonnel"), data.get("typePersonnel") or data.get("type_personnel"))
 
             return {
                 "nom": nom or "Personnel",
                 "prenom": prenom or "Soignant",
                 "email": email,
                 "telephone": telephone,
-                "dateNaissance": u_info.get("dateNaissance") or data.pop("dateNaissance", None),
+                "date_naissance": u_info.get("date_naissance") or u_info.get("dateNaissance") or data.pop("date_naissance", data.pop("dateNaissance", None)),
                 "login": login,
-                "motDePasseHash": password,
+                "mot_de_passe_hash": password,
                 "role": role_user,
                 "actif": True,
             }
@@ -68,21 +70,22 @@ class PersonnelService:
         # Nettoyage des champs virtuels
         data.pop("login", None)
         data.pop("motDePasse", None)
+        data.pop("mot_de_passe", None)
         data.pop("email", None)
         data.pop("telephone", None)
 
         if user:
-            data["idUtilisateur"] = user
-            if not data.get("emailPro"):
-                data["emailPro"] = user.email
-            if not data.get("telephonePro"):
-                data["telephonePro"] = user.telephone
+            data["id_utilisateur"] = user
+            if not data.get("emailPro") and not data.get("email_pro"):
+                data["email_pro"] = user.email
+            if not data.get("telephonePro") and not data.get("telephone_pro"):
+                data["telephone_pro"] = user.telephone
 
-        if "dateEmbauche" not in data or not data["dateEmbauche"]:
-            data["dateEmbauche"] = timezone.now().date()
+        if "dateEmbauche" not in data and "date_embauche" not in data:
+            data["date_embauche"] = timezone.now().date()
 
         # Résolution et rattachement automatique de idService
-        service_input = data.get("idService") or data.get("serviceHopital")
+        service_input = data.pop("id_service", None) or data.pop("idService", None) or data.get("serviceHopital") or data.get("service_hopital")
         if service_input:
             if isinstance(service_input, int):
                 service_obj = self.service_service.get_service(service_input)
@@ -91,8 +94,8 @@ class PersonnelService:
             else:
                 service_obj = service_input
             if service_obj:
-                data["idService"] = service_obj
-                data["serviceHopital"] = service_obj.get_nomService_display()
+                data["id_service"] = service_obj
+                data["service_hopital"] = service_obj.get_nom_service_display()
 
         return self.repository.createPersonnel(**data)
 
@@ -114,22 +117,23 @@ class PersonnelService:
 
     # Mettre à jour les données d'un membre du personnel
     def update_personnel(self, personnel, **data):
-        id_user_data = data.pop("idUtilisateur", None)
+        id_user_data = data.pop("id_utilisateur", None) or data.pop("idUtilisateur", None)
         user_updates = {}
 
         if isinstance(id_user_data, dict):
             user_updates.update(id_user_data)
         elif isinstance(id_user_data, User):
-            personnel.idUtilisateur = id_user_data
+            personnel.id_utilisateur = id_user_data
 
-        for key in ["nom", "prenom", "email", "telephone", "dateNaissance", "login", "motDePasse", "motDePasseHash"]:
+        for key in ["nom", "prenom", "email", "telephone", "date_naissance", "dateNaissance", "login", "motDePasse", "mot_de_passe", "motDePasseHash", "mot_de_passe_hash"]:
             if key in data:
                 user_updates[key] = data.pop(key)
 
         data.pop("login", None)
         data.pop("motDePasse", None)
+        data.pop("mot_de_passe", None)
 
-        service_input = data.get("idService") or data.get("serviceHopital")
+        service_input = data.pop("id_service", None) or data.pop("idService", None) or data.get("serviceHopital") or data.get("service_hopital")
         if service_input:
             if isinstance(service_input, int):
                 service_obj = self.service_service.get_service(service_input)
@@ -138,15 +142,14 @@ class PersonnelService:
             else:
                 service_obj = service_input
             if service_obj:
-                data["idService"] = service_obj
-                data["serviceHopital"] = service_obj.get_nomService_display()
+                data["id_service"] = service_obj
+                data["service_hopital"] = service_obj.get_nom_service_display()
 
         with transaction.atomic():
-            if user_updates and personnel.idUtilisateur:
-                self.user_service.updateUser(personnel.idUtilisateur, **user_updates)
+            if user_updates and personnel.id_utilisateur:
+                self.user_service.updateUser(personnel.id_utilisateur, **user_updates)
             return self.repository.update_Personnel(personnel, **data)
 
     # Désactiver ou supprimer un membre du personnel
     def delete_personnel(self, personnel, hard=False):
         return self.repository.delete_personnel(personnel, hard=hard)
-

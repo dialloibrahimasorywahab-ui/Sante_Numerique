@@ -16,5 +16,8 @@ urlpatterns = [
     path('consultations/', include('consultation.consultationUrls')),
     path('frais_consultations/', include('frais_consultation.fraisUrls')),
     path('ordonnances/', include('ordonnance.ordonnanceUrls')),
+    path('lignes_ordonnances/', include('ligne_ordonnance.ligneUrls')),
+    path('lignes-ordonnances/', include('ligne_ordonnance.ligneUrls')),
 ]
+
 

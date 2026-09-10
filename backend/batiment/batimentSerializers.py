@@ -4,6 +4,7 @@ from .models import Batiment
 
 
 class BatimentSerializer(serializers.ModelSerializer):
+    id_batiment = serializers.IntegerField(read_only=True)
     idBatiment = serializers.IntegerField(source="id_batiment", read_only=True)
     nombre_chambre = serializers.IntegerField(
         required=False,
@@ -22,7 +23,7 @@ class BatimentSerializer(serializers.ModelSerializer):
         source="total_chambres_effectif",
         read_only=True,
         allow_null=True,
-        help_text="Nombre total de chambres effectives."
+        help_text="Nombre total de chambres effectives (alias camelCase)."
     )
 
     class Meta:

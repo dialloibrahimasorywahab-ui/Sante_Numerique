@@ -1,73 +1,53 @@
+from django.db.models import Q
+from common.repositories import BaseRepository
 from .models import Personnel
 
 
-class PersonnelRepository:
+class PersonnelRepository(BaseRepository[Personnel]):
+    """
+    Repository pour l'accès aux données du personnel.
+    Hérite des méthodes CRUD génériques de BaseRepository.
+    """
+    def __init__(self):
+        super().__init__(model=Personnel)
 
-    # Enregistrement d'un membre du personnel
     def createPersonnel(self, **data):
-        return Personnel.objects.create(**data)
+        return self.create(**data)
 
-    # Rechercher et afficher un membre du personnel par son ID
     def get_personnel(self, personnel_id):
-        try:
-            return Personnel.objects.select_related('idUtilisateur', 'idService').get(idPersonnel=personnel_id)
-        except Personnel.DoesNotExist:
-            return None
+        return self.get_by_id(personnel_id, select_related=['id_utilisateur', 'id_service'])
 
-    # Afficher tout le personnel
     def get_all_personnel(self, actif_only: bool = True):
-        qs = Personnel.objects.select_related('idUtilisateur', 'idService').all()
-        if actif_only:
-            qs = qs.filter(idUtilisateur__actif=True)
-        return qs
+        return self.get_all(actif_only=actif_only, select_related=['id_utilisateur', 'id_service'])
 
-    # Rechercher le personnel par type (ex: INFIRMIER, ADMINISTRATIF)
     def get_personnel_by_type(self, type_personnel, actif_only: bool = True):
-        qs = Personnel.objects.filter(typePersonnel__iexact=type_personnel).select_related('idUtilisateur', 'idService')
+        qs = self.model.objects.filter(type_personnel__iexact=type_personnel).select_related('id_utilisateur', 'id_service')
         if actif_only:
-            qs = qs.filter(idUtilisateur__actif=True)
+            qs = qs.filter(id_utilisateur__actif=True)
         return qs
 
-    # Rechercher le personnel par service
     def get_personnel_by_service(self, service_id, actif_only: bool = True):
-        qs = Personnel.objects.filter(idService_id=service_id).select_related('idUtilisateur', 'idService')
+        qs = self.model.objects.filter(id_service_id=service_id).select_related('id_utilisateur', 'id_service')
         if actif_only:
-            qs = qs.filter(idUtilisateur__actif=True)
+            qs = qs.filter(id_utilisateur__actif=True)
         return qs
 
-    # Rechercher des membres du personnel par mot-clé
     def search_personnel(self, query, actif_only: bool = True):
-        if not query:
-            return self.get_all_personnel(actif_only=actif_only)
-        from django.db.models import Q
-        clean_q = str(query).strip()
-        qs = Personnel.objects.filter(
-            Q(idUtilisateur__nom__icontains=clean_q) |
-            Q(idUtilisateur__prenom__icontains=clean_q) |
-            Q(idUtilisateur__email__icontains=clean_q) |
-            Q(matricule__icontains=clean_q) |
-            Q(typePersonnel__icontains=clean_q)
-        ).select_related('idUtilisateur', 'idService')
-        if actif_only:
-            qs = qs.filter(idUtilisateur__actif=True)
-        return qs
+        return self.search(
+            query=query,
+            search_fields=[
+                'id_utilisateur__nom',
+                'id_utilisateur__prenom',
+                'id_utilisateur__email',
+                'matricule',
+                'type_personnel'
+            ],
+            actif_only=actif_only,
+            select_related=['id_utilisateur', 'id_service']
+        )
 
-    # Mettre à jour les informations d'un membre du personnel
     def update_Personnel(self, personnel, **data):
-        for field, value in data.items():
-            setattr(personnel, field, value)
-        personnel.save()
-        return personnel
+        return self.update(personnel, **data)
 
-    # Désactiver ou supprimer un membre du personnel
     def delete_personnel(self, personnel, hard=False):
-        if hard:
-            if personnel.idUtilisateur:
-                personnel.idUtilisateur.delete()
-            else:
-                personnel.delete()
-        else:
-            if personnel.idUtilisateur:
-                personnel.idUtilisateur.actif = False
-                personnel.idUtilisateur.save()
-
+        return self.delete(personnel, hard=hard)

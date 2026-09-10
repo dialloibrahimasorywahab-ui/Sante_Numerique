@@ -1,10 +1,13 @@
+from common.services import BaseService
 from .chambreRepositories import ChambreRepository
+from .models import Chambre
 
 
-class ChambreService:
+class ChambreService(BaseService[Chambre]):
 
     def __init__(self):
         self.repository = ChambreRepository()
+        super().__init__(repository=self.repository)
 
     def create_chambre(self, **data):
         return self.repository.create_chambre(**data)
@@ -33,12 +36,8 @@ class ChambreService:
             return chambre.sync_statut()
         return None
 
-
-
     def update_chambre(self, chambre, **data):
         return self.repository.update_chambre(chambre, **data)
 
     def delete_chambre(self, chambre, hard=False):
         return self.repository.delete_chambre(chambre, hard=hard)
-
-

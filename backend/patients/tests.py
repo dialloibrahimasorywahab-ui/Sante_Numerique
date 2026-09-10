@@ -149,10 +149,33 @@ class PatientAPIPermissionsAndCreationTests(TestCase):
         self.assertEqual(response.data["groupeSanguin"], "O+")
 
         # Vérification en base de données
-        patient = Patient.objects.get(idPatient=response.data["idPatient"])
+        patient = Patient.objects.get(pk=response.data["idPatient"])
         self.assertEqual(patient.idUtilisateur.login, "sekou_patient")
         self.assertEqual(patient.idUtilisateur.role, User.Role.PATIENT)
         self.assertTrue(patient.idUtilisateur.check_password("PatientPass123!"))
+
+    def test_medecin_can_create_patient_with_auto_credentials(self):
+        """Un médecin peut créer un patient sans spécifier manuellement login ni mot de passe."""
+        self.client.force_authenticate(user=self.medecin)
+        payload = {
+            "nom": "Traore",
+            "prenom": "Fatou",
+            "email": "fatou.traore@example.com",
+            "telephone": "+224622998877",
+            "dateNaissance": "1998-03-22",
+            "sexe": "F",
+            "groupeSanguin": "A+",
+            "adresse": "Matam, Conakry",
+        }
+        response = self.client.post("/patients/", payload, format="json")
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["nom"], "Traore")
+        self.assertEqual(response.data["prenom"], "Fatou")
+        patient = Patient.objects.get(pk=response.data["idPatient"])
+        self.assertEqual(patient.idUtilisateur.login, "fatou.traore")
+        self.assertEqual(patient.idUtilisateur.role, User.Role.PATIENT)
+        self.assertTrue(patient.idUtilisateur.check_password("PatientPass123!"))
+
 
     def test_admin_can_create_patient_success(self):
         """Un administrateur peut créer un dossier patient avec succès (201)."""
@@ -166,7 +189,7 @@ class PatientAPIPermissionsAndCreationTests(TestCase):
 
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data["nom"], "Kaba")
-        self.assertTrue(Patient.objects.filter(idUtilisateur__login="admin_created_patient").exists())
+        self.assertTrue(Patient.objects.filter(id_utilisateur__login="admin_created_patient").exists())
 
     def test_create_patient_with_existing_user_id(self):
         """Création d'un dossier patient lié à un compte utilisateur PATIENT déjà existant."""

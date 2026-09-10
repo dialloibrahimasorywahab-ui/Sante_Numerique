@@ -68,6 +68,8 @@ INSTALLED_APPS = [
     'frais_consultation',
     'consultation',
     'ordonnance',
+    'ligne_ordonnance',
+    'simple_history',
 ]
 
 AUTH_USER_MODEL = 'users.User'
@@ -87,12 +89,14 @@ REST_FRAMEWORK = {
         'rest_framework.throttling.UserRateThrottle',
         'rest_framework.throttling.ScopedRateThrottle',
     ],
+    'EXCEPTION_HANDLER': 'config.exceptions.custom_exception_handler',
     'DEFAULT_THROTTLE_RATES': {
         'anon': env('THROTTLE_ANON_RATE', default='100/day'),
         'user': env('THROTTLE_USER_RATE', default='1000/day'),
         'login': env('THROTTLE_LOGIN_RATE', default='5/minute'),
     },
 }
+
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
@@ -138,7 +142,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'simple_history.middleware.HistoryRequestMiddleware',
 ]
+
 
 ROOT_URLCONF = 'config.urls'
 

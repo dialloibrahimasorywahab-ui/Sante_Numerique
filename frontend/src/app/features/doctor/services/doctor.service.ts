@@ -7,6 +7,7 @@ import {
   DoctorProfileDto,
   DoctorAppointmentDto,
   DoctorPatientDto,
+  CreatePatientDto,
   DoctorConsultationDto,
   CreateConsultationDto,
   DoctorPrescriptionDto,
@@ -129,6 +130,13 @@ export class DoctorService {
       withCredentials: true
     });
   }
+
+  createPatient(dto: CreatePatientDto): Observable<DoctorPatientDto> {
+    return this.http.post<DoctorPatientDto>(`${this.apiUrl}/patients/`, dto, {
+      withCredentials: true
+    });
+  }
+
 
   // ==========================================
   // CONSULTATIONS

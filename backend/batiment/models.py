@@ -1,4 +1,3 @@
-# pyrefly: ignore [missing-import]
 from django.db import models
 
 
@@ -15,6 +14,10 @@ class Batiment(models.Model):
         return self.nom
 
     @property
+    def id(self):
+        return self.id_batiment
+
+    @property
     def total_chambres_effectif(self):
         count = self.chambres.count()
         if count > 0:
@@ -22,8 +25,10 @@ class Batiment(models.Model):
         return self.nombre_chambre or 0
 
     def sync_nombre_chambres(self):
-        self.nombre_chambre = self.chambres.count()
-        self.save(update_fields=["nombre_chambre"])
+        new_count = self.chambres.count()
+        if self.nombre_chambre != new_count:
+            self.nombre_chambre = new_count
+            self.save(update_fields=["nombre_chambre"])
         return self.nombre_chambre
 
     # Propriété de compatibilité camelCase

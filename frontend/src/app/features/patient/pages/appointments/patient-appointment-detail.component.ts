@@ -50,15 +50,8 @@ export class PatientAppointmentDetailComponent implements OnInit {
         this.isLoading.set(false);
       },
       error: () => {
-        // Look into local list if remote fails
-        const local = this.appointmentService.getLocalAppointments().find(r => r.id === id);
-        if (local) {
-          this.appointment.set(local);
-          this.isLoading.set(false);
-        } else {
-          this.errorMessage.set('Impossible de charger les détails de ce rendez-vous.');
-          this.isLoading.set(false);
-        }
+        this.errorMessage.set('Impossible de charger les détails de ce rendez-vous.');
+        this.isLoading.set(false);
       }
     });
   }

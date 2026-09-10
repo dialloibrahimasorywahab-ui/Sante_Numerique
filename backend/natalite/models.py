@@ -114,5 +114,9 @@ class Natalite(models.Model):
         return f"{label} (Né(e) le {self.date_naissance})"
 
     @property
-    def idNouveauNe(self):
+    def id(self):
         return self.id_nouveau_ne
+
+    @property
+    def idNouveauNe(self):
+        return self.id_nouveau_ne

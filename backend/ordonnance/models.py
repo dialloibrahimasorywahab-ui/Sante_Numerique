@@ -1,9 +1,8 @@
-# pyrefly: ignore [missing-import]
 from django.db import models
-# pyrefly: ignore [missing-import]
 from django.utils import timezone
-# pyrefly: ignore [missing-import]
+from simple_history.models import HistoricalRecords
 from consultation.models import Consultation
+
 
 
 class Ordonnance(models.Model):
@@ -38,7 +37,10 @@ class Ordonnance(models.Model):
 
     actif = models.BooleanField(default=True)
 
+    history = HistoricalRecords()
+
     class Meta:
+
         verbose_name = "Ordonnance"
         verbose_name_plural = "Ordonnances"
         ordering = ['-date_ordonnance', '-id']
