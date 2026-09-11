@@ -1,8 +1,9 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map, catchError, of, throwError } from 'rxjs';
-import { ServiceHospitalier, PaginatedResponse, Medecin } from '../models/models';
-import { DoctorProfile, HospitalService } from './hospital.service';
+import { PaginatedResponse } from '../models/models';
+import { ServiceHospitalier } from '../../features/services-hospitaliers/models/models';
+import { DoctorProfile, HospitalService } from '../../features/landing/services/hospital.service';
 
 export interface ServiceDetailExtended extends ServiceHospitalier {
   poleCategorie?: string;
