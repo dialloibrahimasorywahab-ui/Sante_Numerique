@@ -4,6 +4,7 @@ import { RouterModule, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DoctorService } from '../../services/doctor.service';
 import { DoctorConsultationDto } from '../../models/doctor.models';
+import { formatDate as formatSharedDate } from '../../../../shared/utils';
 
 @Component({
   selector: 'app-doctor-consultations',
@@ -81,19 +82,6 @@ export class DoctorConsultationsComponent implements OnInit {
   }
 
   formatDate(dateStr?: string): string {
-    if (!dateStr) return '—';
-    try {
-      const d = new Date(dateStr);
-      if (isNaN(d.getTime())) {
-        return dateStr.split('T')[0] || dateStr;
-      }
-      return d.toLocaleDateString('fr-FR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      });
-    } catch {
-      return dateStr;
-    }
+    return formatSharedDate(dateStr);
   }
 }

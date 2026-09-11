@@ -4,6 +4,7 @@ import { RouterModule } from '@angular/router';
 import { AppointmentService } from '../../services/appointment.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { RendezVousDto } from '../../models/models';
+import { isDateTimePast } from '../../../../shared/utils';
 
 @Component({
   selector: 'app-my-appointments',
@@ -55,8 +56,7 @@ export class MyAppointmentsComponent implements OnInit, OnDestroy {
   }
 
   private isAppointmentPast(rdv: RendezVousDto): boolean {
-    const dateTime = new Date(`${rdv.date_rdv}T${rdv.heure.substring(0, 5)}`);
-    return !Number.isNaN(dateTime.getTime()) && dateTime.getTime() <= this.currentTime();
+    return isDateTimePast(rdv.date_rdv, rdv.heure, new Date(this.currentTime()));
   }
 
   loadAppointments(): void {

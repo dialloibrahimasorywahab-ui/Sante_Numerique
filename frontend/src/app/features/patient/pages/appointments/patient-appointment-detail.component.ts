@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { AppointmentService } from '../../../rendez-vous/services/appointment.service';
+import { formatLongDate } from '../../../../shared/utils';
 import { RendezVousDto } from '../../../rendez-vous/models/models';
 
 @Component({
@@ -91,18 +92,7 @@ export class PatientAppointmentDetailComponent implements OnInit {
   }
 
   formatDate(dateStr?: string): string {
-    if (!dateStr) return '—';
-    try {
-      const d = new Date(dateStr);
-      return isNaN(d.getTime()) ? dateStr : d.toLocaleDateString('fr-FR', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-      });
-    } catch {
-      return dateStr;
-    }
+    return formatLongDate(dateStr);
   }
 
   formatTime(timeStr?: string): string {

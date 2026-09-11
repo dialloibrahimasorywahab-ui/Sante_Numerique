@@ -4,6 +4,7 @@ import { Router, ActivatedRoute, RouterModule, RouterLink } from '@angular/route
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DoctorService } from '../../services/doctor.service';
 import { DoctorPatientDto, DoctorProfileDto } from '../../models/doctor.models';
+import { toIsoDate } from '../../../../shared/utils';
 
 @Component({
   selector: 'app-doctor-consultation-create',
@@ -36,7 +37,7 @@ export class DoctorConsultationCreateComponent implements OnInit {
   }
 
   private initForm(): void {
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = toIsoDate();
 
     this.consultationForm = this.fb.group({
       patient: ['', [Validators.required]],
@@ -44,7 +45,8 @@ export class DoctorConsultationCreateComponent implements OnInit {
       symptomes: ['', [Validators.required, Validators.minLength(3)]],
       diagnostic: ['', [Validators.required, Validators.minLength(3)]],
       observations: [''],
-      frais: [null],
+      montant_frais: [100000, [Validators.required, Validators.min(0)]],
+      description_frais: ['Consultation médicale standard'],
       createPrescriptionNow: [false]
     });
   }
@@ -129,7 +131,9 @@ export class DoctorConsultationCreateComponent implements OnInit {
       date_cons: fVal.date_cons,
       symptomes: fVal.symptomes,
       diagnostic: fVal.diagnostic,
-      observations: fVal.observations
+      observations: fVal.observations,
+      montant_frais: fVal.montant_frais != null && fVal.montant_frais !== '' ? +fVal.montant_frais : 0,
+      description_frais: fVal.description_frais || 'Consultation médicale standard'
     };
 
     this.doctorService.createConsultation(payload).subscribe({

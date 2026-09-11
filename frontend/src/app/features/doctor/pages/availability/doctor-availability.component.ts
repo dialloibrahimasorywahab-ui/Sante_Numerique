@@ -8,6 +8,7 @@ import {
   DoctorProfileDto,
   CreneauxResponseDto
 } from '../../models/doctor.models';
+import { toIsoDate } from '../../../../shared/utils';
 
 interface DayScheduleModel {
   jour_semaine: number;
@@ -55,8 +56,8 @@ export class DoctorAvailabilityComponent implements OnInit {
 
   // New Unavailability Form Model
   newIndispo = {
-    date_debut: new Date().toISOString().split('T')[0],
-    date_fin: new Date().toISOString().split('T')[0],
+    date_debut: toIsoDate(),
+    date_fin: toIsoDate(),
     toute_la_journee: true,
     heure_debut: '08:30',
     heure_fin: '16:30',
@@ -64,7 +65,7 @@ export class DoctorAvailabilityComponent implements OnInit {
   };
 
   // Preview Slots State
-  previewDate = signal<string>(new Date().toISOString().split('T')[0]);
+  previewDate = signal<string>(toIsoDate());
   previewSlots = signal<CreneauxResponseDto | null>(null);
 
   ngOnInit(): void {

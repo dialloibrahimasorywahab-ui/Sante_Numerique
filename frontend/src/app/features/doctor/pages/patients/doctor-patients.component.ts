@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DoctorService } from '../../services/doctor.service';
+import { calculateAge as calculateSharedAge } from '../../../../shared/utils';
 import { DoctorPatientDto, CreatePatientDto } from '../../models/doctor.models';
 
 @Component({
@@ -254,13 +255,8 @@ export class DoctorPatientsComponent implements OnInit {
   }
 
   calculateAge(dateStr?: string | null): string {
-    if (!dateStr) return 'Non renseigné';
-    const birth = new Date(dateStr);
-    if (isNaN(birth.getTime())) return 'Non renseigné';
-    const diff = Date.now() - birth.getTime();
-    const ageDate = new Date(diff);
-    const age = Math.abs(ageDate.getUTCFullYear() - 1970);
-    return `${age} ans`;
+    const age = calculateSharedAge(dateStr, 'Non renseigné');
+    return typeof age === 'number' ? `${age} ans` : age;
   }
 }
 

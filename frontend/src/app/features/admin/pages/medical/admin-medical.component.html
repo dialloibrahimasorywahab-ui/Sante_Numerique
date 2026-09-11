@@ -1,0 +1,349 @@
+<div class="admin-page-container">
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div>
+      <div class="breadcrumb">
+        <a routerLink="/admin/dashboard" class="back-link">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+          <span>Tableau de bord</span>
+        </a>
+      </div>
+      <h1 class="page-title">Activités Médicales & Cliniques</h1>
+      <p class="page-subtitle">Suivi des rendez-vous, consultations médicales, hospitalisations et ordonnances.</p>
+    </div>
+  </div>
+
+  <!-- TABS BAR -->
+  <div class="tabs-container">
+    <div class="tabs-nav">
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="activeTab() === 'rendezvous'"
+        (click)="setTab('rendezvous')"
+      >
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+        <span>Rendez-vous</span>
+      </button>
+
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="activeTab() === 'consultations'"
+        (click)="setTab('consultations')"
+      >
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+        </svg>
+        <span>Consultations</span>
+      </button>
+
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="activeTab() === 'hospitalisations'"
+        (click)="setTab('hospitalisations')"
+      >
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+        </svg>
+        <span>Hospitalisations</span>
+      </button>
+
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="activeTab() === 'ordonnances'"
+        (click)="setTab('ordonnances')"
+      >
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+        </svg>
+        <span>Ordonnances</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- SEARCH & FILTER BAR -->
+  <div class="search-bar-card">
+    <div class="search-input-wrapper">
+      <svg class="search-icon w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+      <input
+        type="text"
+        [ngModel]="searchQuery()"
+        (ngModelChange)="onSearchChange($event)"
+        placeholder="Rechercher par patient, médecin, motif, diagnostic, référence..."
+        class="search-input"
+      />
+    </div>
+    <div class="count-badge">
+      <span>{{ totalCount() }} activité(s)</span>
+    </div>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="error-banner">
+      <span>{{ errorMessage() }}</span>
+      <button (click)="loadData()" class="btn-retry">Réessayer</button>
+    </div>
+  }
+
+  <!-- MAIN DATA TABLE -->
+  <div class="table-card">
+    @if (isLoading()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Chargement des activités médicales...</p>
+      </div>
+    } @else if (items().length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg class="w-12 h-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+          </svg>
+        </div>
+        <h3>Aucune activité trouvée</h3>
+        <p>Aucun enregistrement ne correspond à vos critères.</p>
+      </div>
+    } @else {
+      <!-- TABLE RENDEZ-VOUS -->
+      @if (activeTab() === 'rendezvous') {
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Patient</th>
+              <th>Médecin</th>
+              <th>Date & Heure</th>
+              <th>Motif</th>
+              <th>Statut</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (rdv of items(); track (rdv.id || rdv.idRendezVous)) {
+              <tr>
+                <td>
+                  <div class="user-cell">
+                    <div class="avatar-circle">
+                      {{ ((rdv.patient_details?.prenom || rdv.patient_detail?.prenom || 'P')[0]) }}
+                    </div>
+                    <div>
+                      <div class="user-name detail-link" [routerLink]="['/admin/details', 'patients', rdv.patient_id || rdv.patient]">
+                        {{ rdv.patient_details?.prenom || rdv.patient_detail?.prenom }} {{ rdv.patient_details?.nom || rdv.patient_detail?.nom || ('Patient #' + (rdv.patient_id || rdv.patient)) }}
+                      </div>
+                      <div class="user-sub">
+                        {{ rdv.patient_details?.telephone || rdv.patient_detail?.telephone || 'Sans tél' }}
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="user-cell">
+                    <div class="avatar-circle doc">Dr</div>
+                    <div>
+                      <div class="user-name detail-link" [routerLink]="['/admin/details', 'medecins', rdv.medecin_id || rdv.medecin]">
+                        Dr. {{ rdv.medecin_details?.prenom || rdv.medecin_detail?.prenom }} {{ rdv.medecin_details?.nom || rdv.medecin_detail?.nom || ('Médecin #' + (rdv.medecin_id || rdv.medecin)) }}
+                      </div>
+                      <div class="user-sub">
+                        {{ rdv.medecin_details?.specialite || rdv.medecin_detail?.specialite || 'Généraliste' }}
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="datetime-cell">
+                    <span class="font-bold text-slate-800 detail-link" [routerLink]="['/admin/details', 'rendezvous', rdv.id || rdv.idRendezVous]">{{ formatDate(rdv.date_rdv) }}</span>
+                    <span class="time-badge">{{ rdv.heure ? rdv.heure.substring(0, 5) : '—' }}</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="motif-text">{{ rdv.motif || 'Consultation standard' }}</span>
+                </td>
+                <td>
+                  <span class="badge-statut" [ngClass]="getRdvBadgeClass(rdv.statut)">
+                    {{ rdv.statutDisplay || rdv.statut || 'En attente' }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+
+      <!-- TABLE CONSULTATIONS -->
+      @if (activeTab() === 'consultations') {
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Patient</th>
+              <th>Médecin</th>
+              <th>Diagnostic / Symptômes</th>
+              <th>Frais de Consultation</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of items(); track (c.id || c.idConsultation)) {
+              <tr>
+                <td>
+                  <span class="font-semibold text-slate-800 detail-link" [routerLink]="['/admin/details', 'consultations', c.id || c.idConsultation]">{{ formatDate(c.date_cons) }}</span>
+                </td>
+                <td>
+                  <div class="user-name detail-link" [routerLink]="['/admin/details', 'patients', c.patient_id || c.patient]">
+                    {{ c.patient_details?.prenom || c.patient?.prenom }} {{ c.patient_details?.nom || c.patient?.nom || ('Patient #' + (c.patient_id || c.patient)) }}
+                  </div>
+                </td>
+                <td>
+                  <div class="user-name text-emerald-800 detail-link" [routerLink]="['/admin/details', 'medecins', c.medecin_id || c.medecin]">
+                    Dr. {{ c.medecin_details?.prenom || c.medecin?.prenom }} {{ c.medecin_details?.nom || c.medecin?.nom || ('Médecin #' + (c.medecin_id || c.medecin)) }}
+                  </div>
+                </td>
+                <td>
+                  <div>
+                    <div class="font-medium text-slate-900">{{ c.diagnostic || 'Non spécifié' }}</div>
+                    @if (c.symptomes) {
+                      <div class="text-xs text-slate-500">Symptômes: {{ c.symptomes }}</div>
+                    }
+                  </div>
+                </td>
+                <td>
+                  @if (c.frais_details || c.frais) {
+                    <div class="frais-pill">
+                      <span class="frais-amount">{{ (c.frais_details?.montant || c.frais?.montant || c.montant_frais || 0) | number:'1.0-0' }} FCFA</span>
+                      <span class="frais-status" [class.paid]="(c.frais_details?.statut || c.frais?.statut) === 'PAYE'">
+                        {{ (c.frais_details?.statut || c.frais?.statut) === 'PAYE' ? 'Payé' : 'En attente' }}
+                      </span>
+                    </div>
+                  } @else {
+                    <span class="text-xs text-slate-400">Non facturé</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+
+      <!-- TABLE HOSPITALISATIONS -->
+      @if (activeTab() === 'hospitalisations') {
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Patient</th>
+              <th>Médecin Référent</th>
+              <th>Lit & Chambre</th>
+              <th>Date Entrée</th>
+              <th>Date Sortie</th>
+              <th>Statut</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (h of items(); track (h.id || h.idHospitalisation)) {
+              <tr>
+                <td>
+                  <div class="user-cell">
+                    <div class="avatar-circle">
+                      {{ ((h.patient_details?.prenom || 'P')[0]) }}
+                    </div>
+                    <div>
+                      <div class="user-name detail-link" [routerLink]="['/admin/details', 'patients', h.patient_id || h.patient]">
+                        {{ h.patient_details?.prenom }} {{ h.patient_details?.nom || ('Patient #' + (h.patient_id || h.patient)) }}
+                      </div>
+                      <div class="user-sub">{{ h.motif || 'Soins hospitaliers' }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="user-name text-emerald-800 detail-link" [routerLink]="['/admin/details', 'medecins', h.medecin_id || h.medecin]">
+                    Dr. {{ h.medecin_details?.prenom }} {{ h.medecin_details?.nom || 'Non assigné' }}
+                  </div>
+                </td>
+                <td>
+                  <div class="infra-cell">
+                    <span class="infra-icon-circle bg-teal-50 text-teal-700">🛏️</span>
+                    <span class="detail-link" [routerLink]="['/admin/details', 'hospitalisations', h.id || h.idHospitalisation]">{{ formatLitName(h.lit_details?.numero_lit || h.lit) }} ({{ formatChambre(h.lit_details?.chambre_detail || h.lit_details?.chambre) }})</span>
+                  </div>
+                </td>
+                <td>{{ formatDate(h.date_entree) }}</td>
+                <td>{{ h.date_sortie ? formatDate(h.date_sortie) : 'En cours' }}</td>
+                <td>
+                  <span class="badge-statut" [ngClass]="getHospBadgeClass(h.statut)">
+                    {{ h.statut || 'EN_COURS' }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+
+      <!-- TABLE ORDONNANCES -->
+      @if (activeTab() === 'ordonnances') {
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Réf. Ordonnance</th>
+              <th>Date Prescription</th>
+              <th>Consultation / Patient</th>
+              <th>Médicaments / Lignes</th>
+              <th>Observations</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (ord of items(); track (ord.id || ord.idOrdonnance)) {
+              <tr>
+                <td>
+                  <span class="ref-badge detail-link" [routerLink]="['/admin/details', 'ordonnances', ord.id || ord.idOrdonnance]">{{ ord.reference || ('ORD-' + ord.id) }}</span>
+                </td>
+                <td>{{ formatDate(ord.date_ordonnance) }}</td>
+                <td>
+                  <div class="user-name">
+                    {{ ord.consultation_details?.patient_details?.prenom || ord.consultation?.patient_details?.prenom || 'Dossier #' + (ord.consultation || ord.id) }}
+                  </div>
+                </td>
+                <td>
+                  <div class="lignes-count">
+                    <span>{{ (ord.lignes?.length || 0) }} médicament(s) prescrit(s)</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="obs-text">{{ ord.observation || 'Traitement régulier' }}</span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+
+      <!-- PAGINATION -->
+      @if (totalPages() > 1) {
+        <div class="pagination-bar">
+          <button
+            type="button"
+            (click)="setPage(currentPage() - 1)"
+            [disabled]="currentPage() === 1"
+            class="page-btn"
+          >
+            Précédent
+          </button>
+          <span class="page-info">
+            Page {{ currentPage() }} sur {{ totalPages() }} ({{ totalCount() }} total)
+          </span>
+          <button
+            type="button"
+            (click)="setPage(currentPage() + 1)"
+            [disabled]="currentPage() === totalPages()"
+            class="page-btn"
+          >
+            Suivant
+          </button>
+        </div>
+      }
+    }
+  </div>
+</div>

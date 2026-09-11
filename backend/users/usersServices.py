@@ -40,8 +40,12 @@ class UserService:
     def getAllUser(self):
         return self.repository.get_All_User()
 
+    # recuperer un utilisateur par son role
+
     def getUsersByRole(self, role):
         return self.repository.getUsersByRole(role)
+
+    # rechercher un utilisateur par la methodes des query
 
     def searchUsers(self, query):
         return self.repository.searchUsers(query)
@@ -72,9 +76,12 @@ class UserService:
 
     # changer le mot de passe de maniere securisee
     def changePassword(self, user, old_password, new_password, confirm_password=None):
+        # verifier l'ancien mot de passe 
         if not user.check_password(old_password):
             raise ValueError("L'ancien mot de passe est incorrect.")
 
+        # creer et confirmer le nouveau mot de passe
+        
         if confirm_password is not None and new_password != confirm_password:
             raise ValueError("Les deux mots de passe ne correspondent pas.")
 

@@ -67,7 +67,7 @@ class User(AbstractUser):
     objects = CustomUserManager()
 
     USERNAME_FIELD = "login"
-    REQUIRED_FIELDS = ["email", "nom", "prenom"]
+    REQUIRED_FIELDS = ["email", "nom", "prenom", "telephone"]
 
     def save(self, *args, **kwargs):
         self.username = self.login

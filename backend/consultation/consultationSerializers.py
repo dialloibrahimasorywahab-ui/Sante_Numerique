@@ -9,6 +9,21 @@ from frais_consultation.fraisSerializers import FraisConsultationSerializer
 class ConsultationSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
     idConsultation = serializers.IntegerField(source='id', read_only=True)
+    montant_frais = serializers.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        required=False,
+        allow_null=True,
+        write_only=True,
+        help_text="Montant des frais de consultation saisi par le médecin"
+    )
+    description_frais = serializers.CharField(
+        max_length=255,
+        required=False,
+        allow_blank=True,
+        write_only=True,
+        help_text="Description ou motif des frais"
+    )
 
     class Meta:
         model = Consultation
@@ -19,6 +34,8 @@ class ConsultationSerializer(serializers.ModelSerializer):
             'medecin',
             'rdv',
             'frais',
+            'montant_frais',
+            'description_frais',
             'date_cons',
             'symptomes',
             'diagnostic',

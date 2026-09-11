@@ -79,6 +79,17 @@ export interface DoctorAppointmentDto {
   statut: AppointmentStatus;
 }
 
+export interface FraisConsultationDto {
+  id?: number;
+  idFrais?: number;
+  montant: string | number;
+  description?: string;
+  date_paiement?: string | null;
+  statut: 'EN_ATTENTE' | 'PAYE' | 'ANNULE' | string;
+  statut_display?: string;
+  actif?: boolean;
+}
+
 export interface DoctorConsultationDto {
   id: number;
   idConsultation?: number;
@@ -93,6 +104,7 @@ export interface DoctorConsultationDto {
   rdv?: number | null;
   rdv_details?: DoctorAppointmentDto | null;
   frais?: number | null;
+  frais_details?: FraisConsultationDto | null;
   date_cons: string;
   symptomes?: string;
   diagnostic?: string;
@@ -108,6 +120,8 @@ export interface CreateConsultationDto {
   symptomes?: string;
   diagnostic?: string;
   observations?: string;
+  montant_frais?: number | string | null;
+  description_frais?: string | null;
 }
 
 export interface DoctorPrescriptionDto {

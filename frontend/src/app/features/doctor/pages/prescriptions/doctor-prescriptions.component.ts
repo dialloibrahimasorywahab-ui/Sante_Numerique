@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DoctorService } from '../../services/doctor.service';
+import { formatDate as formatSharedDate } from '../../../../shared/utils';
 import { DoctorPrescriptionDto } from '../../models/doctor.models';
 
 @Component({
@@ -85,19 +86,6 @@ export class DoctorPrescriptionsComponent implements OnInit {
   }
 
   formatDate(dateStr?: string): string {
-    if (!dateStr) return '—';
-    try {
-      const d = new Date(dateStr);
-      if (isNaN(d.getTime())) {
-        return dateStr.split('T')[0] || dateStr;
-      }
-      return d.toLocaleDateString('fr-FR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      });
-    } catch {
-      return dateStr;
-    }
+    return formatSharedDate(dateStr);
   }
 }

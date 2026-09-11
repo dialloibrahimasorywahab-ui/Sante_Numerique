@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map, of, forkJoin, catchError } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { AuthService } from '../../../core/services/auth.service';
+import { toIsoDate } from '../../../shared/utils';
 import {
   DoctorProfileDto,
   DoctorAppointmentDto,
@@ -292,7 +293,7 @@ export class DoctorService {
   // ==========================================
 
   getDashboardStats(): Observable<DoctorDashboardStats> {
-    const today = new Date().toISOString().split('T')[0];
+    const today = toIsoDate();
 
     return forkJoin({
       rdvs: this.getAppointments(1, '', ''),

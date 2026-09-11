@@ -9,6 +9,7 @@ import {
   DoctorPrescriptionDto,
   DoctorAppointmentDto
 } from '../../models/doctor.models';
+import { calculateAge as calculateSharedAge } from '../../../../shared/utils';
 
 type TabType = 'CONSULTATIONS' | 'ORDONNANCES' | 'RENDEZ_VOUS';
 
@@ -86,11 +87,7 @@ export class DoctorPatientDetailComponent implements OnInit {
   }
 
   calculateAge(dateStr?: string | null): string {
-    if (!dateStr) return 'Non renseigné';
-    const birth = new Date(dateStr);
-    if (isNaN(birth.getTime())) return 'Non renseigné';
-    const diff = Date.now() - birth.getTime();
-    const ageDate = new Date(diff);
-    return `${Math.abs(ageDate.getUTCFullYear() - 1970)} ans`;
+    const age = calculateSharedAge(dateStr, 'Non renseigné');
+    return typeof age === 'number' ? `${age} ans` : age;
   }
 }

@@ -18,6 +18,10 @@ class Batiment(models.Model):
         return self.id_batiment
 
     @property
+    def reference(self):
+        return f"BAT-{self.id_batiment:02d}"
+
+    @property
     def total_chambres_effectif(self):
         count = self.chambres.count()
         if count > 0:

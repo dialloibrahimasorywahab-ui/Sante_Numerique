@@ -168,6 +168,55 @@
         </div>
       </div>
 
+      <!-- 4. FRAIS & HONORAIRES DE CONSULTATION -->
+      <div class="form-card">
+        <div class="card-title-row">
+          <div class="step-num">4</div>
+          <h2 class="card-title">Honoraires & Frais de Consultation</h2>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="montant_frais">Montant des honoraires (GNF) <span class="required">*</span></label>
+            <div class="input-with-addon">
+              <input
+                id="montant_frais"
+                type="number"
+                min="0"
+                step="500"
+                formControlName="montant_frais"
+                placeholder="Ex: 100000"
+                class="form-control"
+              />
+              <span class="input-addon">GNF</span>
+            </div>
+            @if (consultationForm.get('montant_frais')?.touched && consultationForm.get('montant_frais')?.invalid) {
+              <span class="field-error">Veuillez renseigner un montant valide supérieur ou égal à 0.</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="description_frais">Motif / Prestations incluses</label>
+            <input
+              id="description_frais"
+              type="text"
+              formControlName="description_frais"
+              placeholder="Ex: Consultation médicale standard, bilan de contrôle..."
+              class="form-control"
+            />
+          </div>
+        </div>
+
+        <div class="frais-info-notice">
+          <svg class="w-5 h-5 text-emerald-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <div class="notice-text">
+            <span>Le montant saisi générera automatiquement les frais de consultation avec le statut <strong>En attente de paiement</strong>. Le patient ou le service caisse pourra régulariser le règlement.</span>
+          </div>
+        </div>
+      </div>
+
       <!-- FORM ACTIONS -->
       <div class="form-submit-row">
         <a routerLink="/medecin/consultations" class="btn-cancel">Annuler</a>

@@ -1,0 +1,393 @@
+<div class="admin-page-container">
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div class="header-left">
+      <div class="breadcrumb">
+        <a routerLink="/admin/dashboard" class="back-link">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+          <span>Tableau de bord</span>
+        </a>
+      </div>
+      <h1 class="page-title">Gestion Hospitalière & Infrastructures</h1>
+      <p class="page-subtitle">Supervision des services de soins, bâtiments, chambres et lits d'hospitalisation.</p>
+    </div>
+
+    @if (activeTab() === 'batiments') {
+      <div class="header-actions">
+        <button type="button" (click)="openBatimentModal()" class="btn-create btn-building">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+          </svg>
+          <span>Nouveau Bâtiment</span>
+        </button>
+      </div>
+    }
+  </div>
+
+  <!-- TOAST FEEDBACK NOTIFICATION -->
+  @if (toastMessage()) {
+    <div class="toast-banner" [class.toast-success]="toastMessage()?.type === 'success'" [class.toast-error]="toastMessage()?.type === 'error'">
+      @if (toastMessage()?.type === 'success') {
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+        </svg>
+      } @else {
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      }
+      <span>{{ toastMessage()?.text }}</span>
+    </div>
+  }
+
+  <!-- TABS BAR -->
+  <div class="tabs-container">
+    <div class="tabs-nav">
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="activeTab() === 'services'"
+        (click)="setTab('services')"
+      >
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+        </svg>
+        <span>Pôles & Services</span>
+      </button>
+
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="activeTab() === 'batiments'"
+        (click)="setTab('batiments')"
+      >
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"/>
+        </svg>
+        <span>Bâtiments</span>
+      </button>
+
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="activeTab() === 'chambres'"
+        (click)="setTab('chambres')"
+      >
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 4h8a2 2 0 012 2v14H6V6a2 2 0 012-2zM15 12h.01"/>
+        </svg>
+        <span>Chambres</span>
+      </button>
+
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="activeTab() === 'lits'"
+        (click)="setTab('lits')"
+      >
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-9 2h18a1 1 0 001-1V5a1 1 0 00-1-1H3a1 1 0 00-1 1v14a1 1 0 001 1z"/>
+        </svg>
+        <span>Lits d'hospitalisation</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- SEARCH & FILTER BAR -->
+  <div class="search-bar-card">
+    <div class="search-input-wrapper">
+      <svg class="search-icon w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+      <input
+        type="text"
+        [ngModel]="searchQuery()"
+        (ngModelChange)="onSearchChange($event)"
+        placeholder="Rechercher par nom de service, numéro de chambre, bâtiment, lit..."
+        class="search-input"
+      />
+    </div>
+    <div class="count-badge">
+      <span>{{ totalCount() }} élément(s)</span>
+    </div>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="error-banner">
+      <span>{{ errorMessage() }}</span>
+      <button (click)="loadData()" class="btn-retry">Réessayer</button>
+    </div>
+  }
+
+  <!-- MAIN DATA TABLE -->
+  <div class="table-card">
+    @if (isLoading()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Chargement des infrastructures hospitalières...</p>
+      </div>
+    } @else if (items().length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg class="w-12 h-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+          </svg>
+        </div>
+        <h3>Aucun élément trouvé</h3>
+        <p>Aucune ressource ne correspond aux critères de recherche.</p>
+      </div>
+    } @else {
+      <!-- TABLE SERVICES -->
+      @if (activeTab() === 'services') {
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Nom du Pôle / Service</th>
+              <th>Localisation</th>
+              <th>Description</th>
+              <th>Statut</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (s of items(); track (s.id || s.idService || s.id_service)) {
+              <tr>
+                <td>
+                  <div class="infra-cell">
+                    <span class="infra-icon-circle bg-emerald-50 text-emerald-700">🏥</span>
+                    <span class="font-bold text-slate-900 detail-link" [routerLink]="['/admin/details', 'services', s.id || s.idService || s.id_service]">{{ s.nom_service_display || s.nom_service || s.nomService }}</span>
+                  </div>
+                </td>
+                <td>{{ s.bureau_localisation || s.bureauLocalisation || 'Bâtiment Principal' }}</td>
+                <td>{{ s.description || 'Pôle de soins spécialisé' }}</td>
+                <td>
+                  <span class="status-pill active">Opérationnel</span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+
+      <!-- TABLE BATIMENTS -->
+      @if (activeTab() === 'batiments') {
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Réf. Bâtiment</th>
+              <th>Bâtiment & Pavillon</th>
+              <th>Capacité</th>
+              <th>Description / Affectation</th>
+              <th>Statut</th>
+              <th class="text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (b of items(); track (b.id || b.idBatiment || b.id_batiment)) {
+              <tr>
+                <td>
+                  <span class="ref-badge">{{ b.reference || ('BAT-0' + (b.id_batiment || b.id)) }}</span>
+                </td>
+                <td>
+                  <div class="infra-cell">
+                    <span class="infra-icon-circle bg-blue-50 text-blue-700">🏢</span>
+                    <span class="font-bold text-slate-900 detail-link" [routerLink]="['/admin/details', 'batiments', b.id || b.idBatiment || b.id_batiment]">{{ b.nom || b.nomBatiment || ('Bâtiment #' + b.id) }}</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="font-semibold text-slate-800">{{ b.total_chambres_effectif || b.nombre_chambre || b.nombreChambre || 0 }} chambre(s)</span>
+                </td>
+                <td>{{ b.description || 'Pavillon hospitalier de soins' }}</td>
+                <td>
+                  <span class="status-pill" [class.active]="isBatimentActive(b)" [class.suspended]="!isBatimentActive(b)">
+                    {{ isBatimentActive(b) ? 'Opérationnel' : 'En travaux / Fermé' }}
+                  </span>
+                </td>
+                <td class="text-right">
+                  <button
+                    type="button"
+                    (click)="toggleBatimentStatus(b)"
+                    [disabled]="isActionLoading() === (b.id || b.idBatiment || b.id_batiment)"
+                    class="btn-toggle-status"
+                    [class.btn-suspend]="isBatimentActive(b)"
+                    [class.btn-reactivate]="!isBatimentActive(b)"
+                    [title]="isBatimentActive(b) ? 'Marquer comme en travaux / Fermer' : 'Marquer comme opérationnel'"
+                  >
+                    @if (isBatimentActive(b)) {
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                      </svg>
+                      <span>Fermer / Travaux</span>
+                    } @else {
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                      </svg>
+                      <span>Rendre Opérationnel</span>
+                    }
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+
+      <!-- TABLE CHAMBRES -->
+      @if (activeTab() === 'chambres') {
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Chambre</th>
+              <th>Bâtiment</th>
+              <th>Étage</th>
+              <th>Type / Catégorie</th>
+              <th>Statut</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of items(); track (c.id || c.idChambre || c.id_chambre)) {
+              <tr>
+                <td>
+                  <div class="infra-cell">
+                    <span class="infra-icon-circle bg-indigo-50 text-indigo-700">🚪</span>
+                    <span class="font-bold text-slate-900 detail-link" [routerLink]="['/admin/details', 'chambres', c.id || c.idChambre || c.id_chambre]">{{ formatChambre(c) }}</span>
+                  </div>
+                </td>
+                <td>{{ getBatimentName(c) }}</td>
+                <td>Étage {{ c.etage || 0 }}</td>
+                <td>
+                  <span class="badge-tag">{{ c.typeChambreDisplay || c.type_chambre || 'Standard' }}</span>
+                </td>
+                <td>
+                  <span class="status-pill active">Disponible</span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+
+      <!-- TABLE LITS -->
+      @if (activeTab() === 'lits') {
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Lit</th>
+              <th>Chambre</th>
+              <th>Bâtiment</th>
+              <th>État d'occupation</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (l of items(); track (l.id || l.idLit || l.id_lit)) {
+              <tr>
+                <td>
+                  <div class="infra-cell">
+                    <span class="infra-icon-circle bg-teal-50 text-teal-700">🛏️</span>
+                    <span class="font-bold text-slate-900 detail-link" [routerLink]="['/admin/details', 'lits', l.id || l.idLit || l.id_lit]">{{ formatLitName(l.numero_lit || l.numeroLit || l.id) }}</span>
+                  </div>
+                </td>
+                <td>{{ formatChambre(l.chambre_detail || l.chambre || l.chambre_details) }}</td>
+                <td>{{ getBatimentName(l) }}</td>
+                <td>
+                  <span class="badge-etat" [ngClass]="getBedBadgeClass(l.etat)">
+                    {{ l.etatDisplay || l.etat_display || l.etat || 'DISPONIBLE' }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+
+      <!-- PAGINATION -->
+      @if (totalPages() > 1) {
+        <div class="pagination-bar">
+          <button
+            type="button"
+            (click)="setPage(currentPage() - 1)"
+            [disabled]="currentPage() === 1"
+            class="page-btn"
+          >
+            Précédent
+          </button>
+          <span class="page-info">
+            Page {{ currentPage() }} sur {{ totalPages() }} ({{ totalCount() }} total)
+          </span>
+          <button
+            type="button"
+            (click)="setPage(currentPage() + 1)"
+            [disabled]="currentPage() === totalPages()"
+            class="page-btn"
+          >
+            Suivant
+          </button>
+        </div>
+      }
+    }
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: NOUVEAU BÂTIMENT -->
+  <!-- ========================================================================= -->
+  @if (showBatimentModal()) {
+    <div class="modal-overlay" (click)="closeModals()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div class="modal-title-wrapper">
+            <div class="modal-icon bg-blue-50 text-blue-700">
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+              </svg>
+            </div>
+            <div>
+              <h3>Créer un Pavillon / Bâtiment</h3>
+              <p>Ajout d'une nouvelle structure immobilière sur le campus hospitalier.</p>
+            </div>
+          </div>
+          <button (click)="closeModals()" class="btn-close-modal" aria-label="Fermer">✕</button>
+        </div>
+
+        @if (formError()) {
+          <div class="form-error-banner">{{ formError() }}</div>
+        }
+
+        <form (ngSubmit)="submitBatiment()" class="modal-form">
+          <div class="form-grid">
+            <div class="form-group full-width">
+              <label>Nom du Bâtiment <span class="req">*</span></label>
+              <input type="text" [(ngModel)]="batimentForm.nom" name="nom" required placeholder="Ex: Pavillon Pasteur - Aile Nord" />
+            </div>
+
+            <div class="form-group full-width">
+              <label>Description / Affectation</label>
+              <input type="text" [(ngModel)]="batimentForm.description" name="description" placeholder="Ex: Soins intensifs, cardiologie et réanimation" />
+            </div>
+
+            <div class="form-group">
+              <label>Capacité Prévisionnelle (Chambres)</label>
+              <input type="number" [(ngModel)]="batimentForm.nombre_chambre" name="nombre_chambre" min="0" max="1000" />
+            </div>
+
+            <div class="form-group">
+              <label>Statut Initial</label>
+              <select [(ngModel)]="batimentForm.actif" name="actif">
+                <option [ngValue]="true">Opérationnel (Actif)</option>
+                <option [ngValue]="false">En travaux / Non opérationnel</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" (click)="closeModals()" class="btn-cancel">Annuler</button>
+            <button type="submit" [disabled]="isSubmitting()" class="btn-submit">
+              @if (isSubmitting()) { <span class="spinner-sm"></span> Création... }
+              @else { Enregistrer le Bâtiment }
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

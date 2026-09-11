@@ -4,6 +4,7 @@ import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AppointmentService } from '../../../rendez-vous/services/appointment.service';
 import { RendezVousDto } from '../../../rendez-vous/models/models';
+import { formatLongDate } from '../../../../shared/utils';
 
 @Component({
   selector: 'app-patient-appointments',
@@ -184,18 +185,7 @@ export class PatientAppointmentsComponent implements OnInit {
   }
 
   formatDate(dateStr?: string): string {
-    if (!dateStr) return '—';
-    try {
-      const d = new Date(dateStr);
-      return isNaN(d.getTime()) ? dateStr : d.toLocaleDateString('fr-FR', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-      });
-    } catch {
-      return dateStr;
-    }
+    return formatLongDate(dateStr);
   }
 
   formatTime(timeStr?: string): string {

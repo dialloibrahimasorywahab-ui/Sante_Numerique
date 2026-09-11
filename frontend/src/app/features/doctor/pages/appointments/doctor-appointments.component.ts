@@ -4,6 +4,7 @@ import { RouterModule, RouterLink, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DoctorService } from '../../services/doctor.service';
 import { DoctorAppointmentDto } from '../../models/doctor.models';
+import { addDays, isDateTimePast, toIsoDate } from '../../../../shared/utils';
 
 type TimeFilter = 'TOUS' | 'AUJOURDHUI' | 'DEMAIN' | 'SEMAINE' | 'A_VENIR' | 'PASSES';
 
@@ -63,10 +64,7 @@ export class DoctorAppointmentsComponent implements OnInit {
     const rDate = rdv.date_rdv || rdv.dateRdv;
     if (!rDate) return false;
     const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const todayStr = `${year}-${month}-${day}`;
+    const todayStr = toIsoDate(now);
 
     if (rDate < todayStr) return true;
     if (rDate === todayStr && rdv.heure) {
@@ -76,7 +74,7 @@ export class DoctorAppointmentsComponent implements OnInit {
       const currentH = now.getHours();
       const currentM = now.getMinutes();
       if (!isNaN(h) && !isNaN(m)) {
-        return (h < currentH || (h === currentH && m <= currentM));
+        return isDateTimePast(rDate, rdv.heure, now);
       }
     }
     return false;
@@ -89,14 +87,9 @@ export class DoctorAppointmentsComponent implements OnInit {
     const status = this.selectedStatus();
     const timeFilter = this.selectedTimeFilter();
 
-    const todayStr = new Date().toISOString().split('T')[0];
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = tomorrow.toISOString().split('T')[0];
-
-    const weekLater = new Date();
-    weekLater.setDate(weekLater.getDate() + 7);
-    const weekLaterStr = weekLater.toISOString().split('T')[0];
+    const todayStr = toIsoDate();
+    const tomorrowStr = toIsoDate(addDays(new Date(), 1));
+    const weekLaterStr = toIsoDate(addDays(new Date(), 7));
 
     // 1. Text search
     if (query) {

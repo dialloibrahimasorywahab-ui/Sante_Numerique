@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { PatientHospitalizationService } from '../../services/patient-hospitalization.service';
 import { HospitalisationDto } from '../../models/patient.models';
+import { formatDate as formatSharedDate } from '../../../../shared/utils';
 
 @Component({
   selector: 'app-patient-hospitalizations',
@@ -60,17 +61,7 @@ export class PatientHospitalizationsComponent implements OnInit {
   }
 
   formatDate(dateStr?: string | null): string {
-    if (!dateStr) return 'En cours';
-    try {
-      const d = new Date(dateStr);
-      return isNaN(d.getTime()) ? dateStr : d.toLocaleDateString('fr-FR', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-      });
-    } catch {
-      return dateStr;
-    }
+    return formatSharedDate(dateStr, 'En cours');
   }
 
   getStatusBadgeClass(statut?: string): string {

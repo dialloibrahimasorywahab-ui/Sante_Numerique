@@ -66,6 +66,7 @@
             <th>Patient</th>
             <th>Date</th>
             <th>Diagnostic</th>
+            <th>Honoraires</th>
             <th>Observations cliniques</th>
             <th class="text-right">Action</th>
           </tr>
@@ -97,6 +98,22 @@
               </td>
               <td>
                 <span class="diagnostic-text">{{ c.diagnostic || 'Non spécifié' }}</span>
+              </td>
+              <td>
+                @if (c.frais_details) {
+                  <div class="frais-cell">
+                    <span class="frais-val">{{ c.frais_details.montant }} GNF</span>
+                    <span
+                      class="frais-pill"
+                      [class.paid]="c.frais_details.statut === 'PAYE'"
+                      [class.pending]="c.frais_details.statut === 'EN_ATTENTE'"
+                    >
+                      {{ c.frais_details.statut === 'PAYE' ? 'Réglé' : 'En attente' }}
+                    </span>
+                  </div>
+                } @else {
+                  <span class="text-xs text-slate-400">—</span>
+                }
               </td>
               <td>
                 <span class="obs-preview">{{ c.observations || c.symptomes || 'Examen clinique standard' }}</span>
@@ -151,6 +168,15 @@
 
             <div class="card-body">
               <p class="diag"><strong>Diagnostic :</strong> {{ c.diagnostic || 'Non spécifié' }}</p>
+              @if (c.frais_details) {
+                <p class="frais-row-mobile">
+                  <strong>Honoraires :</strong>
+                  <span class="frais-amount-tag">{{ c.frais_details.montant }} GNF</span>
+                  <span class="frais-pill" [class.paid]="c.frais_details.statut === 'PAYE'">
+                    {{ c.frais_details.statut === 'PAYE' ? 'Réglé' : 'En attente' }}
+                  </span>
+                </p>
+              }
               @if (c.observations) {
                 <p class="obs">{{ c.observations }}</p>
               }

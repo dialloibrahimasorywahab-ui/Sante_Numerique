@@ -4,6 +4,7 @@ import { Router, ActivatedRoute, RouterModule, RouterLink } from '@angular/route
 import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DoctorService } from '../../services/doctor.service';
 import { DoctorConsultationDto } from '../../models/doctor.models';
+import { toIsoDate } from '../../../../shared/utils';
 
 @Component({
   selector: 'app-doctor-prescription-create',
@@ -34,8 +35,8 @@ export class DoctorPrescriptionCreateComponent implements OnInit {
   }
 
   private initForm(): void {
-    const todayStr = new Date().toISOString().split('T')[0];
-    const autoRef = `ORD-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(100 + Math.random() * 900)}`;
+    const todayStr = toIsoDate();
+    const autoRef = `ORD-${todayStr.replace(/-/g, '')}-${Math.floor(100 + Math.random() * 900)}`;
 
     this.prescriptionForm = this.fb.group({
       consultation: ['', [Validators.required]],

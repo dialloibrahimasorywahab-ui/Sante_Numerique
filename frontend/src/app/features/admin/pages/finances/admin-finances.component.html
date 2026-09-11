@@ -1,0 +1,266 @@
+<div class="admin-page-container">
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div>
+      <div class="breadcrumb">
+        <a routerLink="/admin/dashboard" class="back-link">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+          <span>Tableau de bord</span>
+        </a>
+      </div>
+      <h1 class="page-title">Finance, Facturation & Recouvrement</h1>
+      <p class="page-subtitle">Gestion des frais de consultations, suivi des encaissements et facturation médicale.</p>
+    </div>
+  </div>
+
+  <!-- KPI FINANCIAL STATS CARDS -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon-wrapper bg-blue-50 text-blue-700">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <div class="stat-content">
+        <span class="stat-label">Total Facturé</span>
+        <div class="stat-value">{{ stats().totalMontant | number:'1.0-0' }} <span class="currency">FCFA</span></div>
+        <span class="stat-sub">Volume global des consultations</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon-wrapper bg-emerald-50 text-emerald-700">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <div class="stat-content">
+        <span class="stat-label">Total Encaissé (Payé)</span>
+        <div class="stat-value text-emerald-700">{{ stats().montantPaye | number:'1.0-0' }} <span class="currency">FCFA</span></div>
+        <span class="stat-sub">{{ stats().countPaye }} règlement(s) validé(s)</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon-wrapper bg-amber-50 text-amber-700">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <div class="stat-content">
+        <span class="stat-label">En Attente de Règlement</span>
+        <div class="stat-value text-amber-700">{{ stats().montantEnAttente | number:'1.0-0' }} <span class="currency">FCFA</span></div>
+        <span class="stat-sub">{{ stats().countEnAttente }} facture(s) à encaisser</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon-wrapper bg-indigo-50 text-indigo-700">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+        </svg>
+      </div>
+      <div class="stat-content">
+        <span class="stat-label">Taux de Recouvrement</span>
+        <div class="stat-value text-indigo-700">{{ stats().tauxRecouvrement }}%</div>
+        <span class="stat-sub">Règlements perçus / émis</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- FEEDBACK TOASTS -->
+  @if (successMessage()) {
+    <div class="success-banner">
+      <svg class="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+      </svg>
+      <span>{{ successMessage() }}</span>
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="error-banner">
+      <span>{{ errorMessage() }}</span>
+      <button (click)="loadData()" class="btn-retry">Réessayer</button>
+    </div>
+  }
+
+  <!-- TABS BAR / FILTER -->
+  <div class="tabs-container">
+    <div class="tabs-nav">
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="activeFilter() === 'ALL'"
+        (click)="setFilter('ALL')"
+      >
+        <span>Tous les frais</span>
+      </button>
+
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="activeFilter() === 'EN_ATTENTE'"
+        (click)="setFilter('EN_ATTENTE')"
+      >
+        <span class="dot-indicator dot-amber"></span>
+        <span>En attente de paiement ({{ stats().countEnAttente }})</span>
+      </button>
+
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="activeFilter() === 'PAYE'"
+        (click)="setFilter('PAYE')"
+      >
+        <span class="dot-indicator dot-emerald"></span>
+        <span>Payés / Encaissés ({{ stats().countPaye }})</span>
+      </button>
+
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="activeFilter() === 'ANNULE'"
+        (click)="setFilter('ANNULE')"
+      >
+        <span class="dot-indicator dot-red"></span>
+        <span>Annulés</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- SEARCH & FILTER BAR -->
+  <div class="search-bar-card">
+    <div class="search-input-wrapper">
+      <svg class="search-icon w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+      <input
+        type="text"
+        [ngModel]="searchQuery()"
+        (ngModelChange)="onSearchChange($event)"
+        placeholder="Rechercher par libellé, description, montant, ID de facture..."
+        class="search-input"
+      />
+    </div>
+    <div class="count-badge">
+      <span>{{ totalCount() }} facture(s)</span>
+    </div>
+  </div>
+
+  <!-- MAIN DATA TABLE -->
+  <div class="table-card">
+    @if (isLoading()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Chargement des opérations financières...</p>
+      </div>
+    } @else if (items().length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg class="w-12 h-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+          </svg>
+        </div>
+        <h3>Aucune transaction trouvée</h3>
+        <p>Aucun frais de consultation ne correspond aux filtres sélectionnés.</p>
+      </div>
+    } @else {
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>N° Facture</th>
+            <th>Prestation / Description</th>
+            <th>Montant</th>
+            <th>Statut</th>
+            <th>Date de Règlement</th>
+            <th class="text-right">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (frais of items(); track (frais.id || frais.idFrais)) {
+            <tr>
+              <td>
+                <span class="ref-badge detail-link" [routerLink]="['/admin/details', 'frais_consultations', frais.id || frais.idFrais]">#FC-{{ frais.id || frais.idFrais }}</span>
+              </td>
+              <td>
+                <div class="desc-cell">
+                  <span class="font-bold text-slate-900 detail-link" [routerLink]="['/admin/details', 'frais_consultations', frais.id || frais.idFrais]">{{ frais.description || 'Frais de consultation médicale' }}</span>
+                  <span class="text-xs text-slate-500">Prestation clinique</span>
+                </div>
+              </td>
+              <td>
+                <span class="font-black text-slate-900 amount-text">
+                  {{ (frais.montant || 0) | number:'1.0-0' }} FCFA
+                </span>
+              </td>
+              <td>
+                <span class="badge-statut" [ngClass]="getStatutBadgeClass(frais.statut)">
+                  {{ frais.statut_display || frais.statut || 'EN_ATTENTE' }}
+                </span>
+              </td>
+              <td>
+                <span class="text-sm text-slate-600">{{ formatDate(frais.date_paiement) }}</span>
+              </td>
+              <td class="text-right">
+                @if (frais.statut === 'EN_ATTENTE') {
+                  <button
+                    type="button"
+                    (click)="markAsPaid(frais)"
+                    [disabled]="isActionLoading() === (frais.id || frais.idFrais)"
+                    class="btn-payer"
+                  >
+                    @if (isActionLoading() === (frais.id || frais.idFrais)) {
+                      <span class="spinner-sm"></span>
+                    } @else {
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                      </svg>
+                    }
+                    <span>Encaisser</span>
+                  </button>
+                } @else if (frais.statut === 'PAYE') {
+                  <span class="paid-check">
+                    <svg class="w-4 h-4 text-emerald-600 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Réglement validé
+                  </span>
+                } @else {
+                  <span class="text-xs text-slate-400">Annulé</span>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      <!-- PAGINATION -->
+      @if (totalPages() > 1) {
+        <div class="pagination-bar">
+          <button
+            type="button"
+            (click)="setPage(currentPage() - 1)"
+            [disabled]="currentPage() === 1"
+            class="page-btn"
+          >
+            Précédent
+          </button>
+          <span class="page-info">
+            Page {{ currentPage() }} sur {{ totalPages() }} ({{ totalCount() }} total)
+          </span>
+          <button
+            type="button"
+            (click)="setPage(currentPage() + 1)"
+            [disabled]="currentPage() === totalPages()"
+            class="page-btn"
+          >
+            Suivant
+          </button>
+        </div>
+      }
+    }
+  </div>
+</div>

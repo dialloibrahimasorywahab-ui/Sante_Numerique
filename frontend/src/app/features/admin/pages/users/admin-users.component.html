@@ -1,0 +1,671 @@
+<div class="admin-page-container">
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div class="header-left">
+      <div class="breadcrumb">
+        <a routerLink="/admin/dashboard" class="back-link">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+          <span>Tableau de bord</span>
+        </a>
+      </div>
+      <h1 class="page-title">Gestion des Utilisateurs & Ressources Humaines</h1>
+      <p class="page-subtitle">Administration des dossiers patients, corps médical et personnels soignants.</p>
+    </div>
+
+    <!-- ACTION BUTTONS ACCORDING TO ACTIVE TAB -->
+    <div class="header-actions">
+      @if (activeTab() === 'patients') {
+        <button type="button" (click)="openModal('patients')" class="btn-create btn-patient">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+          </svg>
+          <span>Enregistrer un Patient</span>
+        </button>
+      } @else if (activeTab() === 'medecins') {
+        <button type="button" (click)="openModal('medecins')" class="btn-create btn-medecin">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+          </svg>
+          <span>Enregistrer un Médecin</span>
+        </button>
+      } @else if (activeTab() === 'personnel') {
+        <button type="button" (click)="openModal('personnel')" class="btn-create btn-staff">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+          </svg>
+          <span>Enregistrer un Soignant / Staff</span>
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- TOAST FEEDBACK NOTIFICATION -->
+  @if (toastMessage()) {
+    <div class="toast-banner" [class.toast-success]="toastMessage()?.type === 'success'" [class.toast-error]="toastMessage()?.type === 'error'">
+      @if (toastMessage()?.type === 'success') {
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+        </svg>
+      } @else {
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      }
+      <span>{{ toastMessage()?.text }}</span>
+    </div>
+  }
+
+  <!-- TABS BAR -->
+  <div class="tabs-container">
+    <div class="tabs-nav">
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="activeTab() === 'patients'"
+        (click)="setTab('patients')"
+      >
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+        </svg>
+        <span>Dossiers Patients</span>
+      </button>
+
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="activeTab() === 'medecins'"
+        (click)="setTab('medecins')"
+      >
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+        </svg>
+        <span>Corps Médical (Médecins)</span>
+      </button>
+
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="activeTab() === 'personnel'"
+        (click)="setTab('personnel')"
+      >
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2H9.17A3.001 3.001 0 0112 14z"/>
+        </svg>
+        <span>Personnel Soignant & Administratif</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- SEARCH & FILTER BAR -->
+  <div class="search-bar-card">
+    <div class="search-input-wrapper">
+      <svg class="search-icon w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+      <input
+        type="text"
+        [ngModel]="searchQuery()"
+        (ngModelChange)="onSearchChange($event)"
+        placeholder="Rechercher par nom, prénom, email, matricule, téléphone..."
+        class="search-input"
+      />
+    </div>
+    <div class="count-badge">
+      <span>{{ totalCount() }} enregistrement(s)</span>
+    </div>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="error-banner">
+      <span>{{ errorMessage() }}</span>
+      <button (click)="loadData()" class="btn-retry">Réessayer</button>
+    </div>
+  }
+
+  <!-- MAIN DATA TABLE -->
+  <div class="table-card">
+    @if (isLoading()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Chargement des enregistrements...</p>
+      </div>
+    } @else if (items().length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg class="w-12 h-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+          </svg>
+        </div>
+        <h3>Aucun utilisateur trouvé</h3>
+        <p>Aucun résultat ne correspond à votre recherche pour cet onglet.</p>
+      </div>
+    } @else {
+      <!-- TABLE PATIENTS -->
+      @if (activeTab() === 'patients') {
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Patient</th>
+              <th>Date de Naissance</th>
+              <th>Sexe / Groupe</th>
+              <th>N° Sécurité Sociale</th>
+              <th>Statut</th>
+              <th class="text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of items(); track (p.id || p.idPatient || p.id_patient)) {
+              <tr>
+                <td>
+                  <div class="user-cell">
+                    <div class="avatar-circle">
+                      {{ (p.nom || p.idUtilisateur?.nom || 'P')[0] }}
+                    </div>
+                    <div>
+                      <div class="user-name detail-link" [routerLink]="['/admin/details', 'patients', p.id || p.idPatient || p.id_patient]">
+                        {{ p.prenom || p.idUtilisateur?.prenom }} {{ p.nom || p.idUtilisateur?.nom }}
+                      </div>
+                      <div class="user-sub">
+                        {{ p.telephone || p.idUtilisateur?.telephone || p.email || p.idUtilisateur?.email || 'Sans contact' }}
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td>{{ p.date_naissance || p.dateNaissance || '—' }}</td>
+                <td>
+                  <span class="badge-tag">{{ p.sexe || 'N/R' }}</span>
+                  @if (p.groupe_sanguin || p.groupeSanguin) {
+                    <span class="badge-blood">{{ p.groupe_sanguin || p.groupeSanguin }}</span>
+                  }
+                </td>
+                <td>
+                  <span class="secu-badge">{{ p.numero_securite_sociale || p.numeroSecuriteSociale || '—' }}</span>
+                </td>
+                <td>
+                  <span class="status-pill" [class.active]="isUserActive(p)" [class.suspended]="!isUserActive(p)">
+                    {{ isUserActive(p) ? 'Actif' : 'Suspendu' }}
+                  </span>
+                </td>
+                <td class="text-right">
+                  <button
+                    type="button"
+                    (click)="toggleSuspendUser(p)"
+                    [disabled]="isActionLoading() === (p.id || p.idPatient || p.id_patient)"
+                    class="btn-toggle-status"
+                    [class.btn-suspend]="isUserActive(p)"
+                    [class.btn-reactivate]="!isUserActive(p)"
+                    [title]="isUserActive(p) ? 'Suspendre ce patient' : 'Réactiver ce patient'"
+                  >
+                    @if (isUserActive(p)) {
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                      </svg>
+                      <span>Suspendre</span>
+                    } @else {
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                      </svg>
+                      <span>Réactiver</span>
+                    }
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+
+      <!-- TABLE MEDECINS -->
+      @if (activeTab() === 'medecins') {
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Médecin</th>
+              <th>Spécialité</th>
+              <th>Matricule & Ordre</th>
+              <th>Bureau</th>
+              <th>Statut</th>
+              <th class="text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (m of items(); track (m.id || m.idMedecin || m.id_medecin)) {
+              <tr>
+                <td>
+                  <div class="user-cell">
+                    <div class="avatar-circle doc">Dr</div>
+                    <div>
+                      <div class="user-name detail-link" [routerLink]="['/admin/details', 'medecins', m.id || m.idMedecin || m.id_medecin]">
+                        Dr. {{ m.prenom || m.idUtilisateur?.prenom }} {{ m.nom || m.idUtilisateur?.nom }}
+                      </div>
+                      <div class="user-sub">
+                        {{ m.telephone || m.idUtilisateur?.telephone || m.email || m.idUtilisateur?.email }}
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge-spec">{{ m.specialiteDisplay || m.specialite_display || m.specialite || 'Généraliste' }}</span>
+                </td>
+                <td>
+                  <div class="matricule-col">
+                    <span>Matricule : <strong>{{ m.matricule || '—' }}</strong></span>
+                    <span class="text-xs text-slate-500">N° Ordre : {{ m.numeroOrdre || m.numero_ordre || '—' }}</span>
+                  </div>
+                </td>
+                <td>{{ m.bureau || 'Non assigné' }}</td>
+                <td>
+                  <span class="status-pill" [class.active]="isUserActive(m)" [class.suspended]="!isUserActive(m)">
+                    {{ isUserActive(m) ? 'En service' : 'Suspendu' }}
+                  </span>
+                </td>
+                <td class="text-right">
+                  <button
+                    type="button"
+                    (click)="toggleSuspendUser(m)"
+                    [disabled]="isActionLoading() === (m.id || m.idMedecin || m.id_medecin)"
+                    class="btn-toggle-status"
+                    [class.btn-suspend]="isUserActive(m)"
+                    [class.btn-reactivate]="!isUserActive(m)"
+                    [title]="isUserActive(m) ? 'Suspendre ce médecin' : 'Réactiver ce médecin'"
+                  >
+                    @if (isUserActive(m)) {
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                      </svg>
+                      <span>Suspendre</span>
+                    } @else {
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                      </svg>
+                      <span>Réactiver</span>
+                    }
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+
+      <!-- TABLE PERSONNEL -->
+      @if (activeTab() === 'personnel') {
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Personnel</th>
+              <th>Rôle / Qualification</th>
+              <th>Pôle Hospitalier</th>
+              <th>Matricule</th>
+              <th>Statut</th>
+              <th class="text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (staff of items(); track (staff.id || staff.idPersonnel || staff.id_personnel)) {
+              <tr>
+                <td>
+                  <div class="user-cell">
+                    <div class="avatar-circle staff">
+                      {{ (staff.nom || staff.idUtilisateur?.nom || 'S')[0] }}
+                    </div>
+                    <div>
+                      <div class="user-name detail-link" [routerLink]="['/admin/details', 'personnel', staff.id || staff.idPersonnel || staff.id_personnel]">
+                        {{ staff.prenom || staff.idUtilisateur?.prenom }} {{ staff.nom || staff.idUtilisateur?.nom }}
+                      </div>
+                      <div class="user-sub">
+                        {{ staff.telephone || staff.idUtilisateur?.telephone || staff.email || staff.idUtilisateur?.email }}
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge-tag">{{ staff.typePersonnel || staff.role || staff.poste || 'Soignant' }}</span>
+                </td>
+                <td>{{ staff.serviceHopital || staff.nomService || staff.service_hopital || 'Pôle général' }}</td>
+                <td>
+                  <span class="secu-badge">{{ staff.matricule || '—' }}</span>
+                </td>
+                <td>
+                  <span class="status-pill" [class.active]="isUserActive(staff)" [class.suspended]="!isUserActive(staff)">
+                    {{ isUserActive(staff) ? 'En poste' : 'Suspendu' }}
+                  </span>
+                </td>
+                <td class="text-right">
+                  <button
+                    type="button"
+                    (click)="toggleSuspendUser(staff)"
+                    [disabled]="isActionLoading() === (staff.id || staff.idPersonnel || staff.id_personnel)"
+                    class="btn-toggle-status"
+                    [class.btn-suspend]="isUserActive(staff)"
+                    [class.btn-reactivate]="!isUserActive(staff)"
+                    [title]="isUserActive(staff) ? 'Suspendre ce membre' : 'Réactiver ce membre'"
+                  >
+                    @if (isUserActive(staff)) {
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                      </svg>
+                      <span>Suspendre</span>
+                    } @else {
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                      </svg>
+                      <span>Réactiver</span>
+                    }
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+
+      <!-- PAGINATION -->
+      @if (totalPages() > 1) {
+        <div class="pagination-bar">
+          <button
+            type="button"
+            (click)="setPage(currentPage() - 1)"
+            [disabled]="currentPage() === 1"
+            class="page-btn"
+          >
+            Précédent
+          </button>
+          <span class="page-info">
+            Page {{ currentPage() }} sur {{ totalPages() }} ({{ totalCount() }} total)
+          </span>
+          <button
+            type="button"
+            (click)="setPage(currentPage() + 1)"
+            [disabled]="currentPage() === totalPages()"
+            class="page-btn"
+          >
+            Suivant
+          </button>
+        </div>
+      }
+    }
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: ENREGISTRER UN PATIENT -->
+  <!-- ========================================================================= -->
+  @if (showPatientModal()) {
+    <div class="modal-overlay" (click)="closeModals()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div class="modal-title-wrapper">
+            <div class="modal-icon bg-emerald-50 text-emerald-700">
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+              </svg>
+            </div>
+            <div>
+              <h3>Créer un Dossier Patient</h3>
+              <p>Enregistrement d'un nouveau patient dans le système hospitalier.</p>
+            </div>
+          </div>
+          <button (click)="closeModals()" class="btn-close-modal" aria-label="Fermer">✕</button>
+        </div>
+
+        @if (formError()) {
+          <div class="form-error-banner">{{ formError() }}</div>
+        }
+
+        <form (ngSubmit)="submitPatient()" class="modal-form">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Nom <span class="req">*</span></label>
+              <input type="text" [(ngModel)]="patientForm.nom" name="nom" required placeholder="Ex: Dupont" />
+            </div>
+
+            <div class="form-group">
+              <label>Prénom <span class="req">*</span></label>
+              <input type="text" [(ngModel)]="patientForm.prenom" name="prenom" required placeholder="Ex: Jean" />
+            </div>
+
+            <div class="form-group">
+              <label>Email <span class="req">*</span></label>
+              <input type="email" [(ngModel)]="patientForm.email" name="email" required placeholder="jean.dupont@email.com" />
+            </div>
+
+            <div class="form-group">
+              <label>Téléphone <span class="req">*</span></label>
+              <input type="tel" [(ngModel)]="patientForm.telephone" name="telephone" required placeholder="+221 77 123 45 67" />
+            </div>
+
+            <div class="form-group">
+              <label>Date de Naissance</label>
+              <input type="date" [(ngModel)]="patientForm.dateNaissance" name="dateNaissance" />
+            </div>
+
+            <div class="form-group">
+              <label>Sexe</label>
+              <select [(ngModel)]="patientForm.sexe" name="sexe">
+                <option value="M">Masculin</option>
+                <option value="F">Féminin</option>
+                <option value="AUTRE">Autre</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Groupe Sanguin</label>
+              <select [(ngModel)]="patientForm.groupeSanguin" name="groupeSanguin">
+                <option value="A+">A+</option>
+                <option value="A-">A-</option>
+                <option value="B+">B+</option>
+                <option value="B-">B-</option>
+                <option value="AB+">AB+</option>
+                <option value="AB-">AB-</option>
+                <option value="O+">O+</option>
+                <option value="O-">O-</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>N° Sécurité Sociale</label>
+              <input type="text" [(ngModel)]="patientForm.numeroSecuriteSociale" name="numeroSecuriteSociale" placeholder="Ex: 1850575123456" />
+            </div>
+
+            <div class="form-group full-width">
+              <label>Adresse de Résidence</label>
+              <input type="text" [(ngModel)]="patientForm.adresse" name="adresse" placeholder="Ex: 12 Rue de la Santé, Dakar" />
+            </div>
+
+            <div class="form-group full-width">
+              <label>Personne à Contacter (Urgence)</label>
+              <input type="text" [(ngModel)]="patientForm.personneAContacter" name="personneAContacter" placeholder="Nom et téléphone du proche" />
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" (click)="closeModals()" class="btn-cancel">Annuler</button>
+            <button type="submit" [disabled]="isSubmitting()" class="btn-submit">
+              @if (isSubmitting()) { <span class="spinner-sm"></span> Enregistrement... }
+              @else { Enregistrer le Patient }
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: ENREGISTRER UN MEDECIN -->
+  <!-- ========================================================================= -->
+  @if (showMedecinModal()) {
+    <div class="modal-overlay" (click)="closeModals()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div class="modal-title-wrapper">
+            <div class="modal-icon bg-blue-50 text-blue-700">
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+              </svg>
+            </div>
+            <div>
+              <h3>Enregistrer un Médecin (Corps Médical)</h3>
+              <p>Création d'un praticien avec affectation et identifiants sécurisés.</p>
+            </div>
+          </div>
+          <button (click)="closeModals()" class="btn-close-modal" aria-label="Fermer">✕</button>
+        </div>
+
+        @if (formError()) {
+          <div class="form-error-banner">{{ formError() }}</div>
+        }
+
+        <form (ngSubmit)="submitMedecin()" class="modal-form">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Nom <span class="req">*</span></label>
+              <input type="text" [(ngModel)]="medecinForm.nom" name="nom" required placeholder="Ex: Sow" />
+            </div>
+
+            <div class="form-group">
+              <label>Prénom <span class="req">*</span></label>
+              <input type="text" [(ngModel)]="medecinForm.prenom" name="prenom" required placeholder="Ex: Aminata" />
+            </div>
+
+            <div class="form-group">
+              <label>Email Professionnel <span class="req">*</span></label>
+              <input type="email" [(ngModel)]="medecinForm.email" name="email" required placeholder="dr.sow@hopital.sn" />
+            </div>
+
+            <div class="form-group">
+              <label>Téléphone <span class="req">*</span></label>
+              <input type="tel" [(ngModel)]="medecinForm.telephone" name="telephone" required placeholder="+221 77 234 56 78" />
+            </div>
+
+            <div class="form-group">
+              <label>Spécialité Médicale <span class="req">*</span></label>
+              <select [(ngModel)]="medecinForm.specialite" name="specialite" required>
+                <option value="MEDECINE_GENERALE">Médecine Générale</option>
+                <option value="CARDIOLOGIE">Cardiologie</option>
+                <option value="PEDIATRIE">Pédiatrie</option>
+                <option value="GYNECOLOGIE">Gynécologie - Obstétrique</option>
+                <option value="DERMATOLOGIE">Dermatologie</option>
+                <option value="NEUROLOGIE">Neurologie</option>
+                <option value="OPHTALMOLOGIE">Ophtalmologie</option>
+                <option value="RADIOLOGIE">Radiologie & Imagerie</option>
+                <option value="CHIRURGIE">Chirurgie Générale</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Matricule Hospitalier <span class="req">*</span></label>
+              <input type="text" [(ngModel)]="medecinForm.matricule" name="matricule" required placeholder="Ex: MED-8841" />
+            </div>
+
+            <div class="form-group">
+              <label>N° Ordre des Médecins</label>
+              <input type="text" [(ngModel)]="medecinForm.numeroOrdre" name="numeroOrdre" placeholder="Ex: CNOM-45210" />
+            </div>
+
+            <div class="form-group">
+              <label>Bureau / Consultation</label>
+              <input type="text" [(ngModel)]="medecinForm.bureau" name="bureau" placeholder="Ex: Cabinet 204 - Bât. A" />
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" (click)="closeModals()" class="btn-cancel">Annuler</button>
+            <button type="submit" [disabled]="isSubmitting()" class="btn-submit">
+              @if (isSubmitting()) { <span class="spinner-sm"></span> Enregistrement... }
+              @else { Enregistrer le Médecin }
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: ENREGISTRER UN MEMBRE DU PERSONNEL -->
+  <!-- ========================================================================= -->
+  @if (showPersonnelModal()) {
+    <div class="modal-overlay" (click)="closeModals()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div class="modal-title-wrapper">
+            <div class="modal-icon bg-amber-50 text-amber-700">
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2H9.17A3.001 3.001 0 0112 14z"/>
+              </svg>
+            </div>
+            <div>
+              <h3>Enregistrer un Membre du Personnel Soignant</h3>
+              <p>Affectation du personnel infirmier, aide-soignant ou administratif.</p>
+            </div>
+          </div>
+          <button (click)="closeModals()" class="btn-close-modal" aria-label="Fermer">✕</button>
+        </div>
+
+        @if (formError()) {
+          <div class="form-error-banner">{{ formError() }}</div>
+        }
+
+        <form (ngSubmit)="submitPersonnel()" class="modal-form">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Nom <span class="req">*</span></label>
+              <input type="text" [(ngModel)]="personnelForm.nom" name="nom" required placeholder="Ex: Diop" />
+            </div>
+
+            <div class="form-group">
+              <label>Prénom <span class="req">*</span></label>
+              <input type="text" [(ngModel)]="personnelForm.prenom" name="prenom" required placeholder="Ex: Fatou" />
+            </div>
+
+            <div class="form-group">
+              <label>Email Professionnel <span class="req">*</span></label>
+              <input type="email" [(ngModel)]="personnelForm.email" name="email" required placeholder="fatou.diop@hopital.sn" />
+            </div>
+
+            <div class="form-group">
+              <label>Téléphone <span class="req">*</span></label>
+              <input type="tel" [(ngModel)]="personnelForm.telephone" name="telephone" required placeholder="+221 77 345 67 89" />
+            </div>
+
+            <div class="form-group">
+              <label>Catégorie / Rôle <span class="req">*</span></label>
+              <select [(ngModel)]="personnelForm.typePersonnel" name="typePersonnel" required>
+                <option value="INFIRMIER">Infirmier(ère)</option>
+                <option value="AIDE_SOIGNANT">Aide-Soignant(e)</option>
+                <option value="SAGE_FEMME">Sage-Femme</option>
+                <option value="TECHNICIEN">Technicien de Laboratoire</option>
+                <option value="PHARMACIEN">Pharmacien(ne)</option>
+                <option value="ADMINISTRATIF">Agent d'Accueil / Administratif</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Matricule <span class="req">*</span></label>
+              <input type="text" [(ngModel)]="personnelForm.matricule" name="matricule" required placeholder="Ex: STF-3021" />
+            </div>
+
+            <div class="form-group">
+              <label>Intitulé du Poste</label>
+              <input type="text" [(ngModel)]="personnelForm.poste" name="poste" placeholder="Ex: Infirmier(ère) Chef d'Unité" />
+            </div>
+
+            <div class="form-group">
+              <label>Pôle / Service d'Affectation</label>
+              <input type="text" [(ngModel)]="personnelForm.serviceHopital" name="serviceHopital" placeholder="Ex: Pôle Urgences & Réanimation" />
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" (click)="closeModals()" class="btn-cancel">Annuler</button>
+            <button type="submit" [disabled]="isSubmitting()" class="btn-submit">
+              @if (isSubmitting()) { <span class="spinner-sm"></span> Enregistrement... }
+              @else { Enregistrer le Membre }
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

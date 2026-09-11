@@ -11,6 +11,7 @@ import { PatientHospitalizationService } from '../../services/patient-hospitaliz
 import { PatientProfileService } from '../../services/patient-profile.service';
 import { RendezVousDto } from '../../../rendez-vous/models/models';
 import { ConsultationDto, HospitalisationDto, OrdonnanceDto, PatientDashboardStats, PatientRecord } from '../../models/patient.models';
+import { calculateAge as calculateSharedAge, formatDate as formatSharedDate, isDateTimePast } from '../../../../shared/utils';
 
 @Component({
   selector: 'app-patient-dashboard',
@@ -43,15 +44,8 @@ export class PatientDashboardComponent implements OnInit {
     const user = this.authService.currentUser();
     const bday = user?.date_naissance || (user as any)?.dateNaissance || this.patientRecord()?.date_naissance || (this.patientRecord() as any)?.dateNaissance;
     if (!bday) return null;
-    const birthDate = new Date(bday);
-    if (isNaN(birthDate.getTime())) return null;
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const m = today.getMonth() - birthDate.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age >= 0 ? age : null;
+    const age = calculateSharedAge(bday, '');
+    return typeof age === 'number' && age >= 0 ? age : null;
   });
 
   isProfileIncomplete = computed<boolean>(() => {
@@ -66,8 +60,7 @@ export class PatientDashboardComponent implements OnInit {
     const list = this.appointments();
     const now = Date.now();
     const upcoming = list.filter(rdv => {
-      const dt = new Date(`${rdv.date_rdv}T${rdv.heure.substring(0, 5)}`);
-      return !isNaN(dt.getTime()) && dt.getTime() > now && rdv.statut !== 'ANNULE' && rdv.statut !== 'TERMINE';
+      return !isDateTimePast(rdv.date_rdv, rdv.heure, new Date(now)) && rdv.statut !== 'ANNULE' && rdv.statut !== 'TERMINE';
     });
     if (upcoming.length === 0) return null;
     return upcoming.sort((a, b) => (a.date_rdv + a.heure).localeCompare(b.date_rdv + b.heure))[0];
@@ -87,8 +80,7 @@ export class PatientDashboardComponent implements OnInit {
   stats = computed<PatientDashboardStats>(() => {
     const now = Date.now();
     const upcomingCount = this.appointments().filter(rdv => {
-      const dt = new Date(`${rdv.date_rdv}T${rdv.heure.substring(0, 5)}`);
-      return !isNaN(dt.getTime()) && dt.getTime() > now && rdv.statut !== 'ANNULE' && rdv.statut !== 'TERMINE';
+      return !isDateTimePast(rdv.date_rdv, rdv.heure, new Date(now)) && rdv.statut !== 'ANNULE' && rdv.statut !== 'TERMINE';
     }).length;
 
     const activeHospCount = this.hospitalizations().filter(h => h.statut === 'EN_COURS' || h.statut === 'PROGRAMMEE').length;
@@ -138,18 +130,7 @@ export class PatientDashboardComponent implements OnInit {
   }
 
   formatDate(dateStr?: string | null): string {
-    if (!dateStr) return '—';
-    try {
-      const d = new Date(dateStr);
-      return isNaN(d.getTime()) ? dateStr : d.toLocaleDateString('fr-FR', {
-        weekday: 'short',
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric'
-      });
-    } catch {
-      return dateStr;
-    }
+    return formatSharedDate(dateStr);
   }
 
   formatTime(timeStr?: string): string {

@@ -1,0 +1,31 @@
+<div class="admin-detail-page">
+  <a routerLink="/admin/dashboard" class="back-link">← Retour au tableau de bord</a>
+
+  <div class="detail-header">
+    <div>
+      <p class="eyebrow">Espace administrateur</p>
+      <h1>{{ title }}</h1>
+      <p class="subtitle">Toutes les informations associées à cet élément.</p>
+    </div>
+    <a [routerLink]="['/admin', listRoute]" class="back-list">Retour à la liste</a>
+  </div>
+
+  @if (isLoading()) {
+    <div class="state">Chargement des informations...</div>
+  } @else if (errorMessage()) {
+    <div class="state error">{{ errorMessage() }}</div>
+  } @else if (entity()) {
+    <section class="detail-card">
+      <div class="detail-grid">
+        @for (field of (entity() | keyvalue); track field.key) {
+          <div class="detail-field">
+            <dt>{{ field.key }}</dt>
+            <dd>
+              {{ formatValue(field.value) }}
+            </dd>
+          </div>
+        }
+      </div>
+    </section>
+  }
+</div>

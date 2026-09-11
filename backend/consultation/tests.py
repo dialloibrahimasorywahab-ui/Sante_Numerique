@@ -37,21 +37,40 @@ class ConsultationTests(TestCase):
         self.assertEqual(cons.patient, self.patient)
         self.assertEqual(cons.diagnostic, "Grippe saisonnière")
 
+    def test_creer_consultation_avec_saisie_montant_frais(self):
+        cons = self.service.creer_consultation(
+            patient=self.patient,
+            medecin=self.medecin,
+            montant_frais=15000.0,
+            description_frais="Consultation Spécialisée Pédiatrie",
+            symptomes="Toux",
+            diagnostic="Bronchite"
+        )
+        self.assertIsNotNone(cons.id)
+        self.assertIsNotNone(cons.frais)
+        self.assertEqual(float(cons.frais.montant), 15000.0)
+        self.assertEqual(cons.frais.description, "Consultation Spécialisée Pédiatrie")
+        self.assertEqual(cons.frais.statut, FraisConsultation.StatutPaiement.EN_ATTENTE)
+
     def test_api_consultation_crud(self):
         payload = {
             "patient": self.patient.idPatient,
             "medecin": self.medecin.idMedecin,
-            "frais": self.frais.idFrais,
+            "montant_frais": 12000.0,
+            "description_frais": "Consultation générale",
             "symptomes": "Maux de tête",
             "diagnostic": "Migraine"
         }
         res = self.client.post("/consultations/", payload, format="json")
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         cons_id = res.data["id"]
+        self.assertIsNotNone(res.data.get("frais_details"))
+        self.assertEqual(float(res.data["frais_details"]["montant"]), 12000.0)
 
         get_res = self.client.get(f"/consultations/{cons_id}/")
         self.assertEqual(get_res.status_code, status.HTTP_200_OK)
         self.assertEqual(get_res.data["diagnostic"], "Migraine")
+        self.assertEqual(float(get_res.data["frais_details"]["montant"]), 12000.0)
 
     def test_consultation_with_rdv_completes_rdv(self):
         from rendezvous.models import RendezVous

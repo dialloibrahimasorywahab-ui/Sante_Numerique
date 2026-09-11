@@ -140,6 +140,47 @@
             </div>
           }
         </div>
+
+        <!-- FRAIS DE CONSULTATION -->
+        <div class="side-card">
+          <div class="side-card-header">
+            <h3 class="side-card-title">Honoraires de Consultation</h3>
+          </div>
+
+          @if (consultation()?.frais_details; as frais) {
+            <div class="frais-detail-box">
+              <div class="frais-amount-row">
+                <span class="frais-label">Montant :</span>
+                <span class="frais-amount">{{ frais.montant }} GNF</span>
+              </div>
+              <div class="frais-status-row">
+                <span class="frais-label">Règlement :</span>
+                <span
+                  class="badge-statut-frais"
+                  [class.paye]="frais.statut === 'PAYE'"
+                  [class.attente]="frais.statut === 'EN_ATTENTE'"
+                  [class.annule]="frais.statut === 'ANNULE'"
+                >
+                  {{ frais.statut_display || (frais.statut === 'PAYE' ? 'Payé' : (frais.statut === 'ANNULE' ? 'Annulé' : 'En attente de paiement')) }}
+                </span>
+              </div>
+              @if (frais.description) {
+                <div class="frais-desc-row">
+                  <span class="frais-label">Motif :</span>
+                  <span class="frais-desc">{{ frais.description }}</span>
+                </div>
+              }
+              @if (frais.date_paiement) {
+                <div class="frais-desc-row">
+                  <span class="frais-label">Date règlement :</span>
+                  <span class="frais-desc">{{ frais.date_paiement }}</span>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="text-xs text-slate-500 my-2">Aucun honoraire enregistré pour cette consultation.</p>
+          }
+        </div>
       </div>
     </div>
   }

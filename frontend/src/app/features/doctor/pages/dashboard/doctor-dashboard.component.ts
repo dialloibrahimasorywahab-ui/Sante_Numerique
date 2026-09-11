@@ -10,6 +10,7 @@ import {
   DoctorDashboardStats,
   DoctorProfileDto
 } from '../../models/doctor.models';
+import { formatDate as formatSharedDate, toIsoDate } from '../../../../shared/utils';
 
 @Component({
   selector: 'app-doctor-dashboard',
@@ -36,12 +37,7 @@ export class DoctorDashboardComponent implements OnInit {
   recentConsultations = signal<DoctorConsultationDto[]>([]);
   doctorProfile = signal<DoctorProfileDto | null>(null);
 
-  readonly todayDateFormatted = new Intl.DateTimeFormat('fr-FR', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  }).format(new Date());
+  readonly todayDateFormatted = formatSharedDate(new Date());
 
   ngOnInit(): void {
     this.loadDashboardData();
@@ -51,7 +47,7 @@ export class DoctorDashboardComponent implements OnInit {
     this.isLoading.set(true);
     this.errorMessage.set(null);
 
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = toIsoDate();
 
     forkJoin({
       profile: this.doctorService.getMyDoctorProfile(),
@@ -121,19 +117,6 @@ export class DoctorDashboardComponent implements OnInit {
   }
 
   formatDate(dateStr?: string): string {
-    if (!dateStr) return '—';
-    try {
-      const d = new Date(dateStr);
-      if (isNaN(d.getTime())) {
-        return dateStr.split('T')[0] || dateStr;
-      }
-      return d.toLocaleDateString('fr-FR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      });
-    } catch {
-      return dateStr;
-    }
+    return formatSharedDate(dateStr);
   }
 }

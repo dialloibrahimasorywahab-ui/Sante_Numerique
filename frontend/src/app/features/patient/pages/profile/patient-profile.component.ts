@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { PatientProfileService } from '../../services/patient-profile.service';
+import { calculateAge as calculateSharedAge } from '../../../../shared/utils';
 import { AuthService } from '../../../../core/services/auth.service';
 import { User } from '../../../../core/models/user.model';
 import { PatientRecord, UpdateProfileDto } from '../../models/patient.models';
@@ -44,15 +45,8 @@ export class PatientProfileComponent implements OnInit {
   calculatedAge = computed<number | null>(() => {
     const bday = this.selectedDateNaissance() || this.profileForm?.get('date_naissance')?.value || this.currentUser()?.date_naissance || (this.currentUser() as any)?.dateNaissance || this.patientRecord()?.date_naissance;
     if (!bday) return null;
-    const birthDate = new Date(bday);
-    if (isNaN(birthDate.getTime())) return null;
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const m = today.getMonth() - birthDate.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age >= 0 ? age : null;
+    const age = calculateSharedAge(bday, '');
+    return typeof age === 'number' && age >= 0 ? age : null;
   });
 
   ngOnInit(): void {

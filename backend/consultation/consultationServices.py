@@ -19,6 +19,8 @@ class ConsultationService(BaseService[Consultation]):
         medecin=None,
         rdv=None,
         frais=None,
+        montant_frais=None,
+        description_frais: Optional[str] = None,
         date_cons=None,
         symptomes: Optional[str] = None,
         diagnostic: Optional[str] = None,
@@ -32,6 +34,15 @@ class ConsultationService(BaseService[Consultation]):
                 if rdv.statut != RendezVous.StatutRendezVous.TERMINE:
                     rdv.statut = RendezVous.StatutRendezVous.TERMINE
                     rdv.save(update_fields=["statut"])
+
+            # Si le médecin a saisi un montant de frais directement
+            if montant_frais is not None and frais is None:
+                from frais_consultation.models import FraisConsultation
+                frais = FraisConsultation.objects.create(
+                    montant=montant_frais,
+                    description=description_frais or "Frais de consultation médicale",
+                    statut=FraisConsultation.StatutPaiement.EN_ATTENTE
+                )
 
             consultation = self.repository.create_consultation(
                 patient=patient,
@@ -48,6 +59,28 @@ class ConsultationService(BaseService[Consultation]):
 
     def mettre_a_jour_consultation(self, consultation_id: int, **kwargs) -> Optional[Consultation]:
         with transaction.atomic():
+            montant_frais = kwargs.pop('montant_frais', None)
+            description_frais = kwargs.pop('description_frais', None)
+
+            cons = self.repository.get_consultation_by_id(consultation_id)
+            if not cons:
+                return None
+
+            if montant_frais is not None:
+                from frais_consultation.models import FraisConsultation
+                if cons.frais:
+                    cons.frais.montant = montant_frais
+                    if description_frais is not None:
+                        cons.frais.description = description_frais
+                    cons.frais.save(update_fields=['montant', 'description'] if description_frais is not None else ['montant'])
+                else:
+                    new_frais = FraisConsultation.objects.create(
+                        montant=montant_frais,
+                        description=description_frais or "Frais de consultation médicale",
+                        statut=FraisConsultation.StatutPaiement.EN_ATTENTE
+                    )
+                    kwargs['frais'] = new_frais
+
             return self.repository.update_consultation(consultation_id, **kwargs)
 
     def supprimer_consultation(self, consultation_id: int, hard: bool = False) -> bool:

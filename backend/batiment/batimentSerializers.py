@@ -26,11 +26,14 @@ class BatimentSerializer(serializers.ModelSerializer):
         help_text="Nombre total de chambres effectives (alias camelCase)."
     )
 
+    reference = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = Batiment
         fields = [
             'id_batiment',
             'idBatiment',
+            'reference',
             'nom',
             'description',
             'nombre_chambre',
@@ -38,6 +41,9 @@ class BatimentSerializer(serializers.ModelSerializer):
             'totalChambresEffectif',
             'actif',
         ]
+
+    def get_reference(self, obj):
+        return f"BAT-{obj.id_batiment:02d}"
 
     def validate_nom(self, value):
         if not value or not str(value).strip():

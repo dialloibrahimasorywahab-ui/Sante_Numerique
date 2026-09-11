@@ -88,7 +88,7 @@ class RendezVousAPITests(TestCase):
         self.rdv = RendezVous.objects.create(
             patient=self.patient,
             medecin=self.medecin,
-            date_rdv="2026-09-10",
+            date_rdv="2026-10-10",
             heure="09:00:00",
             motif="Bilan général",
             statut="PROGRAMME"
@@ -98,7 +98,7 @@ class RendezVousAPITests(TestCase):
         payload = {
             "id_patient": self.patient.idPatient,
             "id_medecin": self.medecin.idMedecin,
-            "date_rdv": "2026-09-15",
+            "date_rdv": "2026-10-15",
             "heure": "11:00:00",
             "motif": "Contrôle tension",
             "statut": "PROGRAMME"
@@ -138,14 +138,14 @@ class RendezVousAPITests(TestCase):
         self.assertFalse(RendezVous.objects.filter(id=self.rdv.id).exists())
 
     def test_double_booking_medecin_rejected(self):
-        # Création d'un RDV avec le même médecin au même moment que self.rdv ("2026-09-10", "09:00:00")
+        # Création d'un RDV avec le même médecin au même moment que self.rdv ("2026-10-10", "09:00:00")
         user_pat2 = User.objects.create(nom="Konan", prenom="Paul", email="paul@test.com", telephone="0505050505", login="paul_k", motDePasseHash="hash", role=User.Role.PATIENT)
         pat2 = Patient.objects.create(idUtilisateur=user_pat2, sexe="M", dateInscription="2026-01-01")
 
         payload = {
             "id_patient": pat2.idPatient,
             "id_medecin": self.medecin.idMedecin,
-            "date_rdv": "2026-09-10",
+            "date_rdv": "2026-10-10",
             "heure": "09:00:00",
             "motif": "Double réservation médecin",
         }
@@ -161,7 +161,7 @@ class RendezVousAPITests(TestCase):
         payload = {
             "id_patient": self.patient.idPatient,
             "id_medecin": med2.idMedecin,
-            "date_rdv": "2026-09-10",
+            "date_rdv": "2026-10-10",
             "heure": "09:00:00",
             "motif": "Double réservation patient",
         }

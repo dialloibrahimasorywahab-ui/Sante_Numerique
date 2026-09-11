@@ -54,7 +54,11 @@ class LitService(BaseService[Lit]):
 
             if nb_actuel < capacite:
                 for i in range(nb_actuel + 1, capacite + 1):
-                    numero_lit = f"Lit {i}"
+                    if capacite == 1:
+                        numero_lit = f"Lit {chambre.numero_chambre}"
+                    else:
+                        letter = chr(ord('A') + i - 1)
+                        numero_lit = f"Lit {chambre.numero_chambre}-{letter}"
                     lit = self.create_lit(
                         chambre=chambre,
                         numero_lit=numero_lit,

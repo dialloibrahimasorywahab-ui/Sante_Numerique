@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute } from '@angular/router';
 import { PatientConsultationService } from '../../services/patient-consultation.service';
 import { ConsultationDto } from '../../models/patient.models';
+import { formatDate as formatSharedDate } from '../../../../shared/utils';
 
 @Component({
   selector: 'app-patient-consultation-detail',
@@ -55,18 +56,7 @@ export class PatientConsultationDetailComponent implements OnInit {
   }
 
   formatDate(dateStr?: string): string {
-    if (!dateStr) return '—';
-    try {
-      const d = new Date(dateStr);
-      return isNaN(d.getTime()) ? dateStr : d.toLocaleDateString('fr-FR', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-      });
-    } catch {
-      return dateStr;
-    }
+    return formatSharedDate(dateStr);
   }
 
   getDoctorName(c: ConsultationDto): string {

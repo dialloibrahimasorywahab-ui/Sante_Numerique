@@ -6,6 +6,7 @@ import { MedecinService } from './services/medecin.service';
 import { MedecinDto } from './models/models';
 import { HospitalService, BookingFormState, BookingConfirmation } from '../landing/services/hospital.service';
 import { AuthService } from '../../core/services/auth.service';
+import { toIsoDate } from '../../shared/utils';
 
 @Component({
   selector: 'app-medecins-list',
@@ -32,7 +33,7 @@ export class MedecinsListComponent implements OnInit {
   bookingForm: BookingFormState = {
     specialite: '',
     medecinId: null,
-    date: new Date().toISOString().split('T')[0],
+    date: toIsoDate(),
     heure: '09:15',
     motif: '',
     typeConsultation: 'SUR_PLACE',
