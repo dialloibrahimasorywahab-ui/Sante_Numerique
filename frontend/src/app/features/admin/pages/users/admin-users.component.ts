@@ -44,7 +44,7 @@ export class AdminUsersComponent implements OnInit {
     login: '',
     motDePasse: '',
     dateNaissance: '',
-    sexe: 'M',
+    sexe: '',
     groupeSanguin: 'O+',
     numeroSecuriteSociale: '',
     adresse: '',
@@ -163,7 +163,7 @@ export class AdminUsersComponent implements OnInit {
   }
 
   submitPatient(): void {
-    if (!this.patientForm.nom || !this.patientForm.prenom || !this.patientForm.email || !this.patientForm.telephone) {
+    if (!this.patientForm.nom || !this.patientForm.prenom || !this.patientForm.email || !this.patientForm.telephone || !this.patientForm.sexe) {
       this.formError.set('Veuillez renseigner tous les champs obligatoires (*).');
       return;
     }
@@ -341,7 +341,7 @@ export class AdminUsersComponent implements OnInit {
       login: '',
       motDePasse: '',
       dateNaissance: '',
-      sexe: 'M',
+      sexe: '',
       groupeSanguin: 'O+',
       numeroSecuriteSociale: '',
       adresse: '',

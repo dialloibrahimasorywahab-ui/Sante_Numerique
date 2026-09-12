@@ -285,8 +285,9 @@
               </div>
 
               <div class="form-group">
-                <label for="patient-sexe" class="form-label">Sexe biologique</label>
-                <select id="patient-sexe" [(ngModel)]="newPatient.sexe" name="sexe" class="form-control form-select">
+                <label for="patient-sexe" class="form-label">Sexe biologique <span class="req">*</span></label>
+                <select id="patient-sexe" [(ngModel)]="newPatient.sexe" name="sexe" class="form-control form-select" required>
+                  <option value="">Sélectionner</option>
                   <option value="M">Masculin (M)</option>
                   <option value="F">Féminin (F)</option>
                 </select>
@@ -409,19 +410,27 @@
                 <span>Accès au portail patient en ligne</span>
               </h3>
               <label class="auto-login-toggle">
-                <input
-                  type="checkbox"
-                  [(ngModel)]="newPatient.autoLogin"
-                  (ngModelChange)="onNameOrEmailChange()"
-                  name="autoLogin"
-                />
-                <span>Génération automatique</span>
+                    <div class="form-grid-2">
+                      <div class="form-group">
+                      <label for="patient-login" class="form-label">Login <span class="req">*</span></label>
+                      <input id="patient-login" type="login" [(ngModel)]="newPatient.login" name="Login" required placeholder="Ex:  Fatimatou_Sow" class="form-control" />
+                    </div>
+                    </div>
+                  <div class="form-grid-2">
+                    <div class="form-group">
+                      <div class="password-label-raw">
+                        <label for="patient-pass" class="form-label">Password <span class="req">*</span></label>
+                        <input  id="patient-pass" type="password" [(ngModel)]="newPatient.motDePasse" name="login" required placeholder="Ex: ibsD@224guinea" class="form-control"/>
+                      </div>
+
+                  </div>
+                  </div>
               </label>
             </div>
 
-            <div class="form-grid-2">
+            <!-- <div class="form-grid-2">
               <div class="form-group">
-                <label for="patient-login" class="form-label">Identifiant de connexion (Login)</label>
+                <label >Identifiant de connexion (Login)</label>
                 <input
                   id="patient-login"
                   type="text"
@@ -435,7 +444,7 @@
 
               <div class="form-group">
                 <div class="password-label-row">
-                  <label for="patient-pass" class="form-label">Mot de passe temporaire</label>
+                  <label >Mot de passe temporaire</label>
                   <button type="button" (click)="generateRandomPassword()" class="btn-gen-pwd">
                     Générer sécurisé
                   </button>
@@ -465,12 +474,12 @@
                       </svg>
                     }
                   </button>
-                </div>
-              </div>
-            </div>
-            <p class="section-help-text">
+                </div> -->
+              <!-- </div>
+            </div> -->
+            <!-- <p class="section-help-text">
               Un mot de passe temporaire sera attribué au patient pour sa première connexion. Il pourra le modifier à tout moment.
-            </p>
+            </p> -->
           </div>
         </form>
       </div>

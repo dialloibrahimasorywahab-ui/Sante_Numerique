@@ -52,7 +52,7 @@ export class DoctorPatientsComponent implements OnInit {
     email: '',
     telephone: '',
     dateNaissance: '',
-    sexe: 'M',
+    sexe: '',
     groupeSanguin: '',
     numeroSecuriteSociale: '',
     adresse: '',
@@ -90,7 +90,7 @@ export class DoctorPatientsComponent implements OnInit {
       email: '',
       telephone: '',
       dateNaissance: '',
-      sexe: 'M',
+      sexe: '',
       groupeSanguin: '',
       numeroSecuriteSociale: '',
       adresse: '',
@@ -146,6 +146,11 @@ export class DoctorPatientsComponent implements OnInit {
       return;
     }
 
+    if (!this.newPatient.sexe) {
+      this.formError.set('Veuillez sélectionner le sexe du patient.');
+      return;
+    }
+
     if (!email) {
       this.formError.set("L'adresse email est requise.");
       return;
@@ -188,14 +193,14 @@ export class DoctorPatientsComponent implements OnInit {
       next: (created) => {
         this.isSubmitting.set(false);
         this.isCreateModalOpen.set(false);
-        
+
         // Ajout du nouveau patient en tête de liste
         this.patients.update(list => [created, ...list]);
         this.currentPage.set(1);
 
         const patientName = `${created.prenom || prenom} ${created.nom || nom}`;
         this.successNotification.set(`Le patient ${patientName} a été enregistré avec succès dans votre base hospitalière.`);
-        
+
         // Auto-dissiper le toast après 6 secondes
         setTimeout(() => {
           this.successNotification.set(null);

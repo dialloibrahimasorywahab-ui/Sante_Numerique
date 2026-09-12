@@ -16,6 +16,7 @@ from .rendezvousSerializers import RendezVousSerializer
 from .rendezvousServices import ConflictError, RendezVousService
 from .models import RendezVous
 from patients.models import Patient
+from patients.sexes import sexe_depuis_prenom
 from medecin.models import Medecin, DisponibiliteMedecin, IndisponibiliteMedecin
 import datetime
 
@@ -270,7 +271,7 @@ def create_rendezvous(request):
             patient_rec, _ = Patient.objects.get_or_create(
                 id_utilisateur=request.user,
                 defaults={
-                    "sexe": "M",
+                    "sexe": sexe_depuis_prenom(request.user.prenom) or "M",
                     "adresse": "Non renseignée",
                     "groupe_sanguin": "O+",
                     "personne_a_contacter": request.user.telephone or "Non renseigné",
@@ -297,7 +298,7 @@ def create_rendezvous(request):
                         p, _ = Patient.objects.get_or_create(
                             id_utilisateur=user_match,
                             defaults={
-                                "sexe": "M",
+                                "sexe": sexe_depuis_prenom(user_match.prenom) or "M",
                                 "adresse": "Non renseignée",
                                 "groupe_sanguin": "O+",
                                 "personne_a_contacter": user_match.telephone or "Non renseigné",

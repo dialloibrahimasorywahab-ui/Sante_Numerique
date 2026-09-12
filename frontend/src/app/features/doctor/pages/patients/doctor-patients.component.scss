@@ -682,20 +682,20 @@
   align-items: center;
   justify-content: space-between;
 
-  .btn-gen-pwd {
-    background: transparent;
-    border: none;
-    color: #059669;
-    font-size: 0.72rem;
-    font-weight: 700;
-    cursor: pointer;
-    padding: 0;
-    text-decoration: underline;
+  // .btn-gen-pwd {
+  //   background: transparent;
+  //   border: none;
+  //   color: #059669;
+  //   font-size: 0.72rem;
+  //   font-weight: 700;
+  //   cursor: pointer;
+  //   padding: 0;
+  //   text-decoration: underline;
 
-    &:hover {
-      color: #047857;
-    }
-  }
+  //   &:hover {
+  //     color: #047857;
+  //   }
+  // }
 }
 
 .password-input-wrap {

@@ -31,6 +31,7 @@ from .authentication import RoleTokenObtainPairSerializer
 from .models import User
 from .usersSerializers import ChangePasswordSerializer, UserSerializers
 from .usersServices import UserService
+from patients.sexes import sexe_depuis_prenom
 
 
 user_service = UserService()
@@ -124,7 +125,7 @@ def create_user(request):
                 Patient.objects.get_or_create(
                     id_utilisateur=user,
                     defaults={
-                        "sexe": "M",
+                        "sexe": sexe_depuis_prenom(user.prenom) or "M",
                         "adresse": "Conakry",
                         "groupe_sanguin": "O+",
                         "personne_a_contacter": user.telephone or "Non renseigné",

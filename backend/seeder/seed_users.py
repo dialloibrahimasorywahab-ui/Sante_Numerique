@@ -14,11 +14,28 @@ from medecin.models import Medecin
 from medecin.medecinServices import MedecinService
 
 
-PRENOMS = [
-    "Amadou", "Fatoumata", "Ibrahima", "Aissatou", "Mamadou", "Mariama",
-    "Ousmane", "Kadiatou", "Boubacar", "Binta", "Alpha", "Sainabou",
-    "Mohamed", "Hawa", "Cherif", "Aminata", "Sory", "Fanta"
+PRENOMS_PAR_SEXE = [
+    ("Amadou", Patient.Sexe.MASCULIN),
+    ("Fatoumata", Patient.Sexe.FEMININ),
+    ("Ibrahima", Patient.Sexe.MASCULIN),
+    ("Aissatou", Patient.Sexe.FEMININ),
+    ("Mamadou", Patient.Sexe.MASCULIN),
+    ("Mariama", Patient.Sexe.FEMININ),
+    ("Ousmane", Patient.Sexe.MASCULIN),
+    ("Kadiatou", Patient.Sexe.FEMININ),
+    ("Boubacar", Patient.Sexe.MASCULIN),
+    ("Binta", Patient.Sexe.FEMININ),
+    ("Alpha", Patient.Sexe.MASCULIN),
+    ("Sainabou", Patient.Sexe.FEMININ),
+    ("Mohamed", Patient.Sexe.MASCULIN),
+    ("Hawa", Patient.Sexe.FEMININ),
+    ("Cherif", Patient.Sexe.MASCULIN),
+    ("Aminata", Patient.Sexe.FEMININ),
+    ("Sory", Patient.Sexe.MASCULIN),
+    ("Fanta", Patient.Sexe.FEMININ),
 ]
+
+PRENOMS = [prenom for prenom, _ in PRENOMS_PAR_SEXE]
 
 NOMS = [
     "Diallo", "Bah", "Barry", "Sow", "Camara", "Sylla",
@@ -53,12 +70,6 @@ GROUPES_SANGUINS = [
     Patient.GroupeSanguin.O_NEGATIF,
 ]
 
-SEXES = [
-    Patient.Sexe.MASCULIN,
-    Patient.Sexe.FEMININ,
-]
-
-
 def generate_users(count=50):
     user_service = UserService()
     patient_service = PatientService()
@@ -68,7 +79,7 @@ def generate_users(count=50):
     print(f"=== Début de la génération de {count} utilisateurs ===")
 
     for i in range(1, count + 1):
-        prenom = random.choice(PRENOMS)
+        prenom, sexe = random.choice(PRENOMS_PAR_SEXE)
         nom = random.choice(NOMS)
         login = f"{prenom.lower()}_{nom.lower()}_{i}"
         email = f"{login}@santenumerique.com"
@@ -90,7 +101,6 @@ def generate_users(count=50):
 
         # Si le rôle est PATIENT, on lui génère également un profil Patient
         if role == User.Role.PATIENT:
-            sexe = random.choice(SEXES)
             patient_service.createPatient(
                 idUtilisateur=user,
                 dateNaissance=f"{random.randint(1965, 2005)}-{random.randint(1, 12):02d}-{random.randint(1, 28):02d}",
