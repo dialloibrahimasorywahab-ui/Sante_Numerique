@@ -45,7 +45,6 @@ export class DoctorPatientsComponent implements OnInit {
     personneAContacter: string;
     login: string;
     motDePasse: string;
-    autoLogin: boolean;
   } = {
     nom: '',
     prenom: '',
@@ -58,8 +57,7 @@ export class DoctorPatientsComponent implements OnInit {
     adresse: '',
     personneAContacter: '',
     login: '',
-    motDePasse: 'PatientPass123!',
-    autoLogin: true
+    motDePasse: ''
   };
 
   ngOnInit(): void {
@@ -96,8 +94,7 @@ export class DoctorPatientsComponent implements OnInit {
       adresse: '',
       personneAContacter: '',
       login: '',
-      motDePasse: 'PatientPass123!',
-      autoLogin: true
+      motDePasse: ''
     };
     this.showPassword.set(false);
     this.isCreateModalOpen.set(true);
@@ -109,29 +106,6 @@ export class DoctorPatientsComponent implements OnInit {
     this.formError.set(null);
   }
 
-  onNameOrEmailChange(): void {
-    if (this.newPatient.autoLogin) {
-      if (this.newPatient.email && this.newPatient.email.includes('@')) {
-        this.newPatient.login = this.newPatient.email.split('@')[0].toLowerCase();
-      } else if (this.newPatient.prenom || this.newPatient.nom) {
-        const p = this.newPatient.prenom.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-        const n = this.newPatient.nom.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-        this.newPatient.login = p && n ? `${p}.${n}` : `${p}${n}`;
-      }
-    }
-  }
-
-  generateRandomPassword(): void {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%&*';
-    let pwd = 'P@';
-    for (let i = 0; i < 8; i++) {
-      pwd += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    pwd += '9!';
-    this.newPatient.motDePasse = pwd;
-    this.showPassword.set(true);
-  }
-
   submitCreatePatient(): void {
     this.formError.set(null);
 
@@ -140,6 +114,8 @@ export class DoctorPatientsComponent implements OnInit {
     const prenom = this.newPatient.prenom.trim();
     const email = this.newPatient.email.trim();
     const telephone = this.newPatient.telephone.trim();
+    const login = this.newPatient.login.trim();
+    const motDePasse = this.newPatient.motDePasse.trim();
 
     if (!nom || !prenom) {
       this.formError.set('Veuillez saisir le nom et le prénom du patient.');
@@ -167,6 +143,21 @@ export class DoctorPatientsComponent implements OnInit {
       return;
     }
 
+    if (!login) {
+      this.formError.set("L'identifiant de connexion (login) est requis pour l'accès du patient.");
+      return;
+    }
+
+    if (!motDePasse) {
+      this.formError.set("Le mot de passe d'accès est requis.");
+      return;
+    }
+
+    if (motDePasse.length < 6) {
+      this.formError.set('Le mot de passe doit contenir au moins 6 caractères.');
+      return;
+    }
+
     this.isSubmitting.set(true);
 
     const payload: CreatePatientDto = {
@@ -184,9 +175,9 @@ export class DoctorPatientsComponent implements OnInit {
       adresse: this.newPatient.adresse.trim() || undefined,
       personneAContacter: this.newPatient.personneAContacter.trim() || null,
       personne_a_contacter: this.newPatient.personneAContacter.trim() || null,
-      login: this.newPatient.login.trim() || (email.split('@')[0].toLowerCase()),
-      motDePasse: this.newPatient.motDePasse || 'PatientPass123!',
-      mot_de_passe: this.newPatient.motDePasse || 'PatientPass123!'
+      login,
+      motDePasse,
+      mot_de_passe: motDePasse
     };
 
     this.doctorService.createPatient(payload).subscribe({

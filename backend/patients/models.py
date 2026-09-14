@@ -57,6 +57,16 @@ class Patient(models.Model):
 
     date_inscription = models.DateField()
 
+    id_medecin = models.ForeignKey(
+        "medecin.Medecin",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="patients",
+        db_column="id_medecin",
+        help_text="Médecin ayant enregistré ce patient"
+    )
+
     history = HistoricalRecords()
 
     class Meta:
@@ -123,6 +133,22 @@ class Patient(models.Model):
     @dateInscription.setter
     def dateInscription(self, val):
         self.date_inscription = val
+
+    @property
+    def idMedecin(self):
+        return self.id_medecin_id
+
+    @idMedecin.setter
+    def idMedecin(self, val):
+        self.id_medecin = val
+
+    @property
+    def medecin(self):
+        return self.id_medecin
+
+    @medecin.setter
+    def medecin(self, val):
+        self.id_medecin = val
 
     def __str__(self):
         return f"Patient: {self.id_utilisateur.prenom} {self.id_utilisateur.nom}"
