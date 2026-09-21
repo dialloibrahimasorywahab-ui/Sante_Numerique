@@ -4,18 +4,11 @@ from . import views
 
 urlpatterns = [
 
-    # Créer un patient
+    # Lister (GET) ou créer (POST) un patient
     path(
         "",
         views.create_patient,
         name="create_patient"
-    ),
-
-    # Récupérer tous les patients
-    path(
-        "all/",
-        views.get_all_patient,
-        name="get_all_patient"
     ),
 
     # Récupérer un patient par son ID

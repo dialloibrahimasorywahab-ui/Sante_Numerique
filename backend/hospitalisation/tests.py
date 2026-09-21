@@ -34,13 +34,13 @@ class HospitalisationModelAndServiceTests(TestCase):
             role=User.Role.PATIENT,
         )
         self.patient = Patient.objects.create(
-            idUtilisateur=self.user_patient,
-            dateNaissance="1990-01-01",
+            id_utilisateur=self.user_patient,
+            date_naissance="1990-01-01",
             sexe=Patient.Sexe.MASCULIN,
             adresse="Dakar",
-            groupeSanguin=Patient.GroupeSanguin.O_POSITIF,
-            personneAContacter="Awa Diallo",
-            dateInscription="2024-01-01",
+            groupe_sanguin=Patient.GroupeSanguin.O_POSITIF,
+            personne_a_contacter="Awa Diallo",
+            date_inscription="2024-01-01",
         )
 
         self.user_doctor = User.objects.create(
@@ -80,7 +80,7 @@ class HospitalisationModelAndServiceTests(TestCase):
             medecin=self.medecin,
             lit=self.lit,
             motif="Fièvre sévère",
-            statut=Hospitalisation.StatutHospitalisation.EN_COURS,
+            statut=Hospitalisation.StatutHospitalisation.EN_COURS.value,
         )
         self.assertIsNotNone(hosp.id)
         self.assertEqual(hosp.statut, Hospitalisation.StatutHospitalisation.EN_COURS)
@@ -98,9 +98,11 @@ class HospitalisationModelAndServiceTests(TestCase):
         self.assertEqual(self.lit.etat, Lit.EtatLit.OCCUPE)
 
         closed_hosp = self.service.cloturer_hospitalisation(hosp.id, observation_finale="Patient guéri")
+        self.assertIsNotNone(closed_hosp)
+        assert closed_hosp is not None
         self.assertEqual(closed_hosp.statut, Hospitalisation.StatutHospitalisation.TERMINEE)
         self.assertIsNotNone(closed_hosp.date_sortie)
-        self.assertIn("Patient guéri", closed_hosp.observation)
+        self.assertIn("Patient guéri", closed_hosp.observation or "")
 
         self.lit.refresh_from_db()
         self.assertEqual(self.lit.etat, Lit.EtatLit.DISPONIBLE)
@@ -122,7 +124,7 @@ class HospitalisationModelAndServiceTests(TestCase):
             medecin=self.medecin,
             lit=self.lit,
             motif="Première admission",
-            statut=Hospitalisation.StatutHospitalisation.EN_COURS,
+            statut=Hospitalisation.StatutHospitalisation.EN_COURS.value,
         )
 
         # Deuxième patient
@@ -131,7 +133,7 @@ class HospitalisationModelAndServiceTests(TestCase):
             telephone="+221770001122", login="fatou_b", motDePasseHash="pass123",
             role=User.Role.PATIENT
         )
-        patient2 = Patient.objects.create(idUtilisateur=user_pat2, dateNaissance="1995-02-02", sexe=Patient.Sexe.FEMININ, dateInscription="2024-01-01")
+        patient2 = Patient.objects.create(id_utilisateur=user_pat2, date_naissance="1995-02-02", sexe=Patient.Sexe.FEMININ, date_inscription="2024-01-01")
 
         # Tenter d'admettre le 2e patient sur le même lit déjà occupé
         with self.assertRaises(ValueError):
@@ -183,10 +185,10 @@ class HospitalisationAPITests(TestCase):
             role=User.Role.PATIENT,
         )
         self.patient = Patient.objects.create(
-            idUtilisateur=self.user_patient,
-            dateNaissance="1998-05-12",
+            id_utilisateur=self.user_patient,
+            date_naissance="1998-05-12",
             sexe=Patient.Sexe.FEMININ,
-            dateInscription="2024-01-01",
+            date_inscription="2024-01-01",
         )
 
         self.user_doctor = User.objects.create(
@@ -213,7 +215,7 @@ class HospitalisationAPITests(TestCase):
     def test_api_create_and_get_hospitalisation(self):
         url = "/hospitalisations/"
         payload = {
-            "patient": self.patient.idPatient,
+            "patient": self.patient.id_patient,
             "medecin": self.medecin.idMedecin,
             "lit": self.lit.idLit,
             "motif": "Douleurs thoraciques",
@@ -230,7 +232,7 @@ class HospitalisationAPITests(TestCase):
     def test_api_cloturer_hospitalisation(self):
         url = "/hospitalisations/"
         payload = {
-            "patient": self.patient.idPatient,
+            "patient": self.patient.id_patient,
             "medecin": self.medecin.idMedecin,
             "lit": self.lit.idLit,
             "motif": "Hospitalisation test clôture",
@@ -246,7 +248,7 @@ class HospitalisationAPITests(TestCase):
 
     def test_api_delete_hospitalisation(self):
         payload = {
-            "patient": self.patient.idPatient,
+            "patient": self.patient.id_patient,
             "motif": "Hospitalisation test suppression",
         }
         create_res = self.client.post("/hospitalisations/", payload, format="json")

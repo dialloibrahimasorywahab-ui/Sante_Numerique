@@ -17,7 +17,7 @@ class OrdonnanceTests(TestCase):
             nom="Diop", prenom="Awa", email="awa.diop@example.com",
             telephone="+221775556677", login="awa_d", motDePasseHash="pass123", role=User.Role.PATIENT
         )
-        self.patient = Patient.objects.create(idUtilisateur=self.user_p, dateNaissance="1992-04-15", sexe=Patient.Sexe.FEMININ, dateInscription="2024-01-01")
+        self.patient = Patient.objects.create(id_utilisateur=self.user_p, date_naissance="1992-04-15", sexe=Patient.Sexe.FEMININ, date_inscription="2024-01-01")
 
         self.user_m = User.objects.create(
             nom="Touré", prenom="Ousmane", email="ousmane.toure@example.com",
@@ -162,7 +162,7 @@ class OrdonnanceTests(TestCase):
             nom="Gueye", prenom="Aliou", email="aliou.gueye@example.com",
             telephone="+221770006677", login="aliou_g", motDePasseHash="pass123", role=User.Role.PATIENT
         )
-        patient2 = Patient.objects.create(idUtilisateur=user_p2, dateNaissance="1988-11-20", sexe=Patient.Sexe.MASCULIN, dateInscription="2024-01-01")
+        patient2 = Patient.objects.create(id_utilisateur=user_p2, date_naissance="1988-11-20", sexe=Patient.Sexe.MASCULIN, date_inscription="2024-01-01")
         cons_p2 = Consultation.objects.create(patient=patient2, medecin=self.medecin, diagnostic="Grippe")
         ord_p2 = self.service.prescrire_ordonnance(consultation=cons_p2, observation="Ordonnance Patient 2")
 

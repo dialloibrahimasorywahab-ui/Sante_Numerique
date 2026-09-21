@@ -84,7 +84,7 @@ class Hospitalisation(models.Model):
         ordering = ['-date_entree', '-id']
 
     def __str__(self):
-        patient_nom = f"{self.patient.idUtilisateur.prenom} {self.patient.idUtilisateur.nom}" if self.patient and self.patient.idUtilisateur else f"Patient #{self.patient_id}"
+        patient_nom = f"{self.patient.id_utilisateur.prenom} {self.patient.id_utilisateur.nom}" if self.patient and self.patient.id_utilisateur else f"Patient #{self.patient_id}"
         return f"Hospitalisation #{self.id} - {patient_nom} ({self.get_statut_display()})"
 
     @property

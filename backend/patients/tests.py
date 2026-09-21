@@ -14,7 +14,6 @@ class PatientsProjectConfigTests(SimpleTestCase):
 
     def test_patient_routes_are_available(self):
         self.assertEqual(resolve('/patients/').view_name, 'create_patient')
-        self.assertEqual(resolve('/patients/all/').view_name, 'get_all_patient')
 
 
 class PatientRepositoryTests(TestCase):
@@ -25,25 +24,25 @@ class PatientRepositoryTests(TestCase):
             role=User.Role.PATIENT,
         )
         patient = Patient.objects.create(
-            idUtilisateur=user,
-            dateNaissance='1990-01-20',
+            id_utilisateur=user,
+            date_naissance='1990-01-20',
             sexe=Patient.Sexe.FEMININ,
             adresse='12 rue de la Paix',
-            groupeSanguin=Patient.GroupeSanguin.A_POSITIF,
-            numeroSecuriteSociale='1234567890123',
-            personneAContacter='Jean Dupont',
-            dateInscription='2024-01-05',
+            groupe_sanguin=Patient.GroupeSanguin.A_POSITIF,
+            numero_securite_sociale='1234567890123',
+            personne_a_contacter='Jean Dupont',
+            date_inscription='2024-01-05',
         )
 
         repository = PatientRepository()
         updated_patient = repository.update_Patient(
             patient,
             adresse='15 Avenue des Champs',
-            personneAContacter='Marie Dupont',
+            personne_a_contacter='Marie Dupont',
         )
 
         self.assertEqual(updated_patient.adresse, '15 Avenue des Champs')
-        self.assertEqual(updated_patient.personneAContacter, 'Marie Dupont')
+        self.assertEqual(updated_patient.personne_a_contacter, 'Marie Dupont')
 
     def test_get_non_existent_patient_returns_none(self):
         repository = PatientRepository()
@@ -76,14 +75,14 @@ class PatientAPIPermissionsAndCreationTests(TestCase):
             role=User.Role.PATIENT
         )
         self.patient_record = Patient.objects.create(
-            idUtilisateur=self.user_patient,
-            dateNaissance="1992-06-15",
+            id_utilisateur=self.user_patient,
+            date_naissance="1992-06-15",
             sexe=Patient.Sexe.MASCULIN,
             adresse="Dixinn, Conakry",
-            groupeSanguin=Patient.GroupeSanguin.O_POSITIF,
-            numeroSecuriteSociale="1920615000111",
-            personneAContacter="Mariama Sow",
-            dateInscription="2024-01-10"
+            groupe_sanguin=Patient.GroupeSanguin.O_POSITIF,
+            numero_securite_sociale="1920615000111",
+            personne_a_contacter="Mariama Sow",
+            date_inscription="2024-01-10"
         )
 
         self.valid_patient_payload = {
@@ -143,16 +142,17 @@ class PatientAPIPermissionsAndCreationTests(TestCase):
         response = self.client.post("/patients/", self.valid_patient_payload, format="json")
 
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.data["nom"], "Kaba")
-        self.assertEqual(response.data["prenom"], "Sekou")
-        self.assertEqual(response.data["email"], "sekou.kaba@example.com")
-        self.assertEqual(response.data["groupeSanguin"], "O+")
+        data = response.json()
+        self.assertEqual(data["nom"], "Kaba")
+        self.assertEqual(data["prenom"], "Sekou")
+        self.assertEqual(data["email"], "sekou.kaba@example.com")
+        self.assertEqual(data["groupeSanguin"], "O+")
 
         # Vérification en base de données
-        patient = Patient.objects.get(pk=response.data["idPatient"])
-        self.assertEqual(patient.idUtilisateur.login, "sekou_patient")
-        self.assertEqual(patient.idUtilisateur.role, User.Role.PATIENT)
-        self.assertTrue(patient.idUtilisateur.check_password("PatientPass123!"))
+        patient = Patient.objects.get(pk=data["idPatient"])
+        self.assertEqual(patient.id_utilisateur.login, "sekou_patient")
+        self.assertEqual(patient.id_utilisateur.role, User.Role.PATIENT)
+        self.assertTrue(patient.id_utilisateur.check_password("PatientPass123!"))
 
     def test_medecin_can_create_patient_with_auto_credentials(self):
         """Un médecin peut créer un patient sans spécifier manuellement login ni mot de passe."""
@@ -169,13 +169,13 @@ class PatientAPIPermissionsAndCreationTests(TestCase):
         }
         response = self.client.post("/patients/", payload, format="json")
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.data["nom"], "Traore")
-        self.assertEqual(response.data["prenom"], "Fatou")
-        patient = Patient.objects.get(pk=response.data["idPatient"])
-        self.assertEqual(patient.idUtilisateur.login, "fatou.traore")
-        self.assertEqual(patient.idUtilisateur.role, User.Role.PATIENT)
-        self.assertTrue(patient.idUtilisateur.check_password("PatientPass123!"))
-
+        data = response.json()
+        self.assertEqual(data["nom"], "Traore")
+        self.assertEqual(data["prenom"], "Fatou")
+        patient = Patient.objects.get(pk=data["idPatient"])
+        self.assertEqual(patient.id_utilisateur.login, "fatou.traore")
+        self.assertEqual(patient.id_utilisateur.role, User.Role.PATIENT)
+        self.assertTrue(patient.id_utilisateur.check_password("PatientPass123!"))
 
     def test_admin_can_create_patient_success(self):
         """Un administrateur peut créer un dossier patient avec succès (201)."""
@@ -188,7 +188,8 @@ class PatientAPIPermissionsAndCreationTests(TestCase):
         response = self.client.post("/patients/", payload, format="json")
 
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.data["nom"], "Kaba")
+        data = response.json()
+        self.assertEqual(data["nom"], "Kaba")
         self.assertTrue(Patient.objects.filter(id_utilisateur__login="admin_created_patient").exists())
 
     def test_create_patient_with_existing_user_id(self):
@@ -212,9 +213,10 @@ class PatientAPIPermissionsAndCreationTests(TestCase):
         response = self.client.post("/patients/", payload, format="json")
 
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.data["nom"], "Camara")
-        self.assertEqual(response.data["groupeSanguin"], "B+")
-        self.assertEqual(response.data["idUtilisateur"], existing_user.idUser)
+        data = response.json()
+        self.assertEqual(data["nom"], "Camara")
+        self.assertEqual(data["groupeSanguin"], "B+")
+        self.assertEqual(data["idUtilisateur"], existing_user.idUser)
 
     def test_create_patient_missing_required_fields_returns_400(self):
         """Validation : erreur 400 si les champs obligatoires du compte sont manquants."""
@@ -227,8 +229,9 @@ class PatientAPIPermissionsAndCreationTests(TestCase):
         response = self.client.post("/patients/", payload, format="json")
 
         self.assertEqual(response.status_code, 400)
-        self.assertIn("prenom", response.data)
-        self.assertIn("login", response.data)
+        data = response.json()
+        self.assertIn("prenom", data)
+        self.assertIn("login", data)
 
     def test_create_patient_invalid_telephone_returns_400(self):
         """Validation : erreur 400 pour un numéro de téléphone invalide."""
@@ -239,7 +242,8 @@ class PatientAPIPermissionsAndCreationTests(TestCase):
         response = self.client.post("/patients/", payload, format="json")
 
         self.assertEqual(response.status_code, 400)
-        self.assertIn("telephone", response.data)
+        data = response.json()
+        self.assertIn("telephone", data)
 
     def test_create_patient_future_date_naissance_returns_400(self):
         """Validation : erreur 400 pour une date de naissance dans le futur."""
@@ -250,7 +254,8 @@ class PatientAPIPermissionsAndCreationTests(TestCase):
         response = self.client.post("/patients/", payload, format="json")
 
         self.assertEqual(response.status_code, 400)
-        self.assertIn("dateNaissance", response.data)
+        data = response.json()
+        self.assertIn("dateNaissance", data)
 
     def test_create_patient_invalid_blood_group_returns_400(self):
         """Validation : erreur 400 pour un groupe sanguin inexistant."""
@@ -261,7 +266,8 @@ class PatientAPIPermissionsAndCreationTests(TestCase):
         response = self.client.post("/patients/", payload, format="json")
 
         self.assertEqual(response.status_code, 400)
-        self.assertIn("groupeSanguin", response.data)
+        data = response.json()
+        self.assertIn("groupeSanguin", data)
 
     def test_create_patient_duplicate_login_returns_400(self):
         """Intégrité : erreur 400 lors de la tentative de création avec un login ou email déjà utilisé."""
@@ -281,9 +287,6 @@ class PatientAPIPermissionsAndCreationTests(TestCase):
         response_list = self.client.get("/patients/")
         self.assertEqual(response_list.status_code, 403)
 
-        response_all = self.client.get("/patients/all/")
-        self.assertEqual(response_all.status_code, 403)
-
     def test_infirmier_can_list_and_search_patients(self):
         """Un infirmier peut consulter la liste des patients (200)."""
         self.client.force_authenticate(user=self.infirmier)
@@ -302,36 +305,36 @@ class PatientAPIPermissionsAndCreationTests(TestCase):
             role=User.Role.PATIENT
         )
         other_patient = Patient.objects.create(
-            idUtilisateur=other_user,
-            dateNaissance="1985-01-01",
+            id_utilisateur=other_user,
+            date_naissance="1985-01-01",
             sexe=Patient.Sexe.FEMININ,
             adresse="Ratoma",
-            groupeSanguin=Patient.GroupeSanguin.A_POSITIF,
-            personneAContacter="Test",
-            dateInscription="2024-01-01"
+            groupe_sanguin=Patient.GroupeSanguin.A_POSITIF,
+            personne_a_contacter="Test",
+            date_inscription="2024-01-01"
         )
 
         self.client.force_authenticate(user=self.user_patient)
 
         # Accès à son propre dossier -> 200 OK
-        res_own = self.client.get(f"/patients/{self.patient_record.idPatient}/")
+        res_own = self.client.get(f"/patients/{self.patient_record.id_patient}/")
         self.assertEqual(res_own.status_code, 200)
-        self.assertEqual(res_own.data["idPatient"], self.patient_record.idPatient)
+        self.assertEqual(res_own.json()["idPatient"], self.patient_record.id_patient)
 
         # Accès au dossier d'un autre patient -> 403 Forbidden
-        res_other = self.client.get(f"/patients/{other_patient.idPatient}/")
+        res_other = self.client.get(f"/patients/{other_patient.id_patient}/")
         self.assertEqual(res_other.status_code, 403)
 
     def test_patient_and_infirmier_cannot_delete_patient(self):
         """Ni le patient ni l'infirmier ne peuvent supprimer un dossier patient (réservé admin)."""
         # Patient -> 403 Forbidden
         self.client.force_authenticate(user=self.user_patient)
-        res_pat = self.client.delete(f"/patients/{self.patient_record.idPatient}/")
+        res_pat = self.client.delete(f"/patients/{self.patient_record.id_patient}/")
         self.assertEqual(res_pat.status_code, 403)
 
         # Infirmier -> 403 Forbidden
         self.client.force_authenticate(user=self.infirmier)
-        res_inf = self.client.delete(f"/patients/{self.patient_record.idPatient}/")
+        res_inf = self.client.delete(f"/patients/{self.patient_record.id_patient}/")
         self.assertEqual(res_inf.status_code, 403)
 
     def test_patient_soft_deleted_hidden_by_default_and_visible_with_all(self):
@@ -344,14 +347,13 @@ class PatientAPIPermissionsAndCreationTests(TestCase):
         # Liste par défaut -> vide (ou ne contient pas le patient désactivé)
         res_default = self.client.get("/patients/")
         self.assertEqual(res_default.status_code, 200)
-        items = res_default.data.get("results", res_default.data)
+        items = res_default.json().get("results", res_default.json())
         ids = [p["idPatient"] for p in items]
-        self.assertNotIn(self.patient_record.idPatient, ids)
+        self.assertNotIn(self.patient_record.id_patient, ids)
 
         # Liste avec ?all=true -> contient le patient désactivé
         res_all = self.client.get("/patients/?all=true")
         self.assertEqual(res_all.status_code, 200)
-        items_all = res_all.data.get("results", res_all.data)
+        items_all = res_all.json().get("results", res_all.json())
         ids_all = [p["idPatient"] for p in items_all]
-        self.assertIn(self.patient_record.idPatient, ids_all)
-
+        self.assertIn(self.patient_record.id_patient, ids_all)

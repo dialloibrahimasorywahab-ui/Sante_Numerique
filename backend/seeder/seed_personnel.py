@@ -105,9 +105,10 @@ def register_medical_staff():
             )
             registered_count += 1
             service_id_str = f"ID Service: {updated.idService.idService}" if updated.idService else "Pas de service"
+            type_disp = getattr(updated, "get_type_personnel_display", getattr(updated, "get_typePersonnel_display", lambda: updated.type_personnel))()
             print(
                 f"[{i}/{len(PERSONNEL_MEDICAL_DATA)}] [UPDATE] Mis à jour : "
-                f"{updated.get_typePersonnel_display()} - {updated.idUtilisateur.prenom} {updated.idUtilisateur.nom} | "
+                f"{type_disp} - {updated.id_utilisateur.prenom} {updated.id_utilisateur.nom} | "
                 f"{service_id_str} ({updated.serviceHopital}) | Matricule: {updated.matricule}"
             )
             continue
@@ -134,9 +135,10 @@ def register_medical_staff():
             personnel = personnel_service.createPersonnel(**payload)
             registered_count += 1
             service_id_str = f"ID Service: {personnel.idService.idService}" if personnel.idService else "Pas de service"
+            type_disp = getattr(personnel, "get_type_personnel_display", getattr(personnel, "get_typePersonnel_display", lambda: personnel.type_personnel))()
             print(
                 f"[{i}/{len(PERSONNEL_MEDICAL_DATA)}] [OK] Succès : "
-                f"{personnel.get_typePersonnel_display()} - {personnel.idUtilisateur.prenom} {personnel.idUtilisateur.nom} | "
+                f"{type_disp} - {personnel.id_utilisateur.prenom} {personnel.id_utilisateur.nom} | "
                 f"{service_id_str} ({personnel.serviceHopital}) | Matricule: {personnel.matricule} | Login: {login}"
             )
         except Exception as error:

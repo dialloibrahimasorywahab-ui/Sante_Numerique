@@ -37,7 +37,7 @@ class Mortalite(models.Model):
         ordering = ['-date_deces', '-id_deces']
 
     def __str__(self):
-        patient_nom = f"{self.id_patient.idUtilisateur.prenom} {self.id_patient.idUtilisateur.nom}" if self.id_patient and self.id_patient.idUtilisateur else f"Patient #{self.id_patient_id}"
+        patient_nom = f"{self.id_patient.id_utilisateur.prenom} {self.id_patient.id_utilisateur.nom}" if self.id_patient and self.id_patient.id_utilisateur else f"Patient #{self.id_patient_id}"
         return f"Décès #{self.id_deces} - {patient_nom} le {self.date_deces}"
 
     @property

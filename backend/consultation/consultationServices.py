@@ -8,6 +8,7 @@ from .consultationRepositories import ConsultationRepository
 
 
 class ConsultationService(BaseService[Consultation]):
+    repository: ConsultationRepository
 
     def __init__(self, repository: Optional[ConsultationRepository] = None):
         self.repository = repository or ConsultationRepository()

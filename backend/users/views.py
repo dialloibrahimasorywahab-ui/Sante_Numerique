@@ -37,13 +37,24 @@ from patients.sexes import sexe_depuis_prenom
 user_service = UserService()
 
 
+def _get_jwt_cookie_max_ages():
+    """Récupère dynamiquement les durées max_age des cookies d'accès et de rafraîchissement."""
+    simple_jwt = getattr(settings, 'SIMPLE_JWT', {})
+    access_lifetime = simple_jwt.get('ACCESS_TOKEN_LIFETIME')
+    refresh_lifetime = simple_jwt.get('REFRESH_TOKEN_LIFETIME')
+    access_max_age = int(access_lifetime.total_seconds()) if access_lifetime else 3600
+    refresh_max_age = int(refresh_lifetime.total_seconds()) if refresh_lifetime else 7 * 24 * 3600
+    return access_max_age, refresh_max_age
+
+
 def set_jwt_cookies(response, refresh_token):
     """Dépose les cookies sécurisés HttpOnly access_token et refresh_token sur la réponse HTTP."""
     access_token = refresh_token.access_token
+    access_max_age, refresh_max_age = _get_jwt_cookie_max_ages()
     response.set_cookie(
         key="access_token",
         value=str(access_token),
-        max_age=3600,
+        max_age=access_max_age,
         httponly=True,
         secure=getattr(settings, 'JWT_COOKIE_SECURE', False),
         samesite=getattr(settings, 'JWT_COOKIE_SAMESITE', 'Lax'),
@@ -52,7 +63,7 @@ def set_jwt_cookies(response, refresh_token):
     response.set_cookie(
         key="refresh_token",
         value=str(refresh_token),
-        max_age=2592000,
+        max_age=refresh_max_age,
         httponly=True,
         secure=getattr(settings, 'JWT_COOKIE_SECURE', False),
         samesite=getattr(settings, 'JWT_COOKIE_SAMESITE', 'Lax'),
@@ -239,7 +250,13 @@ def get_all_user(request):
 @throttle_classes([LoginRateThrottle])
 def login_user(request):
     login = request.data.get("login") or request.data.get("email") or request.data.get("username")
-    password = request.data.get("motDePasse") or request.data.get("password") or request.data.get("motDePasseHash")
+    password = (
+        request.data.get("mot_de_passe")
+        or request.data.get("motDePasse")
+        or request.data.get("password")
+        or request.data.get("mot_de_passe_hash")
+        or request.data.get("motDePasseHash")
+    )
 
     if login:
         login = str(login).strip()
@@ -377,10 +394,11 @@ class CookieTokenRefreshView(TokenRefreshView):
             status=status.HTTP_200_OK
         )
 
+        access_max_age, refresh_max_age = _get_jwt_cookie_max_ages()
         response.set_cookie(
             key="access_token",
             value=str(access_token),
-            max_age=3600,
+            max_age=access_max_age,
             httponly=True,
             secure=getattr(settings, 'JWT_COOKIE_SECURE', False),
             samesite=getattr(settings, 'JWT_COOKIE_SAMESITE', 'Lax'),
@@ -391,7 +409,7 @@ class CookieTokenRefreshView(TokenRefreshView):
             response.set_cookie(
                 key="refresh_token",
                 value=str(new_refresh),
-                max_age=2592000,
+                max_age=refresh_max_age,
                 httponly=True,
                 secure=getattr(settings, 'JWT_COOKIE_SECURE', False),
                 samesite=getattr(settings, 'JWT_COOKIE_SAMESITE', 'Lax'),

@@ -100,10 +100,10 @@ class SerializersCrossValidationTests(TestCase):
             role=User.Role.PATIENT,
         )
         self.patient_male = Patient.objects.create(
-            idUtilisateur=self.user_male,
-            dateNaissance="1990-05-15",
+            id_utilisateur=self.user_male,
+            date_naissance="1990-05-15",
             sexe=Patient.Sexe.MASCULIN,
-            dateInscription="2026-01-01",
+            date_inscription="2026-01-01",
         )
 
         self.user_female = User.objects.create(
@@ -116,15 +116,15 @@ class SerializersCrossValidationTests(TestCase):
             role=User.Role.PATIENT,
         )
         self.patient_female = Patient.objects.create(
-            idUtilisateur=self.user_female,
-            dateNaissance="1995-08-20",
+            id_utilisateur=self.user_female,
+            date_naissance="1995-08-20",
             sexe=Patient.Sexe.FEMININ,
-            dateInscription="2026-01-01",
+            date_inscription="2026-01-01",
         )
 
     def test_natalite_serializer_male_mother_rejected(self):
         payload = {
-            "id_patient": self.patient_male.idPatient,
+            "id_patient": self.patient_male.id_patient,
             "nom_nouveau_ne": "Diallo",
             "prenom_nouveau_ne": "Ousmane",
             "date_naissance": str(date.today()),
@@ -139,7 +139,7 @@ class SerializersCrossValidationTests(TestCase):
 
     def test_natalite_serializer_female_mother_accepted(self):
         payload = {
-            "id_patient": self.patient_female.idPatient,
+            "id_patient": self.patient_female.id_patient,
             "nom_nouveau_ne": "Bah",
             "prenom_nouveau_ne": "Mariama",
             "date_naissance": str(date.today()),
@@ -153,7 +153,7 @@ class SerializersCrossValidationTests(TestCase):
 
     def test_mortalite_serializer_death_before_birth_rejected(self):
         payload = {
-            "id_patient": self.patient_male.idPatient,
+            "id_patient": self.patient_male.id_patient,
             "date_deces": "1980-01-01",  # Born in 1990!
             "heure_deces": "12:00:00",
             "cause_deces": "Arret cardiaque",

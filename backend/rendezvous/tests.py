@@ -27,7 +27,7 @@ class RendezVousModelAndRepositoryTests(TestCase):
         self.service = RendezVousService()
 
         user_pat = User.objects.create(nom="KOUASSI", prenom="Awa", email="pat_repo@test.com", telephone="0101010101", login="pat_user_repo", motDePasseHash="hash", role=User.Role.PATIENT)
-        self.patient = Patient.objects.create(idUtilisateur=user_pat, sexe="F", adresse="Abidjan", groupeSanguin="O+", numeroSecuriteSociale="12345", personneAContacter="Mom", dateInscription="2026-01-01")
+        self.patient = Patient.objects.create(id_utilisateur=user_pat, sexe="F", adresse="Abidjan", groupe_sanguin="O+", numero_securite_sociale="12345", personne_a_contacter="Mom", date_inscription="2026-01-01")
 
         user_med = User.objects.create(nom="TRAORE", prenom="Ibrahim", email="med_repo@test.com", telephone="0202020202", login="med_user_repo", motDePasseHash="hash", role=User.Role.MEDECIN)
         self.medecin = Medecin.objects.create(idUtilisateur=user_med, specialite="CARDIOLOGIE", matricule="MED100", numeroOrdre="ORD100", dateEmbauche="2020-01-01")
@@ -60,7 +60,7 @@ class RendezVousModelAndRepositoryTests(TestCase):
             statut=RendezVous.StatutRendezVous.CONFIRME
         )
 
-        by_pat = self.repository.get_rendezvous_by_patient(self.patient.idPatient)
+        by_pat = self.repository.get_rendezvous_by_patient(self.patient.id_patient)
         self.assertEqual(len(by_pat), 1)
 
         by_med = self.repository.get_rendezvous_by_medecin(self.medecin.idMedecin)
@@ -75,7 +75,7 @@ class RendezVousAPITests(TestCase):
         self.client = APIClient()
 
         user_pat = User.objects.create(nom="KOUASSI", prenom="Awa", email="pat_api@test.com", telephone="0303030303", login="pat_user_api", motDePasseHash="hash", role=User.Role.PATIENT)
-        self.patient = Patient.objects.create(idUtilisateur=user_pat, sexe="F", adresse="Abidjan", groupeSanguin="O+", numeroSecuriteSociale="12345", personneAContacter="Mom", dateInscription="2026-01-01")
+        self.patient = Patient.objects.create(id_utilisateur=user_pat, sexe="F", adresse="Abidjan", groupe_sanguin="O+", numero_securite_sociale="12345", personne_a_contacter="Mom", date_inscription="2026-01-01")
 
         user_med = User.objects.create(nom="TRAORE", prenom="Ibrahim", email="med_api@test.com", telephone="0404040404", login="med_user_api", motDePasseHash="hash", role=User.Role.MEDECIN)
         self.medecin = Medecin.objects.create(idUtilisateur=user_med, specialite="CARDIOLOGIE", matricule="MED101", numeroOrdre="ORD101", dateEmbauche="2020-01-01")
@@ -96,7 +96,7 @@ class RendezVousAPITests(TestCase):
 
     def test_create_rendezvous_api(self):
         payload = {
-            "id_patient": self.patient.idPatient,
+            "id_patient": self.patient.id_patient,
             "id_medecin": self.medecin.idMedecin,
             "date_rdv": "2026-10-15",
             "heure": "11:00:00",
@@ -140,10 +140,10 @@ class RendezVousAPITests(TestCase):
     def test_double_booking_medecin_rejected(self):
         # Création d'un RDV avec le même médecin au même moment que self.rdv ("2026-10-10", "09:00:00")
         user_pat2 = User.objects.create(nom="Konan", prenom="Paul", email="paul@test.com", telephone="0505050505", login="paul_k", motDePasseHash="hash", role=User.Role.PATIENT)
-        pat2 = Patient.objects.create(idUtilisateur=user_pat2, sexe="M", dateInscription="2026-01-01")
+        pat2 = Patient.objects.create(id_utilisateur=user_pat2, sexe="M", date_inscription="2026-01-01")
 
         payload = {
-            "id_patient": pat2.idPatient,
+            "id_patient": pat2.id_patient,
             "id_medecin": self.medecin.idMedecin,
             "date_rdv": "2026-10-10",
             "heure": "09:00:00",
@@ -159,7 +159,7 @@ class RendezVousAPITests(TestCase):
         med2 = Medecin.objects.create(idUtilisateur=user_med2, specialite="PEDIATRIE", matricule="MED102", numeroOrdre="ORD102", dateEmbauche="2020-01-01")
 
         payload = {
-            "id_patient": self.patient.idPatient,
+            "id_patient": self.patient.id_patient,
             "id_medecin": med2.idMedecin,
             "date_rdv": "2026-10-10",
             "heure": "09:00:00",

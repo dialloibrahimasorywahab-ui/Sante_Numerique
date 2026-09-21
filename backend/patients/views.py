@@ -22,7 +22,7 @@ from .patientServices import PatientService
 patient_service = PatientService()
 
 
-# Enregistrement et listing des patients
+# Enregistrement et listing des patients (endpoint unique)
 @extend_schema(
     tags=["Patients"],
     summary="Lister ou créer un patient",
@@ -33,11 +33,22 @@ patient_service = PatientService()
         *PAGINATION_PARAMS
     ],
     request=PatientSerializer,
-    responses={200: PatientSerializer(many=True), 201: PatientSerializer, 400: ErrorResponseSerializer},
+    responses={
+        200: PatientSerializer(many=True),
+        201: PatientSerializer,
+        400: ErrorResponseSerializer,
+        403: ErrorResponseSerializer,
+    },
 )
 @api_view(["GET", "POST"])
 @permission_classes([IsStaffOrAdminReadOnly_IsMedecinOuAdminWrite])
 def create_patient(request):
+    """
+    Vue unifiée pour le listing et la création de patients :
+    - GET  : Liste paginée des patients (autorisé pour Médecins, Infirmiers et Administrateurs).
+             Prend en charge ?all=true pour inclure les patients inactifs (archivés) et ?search= / ?q=.
+    - POST : Création d'un patient (autorisé uniquement pour Médecins et Administrateurs).
+    """
     if request.method == "GET":
         actif_only = request.query_params.get("all", "false").lower() != "true"
         query = request.query_params.get("search") or request.query_params.get("q")
@@ -48,7 +59,6 @@ def create_patient(request):
         return paginate_response(patients, request, PatientSerializer)
 
     serializer = PatientSerializer(data=request.data)
-
 
     if serializer.is_valid():
         try:
@@ -71,23 +81,9 @@ def create_patient(request):
     )
 
 
-# Recuperer tous les patients
-@extend_schema(
-    tags=["Patients"],
-    summary="Lister les patients",
-    description="Retourne la liste de tous les patients enregistrés.",
-    parameters=[
-        OpenApiParameter(name="all", type=OpenApiTypes.BOOL, location=OpenApiParameter.QUERY, required=False, description="Inclure aussi les patients inactifs si true."),
-        *PAGINATION_PARAMS
-    ],
-    responses={200: PatientSerializer(many=True)},
-)
-@api_view(["GET"])
-@permission_classes([IsStaffOrAdmin])
-def get_all_patient(request):
-    actif_only = request.query_params.get("all", "false").lower() != "true"
-    patients = patient_service.get_all_patient(actif_only=actif_only)
-    return paginate_response(patients, request, PatientSerializer)
+# Alias pour rétrocompatibilité
+patient_list_create = create_patient
+get_all_patient = create_patient
 
 
 # Recuperer, modifier ou supprimer un patient grace a son id

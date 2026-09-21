@@ -61,6 +61,15 @@ class PatientService(BaseService[Patient]):
         data.pop("motDePasse", None)
         data.pop("mot_de_passe", None)
 
+        if "date_naissance" not in data and "dateNaissance" in data:
+            data["date_naissance"] = data.pop("dateNaissance")
+        if "groupe_sanguin" not in data and "groupeSanguin" in data:
+            data["groupe_sanguin"] = data.pop("groupeSanguin")
+        if "numero_securite_sociale" not in data and "numeroSecuriteSociale" in data:
+            data["numero_securite_sociale"] = data.pop("numeroSecuriteSociale")
+        if "personne_a_contacter" not in data and "personneAContacter" in data:
+            data["personne_a_contacter"] = data.pop("personneAContacter")
+
         if user:
             data["id_utilisateur"] = user
 
@@ -98,6 +107,17 @@ class PatientService(BaseService[Patient]):
         data.pop("login", None)
         data.pop("motDePasse", None)
         data.pop("mot_de_passe", None)
+
+        if "date_naissance" not in data and "dateNaissance" in data:
+            data["date_naissance"] = data.pop("dateNaissance")
+        if "groupe_sanguin" not in data and "groupeSanguin" in data:
+            data["groupe_sanguin"] = data.pop("groupeSanguin")
+        if "numero_securite_sociale" not in data and "numeroSecuriteSociale" in data:
+            data["numero_securite_sociale"] = data.pop("numeroSecuriteSociale")
+        if "personne_a_contacter" not in data and "personneAContacter" in data:
+            data["personne_a_contacter"] = data.pop("personneAContacter")
+        if "date_inscription" not in data and "dateInscription" in data:
+            data["date_inscription"] = data.pop("dateInscription")
 
         with transaction.atomic():
             if user_updates and patient.id_utilisateur:

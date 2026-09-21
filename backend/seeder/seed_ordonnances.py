@@ -61,7 +61,7 @@ def run_seed_ordonnances():
         )
         created_count += 1
 
-        pat_name = f"{cons.patient.idUtilisateur.prenom} {cons.patient.idUtilisateur.nom}" if cons.patient and cons.patient.idUtilisateur else f"Patient #{cons.patient_id}"
+        pat_name = f"{cons.patient.id_utilisateur.prenom} {cons.patient.id_utilisateur.nom}" if cons.patient and cons.patient.id_utilisateur else f"Patient #{cons.patient_id}"
         med_name = f"Dr. {cons.medecin.idUtilisateur.prenom} {cons.medecin.idUtilisateur.nom}" if cons.medecin and cons.medecin.idUtilisateur else f"Médecin #{cons.medecin_id}"
 
         print(f"   |- Ordonnance {ord_obj.reference} | Consultation #{cons.id} | {pat_name} | {med_name}")

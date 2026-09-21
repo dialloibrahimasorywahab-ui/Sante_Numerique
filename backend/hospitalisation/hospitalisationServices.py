@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 from django.db import transaction
 from django.utils import timezone
 from common.services import BaseService
@@ -8,6 +8,7 @@ from .hospitalisationRepositories import HospitalisationRepository
 
 
 class HospitalisationService(BaseService[Hospitalisation]):
+    repository: HospitalisationRepository
 
     def __init__(self, repository: Optional[HospitalisationRepository] = None):
         self.repository = repository or HospitalisationRepository()
@@ -21,7 +22,7 @@ class HospitalisationService(BaseService[Hospitalisation]):
         date_entree=None,
         date_sortie=None,
         motif: Optional[str] = None,
-        statut: str = Hospitalisation.StatutHospitalisation.EN_COURS,
+        statut: Union[str, Hospitalisation.StatutHospitalisation] = Hospitalisation.StatutHospitalisation.EN_COURS,
         observation: Optional[str] = None,
     ) -> Hospitalisation:
         if date_entree and date_sortie and date_sortie < date_entree:

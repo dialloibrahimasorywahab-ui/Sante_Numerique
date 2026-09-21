@@ -147,7 +147,7 @@ def consultation_detail_view(request, pk):
                     status=status.HTTP_403_FORBIDDEN
                 )
         elif user_role == "PATIENT":
-            if not cons.patient or cons.patient.idUtilisateur != request.user:
+            if not cons.patient or cons.patient.id_utilisateur != request.user:
                 return Response(
                     {"error": "Accès refusé. Vous ne pouvez consulter que vos propres consultations."},
                     status=status.HTTP_403_FORBIDDEN

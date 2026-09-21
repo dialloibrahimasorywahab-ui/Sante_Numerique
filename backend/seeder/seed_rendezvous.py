@@ -42,7 +42,7 @@ def run_seed_rendezvous():
     medecins = list(Medecin.objects.all())
 
     if not patients or not medecins:
-        print("❌ Impossible de seeder les rendez-vous: aucun patient ou médecin trouvé en base.")
+        print("[X] Impossible de seeder les rendez-vous: aucun patient ou médecin trouvé en base.")
         return
 
     print("=========================================================")
@@ -71,7 +71,7 @@ def run_seed_rendezvous():
             statut=statut_choice
         )
         crees += 1
-        pat_nom = f"{pat.idUtilisateur.prenom} {pat.idUtilisateur.nom}" if pat.idUtilisateur else f"Patient #{pat.idPatient}"
+        pat_nom = f"{pat.id_utilisateur.prenom} {pat.id_utilisateur.nom}" if pat.id_utilisateur else f"Patient #{pat.id_patient}"
         med_nom = f"Dr. {med.idUtilisateur.prenom} {med.idUtilisateur.nom}" if med.idUtilisateur else f"Médecin #{med.idMedecin}"
         print(f"   |- RDV #{rdv.id} | {pat_nom} -> {med_nom} | Date: {date_rdv} {heure_rdv} | Statut: {rdv.get_statut_display()}")
 

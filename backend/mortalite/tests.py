@@ -20,13 +20,13 @@ class MortaliteModelAndRepositoryTests(TestCase):
             role=User.Role.PATIENT,
         )
         self.patient = Patient.objects.create(
-            idUtilisateur=self.user,
-            dateNaissance="1950-01-01",
+            id_utilisateur=self.user,
+            date_naissance="1950-01-01",
             sexe=Patient.Sexe.MASCULIN,
             adresse="Conakry",
-            groupeSanguin=Patient.GroupeSanguin.A_POSITIF,
-            personneAContacter="Mamadou Diallo",
-            dateInscription="2024-01-01",
+            groupe_sanguin=Patient.GroupeSanguin.A_POSITIF,
+            personne_a_contacter="Mamadou Diallo",
+            date_inscription="2024-01-01",
         )
 
         self.repository = MortaliteRepository()
@@ -60,18 +60,18 @@ class MortaliteAPITests(TestCase):
         self.admin = User.objects.create(nom="Admin", prenom="Super", email="adm_mor@test.com", telephone="0101010101", login="adm_mor", motDePasseHash="hash", role=User.Role.ADMINISTRATEUR)
         self.client.force_authenticate(user=self.admin)
         self.patient = Patient.objects.create(
-            idUtilisateur=self.user,
-            dateNaissance="1965-06-10",
+            id_utilisateur=self.user,
+            date_naissance="1965-06-10",
             sexe=Patient.Sexe.FEMININ,
             adresse="Kindia",
-            groupeSanguin=Patient.GroupeSanguin.O_NEGATIF,
-            personneAContacter="Sory Camara",
-            dateInscription="2024-01-01",
+            groupe_sanguin=Patient.GroupeSanguin.O_NEGATIF,
+            personne_a_contacter="Sory Camara",
+            date_inscription="2024-01-01",
         )
 
     def test_api_create_and_get_mortalite(self):
         payload = {
-            "patient_id": self.patient.idPatient,
+            "patient_id": self.patient.id_patient,
             "date_deces": "2024-05-20",
             "cause_deces": "Insuffisance respiratoire aiguë",
             "lieu_deces": "Hôpital Ignace Deen",

@@ -24,13 +24,13 @@ class NataliteModelAndRepositoryTests(TestCase):
             role=User.Role.PATIENT,
         )
         self.patient_mother = Patient.objects.create(
-            idUtilisateur=self.user_mother,
-            dateNaissance="1995-03-15",
+            id_utilisateur=self.user_mother,
+            date_naissance="1995-03-15",
             sexe=Patient.Sexe.FEMININ,
             adresse="Dakar",
-            groupeSanguin=Patient.GroupeSanguin.O_POSITIF,
-            personneAContacter="Modou Diop",
-            dateInscription="2024-01-01",
+            groupe_sanguin=Patient.GroupeSanguin.O_POSITIF,
+            personne_a_contacter="Modou Diop",
+            date_inscription="2024-01-01",
         )
 
         self.user_doctor = User.objects.create(
@@ -70,7 +70,7 @@ class NataliteModelAndRepositoryTests(TestCase):
         fetched = self.repository.get_NouveauNeById(natalite.id_nouveau_ne)
         self.assertEqual(fetched, natalite)
 
-        by_patient = self.repository.get_nouveaux_nes_by_patient(self.patient_mother.idPatient)
+        by_patient = self.repository.get_nouveaux_nes_by_patient(self.patient_mother.id_patient)
         self.assertEqual(len(by_patient), 1)
 
         by_sexe = self.repository.get_natalities_by_sexe(Natalite.Sexe.FEMININ)
@@ -114,18 +114,18 @@ class NataliteAPITests(TestCase):
         self.admin = User.objects.create(nom="Admin", prenom="Super", email="adm_nat@test.com", telephone="0101010101", login="adm_nat", motDePasseHash="hash", role=User.Role.ADMINISTRATEUR)
         self.client.force_authenticate(user=self.admin)
         self.patient = Patient.objects.create(
-            idUtilisateur=self.user_mother,
-            dateNaissance="1998-07-20",
+            id_utilisateur=self.user_mother,
+            date_naissance="1998-07-20",
             sexe=Patient.Sexe.FEMININ,
             adresse="Bamako",
-            groupeSanguin=Patient.GroupeSanguin.B_POSITIF,
-            personneAContacter="Oumar Traore",
-            dateInscription="2024-01-01",
+            groupe_sanguin=Patient.GroupeSanguin.B_POSITIF,
+            personne_a_contacter="Oumar Traore",
+            date_inscription="2024-01-01",
         )
 
     def test_api_create_and_get_natalite(self):
         payload = {
-            "patient_id": self.patient.idPatient,
+            "patient_id": self.patient.id_patient,
             "prenom_nouveau_ne": "Ibrahim",
             "nom_nouveau_ne": "Traore",
             "date_naissance": "2024-06-01",
@@ -146,7 +146,7 @@ class NataliteAPITests(TestCase):
 
     def test_api_future_date_rejected(self):
         payload = {
-            "patient_id": self.patient.idPatient,
+            "patient_id": self.patient.id_patient,
             "date_naissance": "2099-01-01",
             "sexe": "M",
         }

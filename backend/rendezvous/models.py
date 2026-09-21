@@ -50,7 +50,7 @@ class RendezVous(models.Model):
         ]
 
     def __str__(self):
-        pat_nom = f"{self.patient.idUtilisateur.prenom} {self.patient.idUtilisateur.nom}" if self.patient and self.patient.idUtilisateur else f"Patient #{self.patient_id}"
+        pat_nom = f"{self.patient.id_utilisateur.prenom} {self.patient.id_utilisateur.nom}" if self.patient and self.patient.id_utilisateur else f"Patient #{self.patient_id}"
         med_nom = f"Dr. {self.medecin.idUtilisateur.prenom} {self.medecin.idUtilisateur.nom}" if self.medecin and self.medecin.idUtilisateur else f"Médecin #{self.medecin_id}"
         return f"RDV #{self.id} - {pat_nom} avec {med_nom} le {self.date_rdv} à {self.heure} ({self.get_statut_display()})"
 

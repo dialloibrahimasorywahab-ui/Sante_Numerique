@@ -36,7 +36,7 @@ export class AdminService {
       users: this.http.get<PaginatedResponse<any> | any[]>(`${this.apiUrl}/users/all/?page_size=1`, this.httpOptions).pipe(catchError(() => of({ count: 0 }))),
       medecins: this.http.get<PaginatedResponse<any> | any[]>(`${this.apiUrl}/medecins/all/?page_size=1`, this.httpOptions).pipe(catchError(() => of({ count: 0 }))),
       personnel: this.http.get<PaginatedResponse<any> | any[]>(`${this.apiUrl}/personnel/all/?page_size=1`, this.httpOptions).pipe(catchError(() => of({ count: 0 }))),
-      patients: this.http.get<PaginatedResponse<any> | any[]>(`${this.apiUrl}/patients/all/?page_size=1`, this.httpOptions).pipe(catchError(() => of({ count: 0 }))),
+      patients: this.http.get<PaginatedResponse<any> | any[]>(`${this.apiUrl}/patients/?page_size=1`, this.httpOptions).pipe(catchError(() => of({ count: 0 }))),
       rendezvous: this.http.get<PaginatedResponse<any> | any[]>(`${this.apiUrl}/rendezvous/all/?page_size=1`, this.httpOptions).pipe(catchError(() => of({ count: 0 }))),
       consultations: this.http.get<PaginatedResponse<any> | any[]>(`${this.apiUrl}/consultations/?page_size=1`, this.httpOptions).pipe(catchError(() => of({ count: 0 }))),
       hospitalisations: this.http.get<PaginatedResponse<any> | any[]>(`${this.apiUrl}/hospitalisations/?page_size=1`, this.httpOptions).pipe(catchError(() => of({ count: 0 }))),

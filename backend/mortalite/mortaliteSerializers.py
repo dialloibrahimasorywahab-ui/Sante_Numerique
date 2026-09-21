@@ -62,8 +62,9 @@ class MortaliteSerializer(serializers.ModelSerializer):
         if not date_deces and self.instance:
             date_deces = self.instance.date_deces
 
-        if patient and date_deces and getattr(patient, 'dateNaissance', None):
-            if date_deces < patient.dateNaissance:
+        birth_date = getattr(patient, 'date_naissance', None) or getattr(patient, 'dateNaissance', None)
+        if patient and date_deces and birth_date:
+            if date_deces < birth_date:
                 raise serializers.ValidationError(
                     {"date_deces": "La date de décès ne peut pas être antérieure à la date de naissance du patient."}
                 )

@@ -17,7 +17,7 @@ class ConsultationTests(TestCase):
             nom="Diallo", prenom="Aissatou", email="aissatou.diallo@example.com",
             telephone="+221770009988", login="aissatou_d", motDePasseHash="pass123", role=User.Role.PATIENT
         )
-        self.patient = Patient.objects.create(idUtilisateur=self.user_p, dateNaissance="1995-02-10", sexe=Patient.Sexe.FEMININ, dateInscription="2024-01-01")
+        self.patient = Patient.objects.create(id_utilisateur=self.user_p, date_naissance="1995-02-10", sexe=Patient.Sexe.FEMININ, date_inscription="2024-01-01")
 
         self.user_m = User.objects.create(
             nom="Sow", prenom="Mamadou", email="mamadou.sow@example.com",
@@ -54,7 +54,7 @@ class ConsultationTests(TestCase):
 
     def test_api_consultation_crud(self):
         payload = {
-            "patient": self.patient.idPatient,
+            "patient": self.patient.id_patient,
             "medecin": self.medecin.idMedecin,
             "montant_frais": 12000.0,
             "description_frais": "Consultation générale",
@@ -98,7 +98,7 @@ class ConsultationTests(TestCase):
             nom="Kane", prenom="Awa", email="awa.kane@example.com",
             telephone="+221770007766", login="awa_k", motDePasseHash="pass123", role=User.Role.PATIENT
         )
-        other_patient = Patient.objects.create(idUtilisateur=user_p2, dateNaissance="1998-03-03", sexe=Patient.Sexe.FEMININ, dateInscription="2024-01-01")
+        other_patient = Patient.objects.create(id_utilisateur=user_p2, date_naissance="1998-03-03", sexe=Patient.Sexe.FEMININ, date_inscription="2024-01-01")
 
         rdv_other = RendezVous.objects.create(
             patient=other_patient,

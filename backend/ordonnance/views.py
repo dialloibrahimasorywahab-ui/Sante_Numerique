@@ -144,7 +144,7 @@ def ordonnance_detail_view(request, pk):
                     status=status.HTTP_403_FORBIDDEN
                 )
         elif user_role == "PATIENT":
-            if not ord_obj.consultation or not ord_obj.consultation.patient or ord_obj.consultation.patient.idUtilisateur != request.user:
+            if not ord_obj.consultation or not ord_obj.consultation.patient or ord_obj.consultation.patient.id_utilisateur != request.user:
                 return Response(
                     {"error": "Accès refusé. Vous ne pouvez consulter que vos propres ordonnances."},
                     status=status.HTTP_403_FORBIDDEN

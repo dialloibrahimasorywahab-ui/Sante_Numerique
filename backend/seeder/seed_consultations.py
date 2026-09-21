@@ -109,7 +109,7 @@ def run_seed_consultations():
             )
             ord_info = f" | Ordonnance {ord_obj.reference}"
 
-        pat_nom = f"{patient.idUtilisateur.prenom} {patient.idUtilisateur.nom}" if patient.idUtilisateur else f"Patient #{patient.idPatient}"
+        pat_nom = f"{patient.id_utilisateur.prenom} {patient.id_utilisateur.nom}" if patient.id_utilisateur else f"Patient #{patient.id_patient}"
         med_nom = f"Dr. {medecin.idUtilisateur.prenom} {medecin.idUtilisateur.nom}" if medecin.idUtilisateur else f"Dr. #{medecin.idMedecin}"
 
         print(f"   |- Cons #{cons.id} | {pat_nom} | {med_nom} | Frais #{frais.id} ({frais.montant} GNF, {frais.get_statut_display()}){ord_info}")
