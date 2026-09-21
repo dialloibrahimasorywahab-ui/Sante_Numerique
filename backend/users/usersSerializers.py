@@ -13,6 +13,36 @@ class UserSerializers(serializers.ModelSerializer):
     motDePasseHash = serializers.CharField(source="mot_de_passe_hash", write_only=True, required=False, allow_blank=True)
     idUser = serializers.IntegerField(source="id_user", read_only=True)
     derniereConnexion = serializers.DateTimeField(source="derniere_connexion", read_only=True)
+    idPatient = serializers.SerializerMethodField()
+    patient_id = serializers.SerializerMethodField()
+    idMedecin = serializers.SerializerMethodField()
+    medecin_id = serializers.SerializerMethodField()
+    idPersonnel = serializers.SerializerMethodField()
+    personnel_id = serializers.SerializerMethodField()
+
+    def get_idPatient(self, obj):
+        if hasattr(obj, 'patient') and obj.patient:
+            return obj.patient.id_patient
+        return None
+
+    def get_patient_id(self, obj):
+        return self.get_idPatient(obj)
+
+    def get_idMedecin(self, obj):
+        if hasattr(obj, 'medecin') and obj.medecin:
+            return obj.medecin.id_medecin
+        return None
+
+    def get_medecin_id(self, obj):
+        return self.get_idMedecin(obj)
+
+    def get_idPersonnel(self, obj):
+        if hasattr(obj, 'personnel') and obj.personnel:
+            return obj.personnel.id_personnel
+        return None
+
+    def get_personnel_id(self, obj):
+        return self.get_idPersonnel(obj)
 
     class Meta:
         model = User
@@ -32,6 +62,12 @@ class UserSerializers(serializers.ModelSerializer):
             "date_naissance",
             "dateNaissance",
             "actif",
+            "idPatient",
+            "patient_id",
+            "idMedecin",
+            "medecin_id",
+            "idPersonnel",
+            "personnel_id",
         ]
 
     def to_internal_value(self, data):

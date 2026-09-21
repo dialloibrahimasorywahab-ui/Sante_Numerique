@@ -51,13 +51,14 @@ export class DoctorPatientsComponent implements OnInit {
     email: '',
     telephone: '',
     dateNaissance: '',
-    sexe: '',
-    groupeSanguin: '',
+    sexe: 'M',
+    groupeSanguin: 'O+',
     numeroSecuriteSociale: '',
     adresse: '',
     personneAContacter: '',
     login: '',
-    motDePasse: ''
+    motDePasse: '',
+    autoLogin: true
   };
 
   ngOnInit(): void {
@@ -88,13 +89,14 @@ export class DoctorPatientsComponent implements OnInit {
       email: '',
       telephone: '',
       dateNaissance: '',
-      sexe: '',
-      groupeSanguin: '',
+      sexe: 'M',
+      groupeSanguin: 'O+',
       numeroSecuriteSociale: '',
       adresse: '',
       personneAContacter: '',
       login: '',
-      motDePasse: ''
+      motDePasse: '',
+      autoLogin: true
     };
     this.showPassword.set(false);
     this.isCreateModalOpen.set(true);
@@ -106,16 +108,34 @@ export class DoctorPatientsComponent implements OnInit {
     this.formError.set(null);
   }
 
+  onNameOrEmailChange(): void {
+    if (this.newPatient.autoLogin) {
+      const p = (this.newPatient.prenom || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+      const n = (this.newPatient.nom || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (p && n) {
+        // Première lettre prénom + nom, plafonné à 6 caractères max
+        this.newPatient.login = (p[0] + n).slice(0, 6);
+      } else if (n) {
+        this.newPatient.login = n.slice(0, 6);
+      } else if (p) {
+        this.newPatient.login = p.slice(0, 6);
+      } else if (this.newPatient.email && this.newPatient.email.includes('@')) {
+        const prefix = this.newPatient.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+        this.newPatient.login = prefix.slice(0, 6);
+      }
+    }
+  }
+
   submitCreatePatient(): void {
     this.formError.set(null);
 
     // Validation des champs obligatoires
-    const nom = this.newPatient.nom.trim();
-    const prenom = this.newPatient.prenom.trim();
-    const email = this.newPatient.email.trim();
-    const telephone = this.newPatient.telephone.trim();
-    const login = this.newPatient.login.trim();
-    const motDePasse = this.newPatient.motDePasse.trim();
+    const nom = (this.newPatient.nom || '').trim();
+    const prenom = (this.newPatient.prenom || '').trim();
+    const email = (this.newPatient.email || '').trim();
+    const telephone = (this.newPatient.telephone || '').trim();
+    const login = (this.newPatient.login || '').trim().toLowerCase();
+    const motDePasse = this.newPatient.motDePasse || '';
 
     if (!nom || !prenom) {
       this.formError.set('Veuillez saisir le nom et le prénom du patient.');
@@ -144,17 +164,22 @@ export class DoctorPatientsComponent implements OnInit {
     }
 
     if (!login) {
-      this.formError.set("L'identifiant de connexion (login) est requis pour l'accès du patient.");
+      this.formError.set("L'identifiant de connexion (login) est obligatoire.");
+      return;
+    }
+
+    if (login.length > 6) {
+      this.formError.set("L'identifiant de connexion (login) ne doit pas dépasser 6 caractères.");
       return;
     }
 
     if (!motDePasse) {
-      this.formError.set("Le mot de passe d'accès est requis.");
+      this.formError.set('Veuillez saisir le mot de passe de connexion.');
       return;
     }
 
     if (motDePasse.length < 6) {
-      this.formError.set('Le mot de passe doit contenir au moins 6 caractères.');
+      this.formError.set('Le mot de passe doit comporter au moins 6 caractères.');
       return;
     }
 
@@ -165,18 +190,18 @@ export class DoctorPatientsComponent implements OnInit {
       prenom,
       email,
       telephone,
-      sexe: this.newPatient.sexe || undefined,
+      sexe: this.newPatient.sexe || 'M',
       dateNaissance: this.newPatient.dateNaissance || null,
       date_naissance: this.newPatient.dateNaissance || null,
-      groupeSanguin: this.newPatient.groupeSanguin || undefined,
-      groupe_sanguin: this.newPatient.groupeSanguin || undefined,
-      numeroSecuriteSociale: this.newPatient.numeroSecuriteSociale.trim() || null,
-      numero_securite_sociale: this.newPatient.numeroSecuriteSociale.trim() || null,
-      adresse: this.newPatient.adresse.trim() || undefined,
-      personneAContacter: this.newPatient.personneAContacter.trim() || null,
-      personne_a_contacter: this.newPatient.personneAContacter.trim() || null,
-      login,
-      motDePasse,
+      groupeSanguin: this.newPatient.groupeSanguin || 'O+',
+      groupe_sanguin: this.newPatient.groupeSanguin || 'O+',
+      numeroSecuriteSociale: (this.newPatient.numeroSecuriteSociale || '').trim() || null,
+      numero_securite_sociale: (this.newPatient.numeroSecuriteSociale || '').trim() || null,
+      adresse: (this.newPatient.adresse || '').trim() || undefined,
+      personneAContacter: (this.newPatient.personneAContacter || '').trim() || null,
+      personne_a_contacter: (this.newPatient.personneAContacter || '').trim() || null,
+      login: login.slice(0, 6),
+      motDePasse: motDePasse,
       mot_de_passe: motDePasse
     };
 

@@ -76,6 +76,16 @@ class PatientService(BaseService[Patient]):
         if "date_inscription" not in data or not data["date_inscription"]:
             data["date_inscription"] = data.pop("dateInscription", timezone.now().date())
 
+        if data.get("adresse") is None:
+            data["adresse"] = ""
+        if data.get("personne_a_contacter") is None:
+            data["personne_a_contacter"] = ""
+
+        if not data.get("groupe_sanguin"):
+            data["groupe_sanguin"] = "O+"
+        if not data.get("sexe"):
+            data["sexe"] = "M"
+
         return self.repository.createPatient(**data)
 
     # rechercher et afficher un patient par son id

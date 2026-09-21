@@ -16,6 +16,22 @@
       </div>
     </div>
 
+    <!-- Admin User Badge -->
+    <div class="admin-profile-card">
+      <div class="admin-avatar">
+        <span>AD</span>
+      </div>
+      <div class="admin-info">
+        <div class="admin-name">
+          {{ authService.currentUser()?.nom }} {{ authService.currentUser()?.prenom }}
+        </div>
+        <div class="admin-role">
+          Administrateur Système
+        </div>
+      </div>
+      <div class="status-indicator-dot" title="Session active"></div>
+    </div>
+
     <!-- Navigation Sections -->
     <nav class="sidebar-nav">
       @for (section of navSections; track section.title) {
@@ -191,6 +207,12 @@
           </svg>
           <span>{{ todayFormatted() }}</span>
         </div>
+
+        <!-- Status Indicator
+        <div class="status-indicator">
+          <span class="dot"></span>
+          <span class="status-text">Système Opérationnel</span>
+        </div> -->
 
         <!-- Admin Profile dropdown/pill -->
         <div class="topbar-user">

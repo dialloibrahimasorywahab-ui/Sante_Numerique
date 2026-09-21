@@ -33,6 +33,18 @@ class PatientSerializer(serializers.ModelSerializer):
         allow_null=True,
         allow_blank=True
     )
+    groupeSanguin = serializers.CharField(
+        source="groupe_sanguin",
+        validators=[validate_blood_group],
+        required=False,
+        allow_null=True,
+        allow_blank=True
+    )
+    adresse = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True
+    )
     personne_a_contacter = serializers.CharField(
         required=False,
         allow_blank=True,

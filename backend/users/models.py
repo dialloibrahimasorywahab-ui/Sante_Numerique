@@ -76,6 +76,9 @@ class User(AbstractUser):
         self.is_active = self.actif
         super().save(*args, **kwargs)
 
+    class Meta:
+        ordering = ["id_user"]
+
     # Propriétés snake_case standard
     @property
     def mot_de_passe_hash(self):

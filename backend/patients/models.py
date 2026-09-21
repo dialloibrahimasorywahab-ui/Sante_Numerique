@@ -38,7 +38,11 @@ class Patient(models.Model):
         choices=Sexe.choices
     )
 
-    adresse = models.CharField(max_length=255)
+    adresse = models.CharField(
+        max_length=255,
+        blank=True,
+        default=""
+    )
 
     groupe_sanguin = models.CharField(
         max_length=3,
@@ -52,7 +56,9 @@ class Patient(models.Model):
     )
 
     personne_a_contacter = models.CharField(
-        max_length=100
+        max_length=100,
+        blank=True,
+        default=""
     )
 
     date_inscription = models.DateField()

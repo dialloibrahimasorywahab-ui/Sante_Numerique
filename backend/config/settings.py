@@ -135,8 +135,34 @@ JWT_COOKIE_SAMESITE = env('JWT_COOKIE_SAMESITE', default='Lax')
 JWT_COOKIE_SECURE = env.bool('JWT_COOKIE_SECURE', default=not DEBUG)
 
 # CORS Configuration
-CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=['http://localhost:4200', 'http://127.0.0.1:4200'])
+# En développement, localhost:4200 est autorisé par défaut.
+# En production, définir CORS_ALLOWED_ORIGINS dans .env avec les domaines officiels uniquement.
+if DEBUG:
+    CORS_ALLOWED_ORIGINS = env.list(
+        'CORS_ALLOWED_ORIGINS',
+        default=['http://localhost:4200', 'http://127.0.0.1:4200']
+    )
+else:
+    # En production, cette variable DOIT être définie dans .env (pas de fallback permissif)
+    CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS')
+
 CORS_ALLOW_CREDENTIALS = True
+
+# CSRF : liste des origines de confiance pour les requêtes multi-domaines.
+# Angular doit envoyer le header X-CSRFToken sur toute requête mutante (POST/PUT/PATCH/DELETE).
+# Ajouter ici tous les domaines officiels en production.
+CSRF_TRUSTED_ORIGINS = env.list(
+    'CSRF_TRUSTED_ORIGINS',
+    default=['http://localhost:4200', 'http://127.0.0.1:4200']
+)
+
+# CSRF_COOKIE_HTTPONLY=False permet au frontend JavaScript (Angular) de lire
+# le cookie csrftoken et de l'injecter dans le header X-CSRFToken.
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SECURE = not DEBUG   # Cookie CSRF transmis uniquement en HTTPS en production
+
+# Exposer X-CSRFToken dans les réponses CORS pour qu'Angular puisse le récupérer
+CORS_EXPOSE_HEADERS = ['X-CSRFToken']
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'API Santé Numérique',
