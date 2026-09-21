@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import IntegrityError
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
@@ -62,6 +63,17 @@ def create_patient(request):
         except IntegrityError as e:
             return Response(
                 {"error": "Un patient ou utilisateur avec cet identifiant, email, téléphone existe déjà.", "detail": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except DjangoValidationError as e:
+            msg = e.messages if hasattr(e, 'messages') else str(e)
+            return Response(
+                {"error": msg if isinstance(msg, str) else (msg[0] if msg else "Données non valides.")},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            return Response(
+                {"error": f"Erreur lors de l'enregistrement du patient : {str(e)}"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 

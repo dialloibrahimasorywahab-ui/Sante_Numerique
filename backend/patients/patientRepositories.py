@@ -14,7 +14,13 @@ class PatientRepository(BaseRepository[Patient]):
         return self.create(**data)
 
     def get_patient(self, patient_id):
-        return self.get_by_id(patient_id, select_related=['id_utilisateur'])
+        patient = self.get_by_id(patient_id, select_related=['id_utilisateur'])
+        if not patient:
+            try:
+                patient = self.model.objects.select_related('id_utilisateur').filter(id_utilisateur_id=patient_id).first()
+            except Exception:
+                patient = None
+        return patient
 
     def get_all_patient(self, actif_only: bool = True):
         return self.get_all(actif_only=actif_only, select_related=['id_utilisateur'])

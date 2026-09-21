@@ -403,6 +403,38 @@
 
           <!-- SECTION 4: COMPTE D'ACCÈS PATIENT -->
           <div class="form-section access-section">
+              <div class="section-header-row">
+                <div class="form-grid-2">
+                  <div class="form-group">
+                    <h3 class="section-heading">
+                      <span class="section-num">4</span>
+                      <span>Accès au portail patient en ligne</span>
+                    </h3>
+                    <label for="patient-login" class="form-label"> Identifiant de connexion(Login) <span class="required">*</span>
+                    </label>
+                    <input 
+                      id="patient-login"
+                      type="text"
+                      [(ngModel)]="newPatient.login"
+                      name="login"
+                      placeholder="ibsd"
+                      class="form-control"                    
+                    />
+                  </div>
+
+                  <div class="form-group">
+                    <label for="patient-pass" class="form-label">Mot de passe <span class="required">*</span></label>
+                    <input 
+                      id="patient-pass"
+                      type="password"
+                      [(ngModel)]="newPatient.motDePasse" name="password"
+                      class="form-control"
+                    />
+                  </div>
+                </div>
+              </div>
+          </div>
+          <!-- <div class="form-section access-section">
             <div class="section-header-row">
               <h3 class="section-heading">
                 <span class="section-num">4</span>
@@ -471,7 +503,7 @@
             <p class="section-help-text">
               Un mot de passe temporaire sera attribué au patient pour sa première connexion. Il pourra le modifier à tout moment.
             </p>
-          </div>
+          </div> -->
         </form>
       </div>
 
