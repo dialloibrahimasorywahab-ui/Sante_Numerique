@@ -680,6 +680,15 @@
               <label>Pôle / Service d'Affectation</label>
               <input type="text" [(ngModel)]="personnelForm.serviceHopital" name="serviceHopital" placeholder="Ex: Pôle Urgences & Réanimation" />
             </div>
+
+            <div class="form-group">
+              <label>Login <span class="req">*</span></label>
+              <input type="text" [(ngModel)]="personnelForm.login" name="login" placeholder="Ibsd" />
+            </div>
+            <div class="form-group">
+              <label>Mot de passe <span class="req">*</span></label>
+              <input type="text" [(ngModel)]="personnelForm.motDePasse" name="mot de passe" placeholder="limboco@224" />
+            </div>
           </div>
 
           <div class="modal-footer">

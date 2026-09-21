@@ -214,7 +214,7 @@
                 <td>
                   @if (c.frais_details || c.frais) {
                     <div class="frais-pill">
-                      <span class="frais-amount">{{ (c.frais_details?.montant || c.frais?.montant || c.montant_frais || 0) | number:'1.0-0' }} FCFA</span>
+                      <span class="frais-amount">{{ (c.frais_details?.montant || c.frais?.montant || c.montant_frais || 0) | number:'1.0-0' }} GNF</span>
                       <span class="frais-status" [class.paid]="(c.frais_details?.statut || c.frais?.statut) === 'PAYE'">
                         {{ (c.frais_details?.statut || c.frais?.statut) === 'PAYE' ? 'Payé' : 'En attente' }}
                       </span>

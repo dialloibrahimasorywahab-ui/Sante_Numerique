@@ -104,7 +104,7 @@ export class AdminFinancesComponent implements OnInit {
     this.adminService.markFraisAsPaid(id).subscribe({
       next: () => {
         this.isActionLoading.set(null);
-        this.successMessage.set(`Le règlement des frais #${id} (${item.montant} FCFA) a été validé.`);
+        this.successMessage.set(`Le règlement des frais #${id} (${item.montant} GNF) a été validé.`);
         this.loadData();
         this.loadStats();
 

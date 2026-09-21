@@ -25,7 +25,7 @@
       </div>
       <div class="stat-content">
         <span class="stat-label">Total Facturé</span>
-        <div class="stat-value">{{ stats().totalMontant | number:'1.0-0' }} <span class="currency">FCFA</span></div>
+        <div class="stat-value">{{ stats().totalMontant | number:'1.0-0' }} <span class="currency">GNF</span></div>
         <span class="stat-sub">Volume global des consultations</span>
       </div>
     </div>
@@ -38,7 +38,7 @@
       </div>
       <div class="stat-content">
         <span class="stat-label">Total Encaissé (Payé)</span>
-        <div class="stat-value text-emerald-700">{{ stats().montantPaye | number:'1.0-0' }} <span class="currency">FCFA</span></div>
+        <div class="stat-value text-emerald-700">{{ stats().montantPaye | number:'1.0-0' }} <span class="currency">GNF</span></div>
         <span class="stat-sub">{{ stats().countPaye }} règlement(s) validé(s)</span>
       </div>
     </div>
@@ -51,7 +51,7 @@
       </div>
       <div class="stat-content">
         <span class="stat-label">En Attente de Règlement</span>
-        <div class="stat-value text-amber-700">{{ stats().montantEnAttente | number:'1.0-0' }} <span class="currency">FCFA</span></div>
+        <div class="stat-value text-amber-700">{{ stats().montantEnAttente | number:'1.0-0' }} <span class="currency">GNF</span></div>
         <span class="stat-sub">{{ stats().countEnAttente }} facture(s) à encaisser</span>
       </div>
     </div>
@@ -193,7 +193,7 @@
               </td>
               <td>
                 <span class="font-black text-slate-900 amount-text">
-                  {{ (frais.montant || 0) | number:'1.0-0' }} FCFA
+                  {{ (frais.montant || 0) | number:'1.0-0' }} GNF
                 </span>
               </td>
               <td>

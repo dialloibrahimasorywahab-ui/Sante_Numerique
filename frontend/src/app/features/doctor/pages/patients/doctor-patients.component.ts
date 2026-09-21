@@ -58,7 +58,7 @@ export class DoctorPatientsComponent implements OnInit {
     personneAContacter: '',
     login: '',
     motDePasse: '',
-    autoLogin: true
+    // autoLogin: true
   };
 
   ngOnInit(): void {
@@ -96,7 +96,7 @@ export class DoctorPatientsComponent implements OnInit {
       personneAContacter: '',
       login: '',
       motDePasse: '',
-      autoLogin: true
+      // autoLogin: true
     };
     this.showPassword.set(false);
     this.isCreateModalOpen.set(true);
@@ -108,23 +108,23 @@ export class DoctorPatientsComponent implements OnInit {
     this.formError.set(null);
   }
 
-  onNameOrEmailChange(): void {
-    if (this.newPatient.autoLogin) {
-      const p = (this.newPatient.prenom || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-      const n = (this.newPatient.nom || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-      if (p && n) {
-        // Première lettre prénom + nom, plafonné à 6 caractères max
-        this.newPatient.login = (p[0] + n).slice(0, 6);
-      } else if (n) {
-        this.newPatient.login = n.slice(0, 6);
-      } else if (p) {
-        this.newPatient.login = p.slice(0, 6);
-      } else if (this.newPatient.email && this.newPatient.email.includes('@')) {
-        const prefix = this.newPatient.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
-        this.newPatient.login = prefix.slice(0, 6);
-      }
-    }
-  }
+  // onNameOrEmailChange(): void {
+  //   if (this.newPatient.login) {
+  //     const p = (this.newPatient.prenom || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+  //     const n = (this.newPatient.nom || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+  //     if (p && n) {
+  //       // Première lettre prénom + nom, plafonné à 6 caractères max
+  //       this.newPatient.login = (p[0] + n).slice(0, 6);
+  //     } else if (n) {
+  //       this.newPatient.login = n.slice(0, 6);
+  //     } else if (p) {
+  //       this.newPatient.login = p.slice(0, 6);
+  //     } else if (this.newPatient.email && this.newPatient.email.includes('@')) {
+  //       const prefix = this.newPatient.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+  //       this.newPatient.login = prefix.slice(0, 6);
+  //     }
+  //   }
+  // }
 
   submitCreatePatient(): void {
     this.formError.set(null);

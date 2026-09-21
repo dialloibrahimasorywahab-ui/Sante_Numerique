@@ -1,9 +1,11 @@
 import os
 import random
 import django
+import sys
 
 # Initialisation de l'environnement Django
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 django.setup()
 
 from users.models import User
