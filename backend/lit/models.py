@@ -45,3 +45,11 @@ class Lit(models.Model):
     @property
     def idLit(self) -> int:
         return self.id
+
+    @property
+    def statut(self) -> str:
+        return self.etat
+
+    @statut.setter
+    def statut(self, val: str):
+        self.etat = val

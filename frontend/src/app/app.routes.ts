@@ -69,6 +69,12 @@ export const routes: Routes = [
     pathMatch: 'full'
   },
   {
+    path: 'parcours',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/parcours-patient/parcours-dashboard.component').then(m => m.ParcoursDashboardComponent),
+    title: 'Suivi du Parcours Patient — Santé Numérique'
+  },
+  {
     path: 'admin',
     canActivate: [authGuard, roleGuard],
     data: { roles: ['ADMINISTRATEUR'] },

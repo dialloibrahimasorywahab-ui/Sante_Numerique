@@ -82,5 +82,13 @@ class Patient(models.Model):
     def id(self):
         return self.id_patient
 
+    @property
+    def nom(self):
+        return self.id_utilisateur.nom if self.id_utilisateur else ""
+
+    @property
+    def prenom(self):
+        return self.id_utilisateur.prenom if self.id_utilisateur else ""
+
     def __str__(self):
         return f"Patient: {self.id_utilisateur.prenom} {self.id_utilisateur.nom}"

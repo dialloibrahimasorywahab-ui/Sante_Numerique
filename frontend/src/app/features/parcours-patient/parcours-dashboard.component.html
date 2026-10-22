@@ -1,0 +1,812 @@
+<div class="parcours-container">
+  <!-- Feedback Toast / Notification -->
+  @if (feedbackMessage(); as msg) {
+    <div class="feedback-toast toast-{{ msg.type }}">
+      <i [class]="msg.type === 'success' ? 'ri-checkbox-circle-fill' : 'ri-error-warning-fill'"></i>
+      <span>{{ msg.text }}</span>
+      <button class="toast-close" (click)="feedbackMessage.set(null)">&times;</button>
+    </div>
+  }
+
+  <!-- En-tête de page & Navigation Onglets -->
+  <header class="page-header">
+    <div class="header-left">
+      <div class="header-badge">
+        <span class="pulse-dot"></span>
+        SIH Connecté • Suivi & Localisation Temps Réel
+      </div>
+      <h1>Suivi du Parcours & Localisation des Patients</h1>
+      <p class="subtitle">
+        Supervision hospitalière des urgences, analyses, hospitalisations et disponibilité des lits.
+      </p>
+    </div>
+
+    <div class="header-right">
+      @if (parcoursService.lastRefreshed(); as lr) {
+        <span class="refresh-indicator">
+          <i class="ri-time-line"></i> Mis à jour à {{ lr | date:'HH:mm:ss' }}
+        </span>
+      }
+      <button class="btn btn-outline" (click)="chargerDonnees()" [disabled]="parcoursService.isLoading()">
+        <i class="ri-refresh-line" [class.spinning]="parcoursService.isLoading()"></i> Actualiser
+      </button>
+    </div>
+  </header>
+
+  <!-- Navigation par Onglets -->
+  <nav class="nav-tabs-bar">
+    <button
+      class="tab-btn"
+      [class.active]="activeTab() === 'dashboard'"
+      (click)="changerOnglet('dashboard')"
+    >
+      <i class="ri-dashboard-line"></i> Vue d'ensemble & Indicateurs
+    </button>
+    <button
+      class="tab-btn"
+      [class.active]="activeTab() === 'localisation'"
+      (click)="changerOnglet('localisation')"
+    >
+      <i class="ri-map-pin-user-line"></i> Localisation Actuelle des Patients
+      <span class="tab-badge" *ngIf="parcoursService.dashboardStats()?.patientsPresents">
+        {{ parcoursService.dashboardStats()?.patientsPresents }}
+      </span>
+    </button>
+    <button
+      class="tab-btn"
+      [class.active]="activeTab() === 'dossier'"
+      (click)="changerOnglet('dossier')"
+    >
+      <i class="ri-folder-user-line"></i> Dossier Patient & Chronologie
+      @if (parcoursService.activeDossier()) {
+        <span class="tab-badge-patient">
+          {{ parcoursService.activeDossier()?.sejour?.reference }}
+        </span>
+      }
+    </button>
+  </nav>
+
+  <!-- Barre de Recherche Rapide avec Debounce -->
+  <section class="quick-search-bar">
+    <div class="search-input-wrapper">
+      <i class="ri-search-line search-icon"></i>
+      <input
+        type="text"
+        placeholder="Recherche rapide de patient (Nom, prénom, NSS, référence séjour S-YYYY-XXXX...)"
+        [ngModel]="searchQuery()"
+        (ngModelChange)="onSearchInput($event)"
+      />
+      @if (searchQuery()) {
+        <button class="clear-btn" (click)="onSearchInput('')">&times;</button>
+      }
+    </div>
+    <div class="filter-controls">
+      <select [ngModel]="selectedStatut()" (ngModelChange)="selectedStatut.set($event); chargerDonnees()">
+        <option value="">Tous les statuts</option>
+        <option value="EN_COURS">En cours de soins</option>
+        <option value="EN_ATTENTE">En attente de prise en charge</option>
+        <option value="TRANSFERE">Transféré</option>
+        <option value="SORTIE_AUTORISEE">Sortie médicale autorisée</option>
+        <option value="TERMINE">Sortie définitive effectuée</option>
+      </select>
+
+      <select [ngModel]="selectedService()" (ngModelChange)="selectedService.set($event); chargerDonnees()">
+        <option value="">Tous les pôles / services</option>
+        @for (srv of servicesList(); track (srv.id_service || srv.idService || srv.id || $index)) {
+          <option [value]="srv.id_service || srv.idService || srv.id">
+            {{ srv.nom_service || srv.nomService || srv.nom }}
+          </option>
+        }
+      </select>
+    </div>
+  </section>
+
+  <!-- ========================================== -->
+  <!-- ONGLET 1 : VUE D'ENSEMBLE (DASHBOARD)      -->
+  <!-- ========================================== -->
+  @if (activeTab() === 'dashboard') {
+    <!-- Cartes Statistiques Réelles -->
+    <section class="kpi-grid">
+      @if (parcoursService.dashboardStats(); as stats) {
+        <div class="kpi-card kpi-blue">
+          <div class="kpi-icon"><i class="ri-user-follow-line"></i></div>
+          <div class="kpi-content">
+            <span class="kpi-label">Patients Présents</span>
+            <span class="kpi-value">{{ stats.patientsPresents }}</span>
+            <span class="kpi-sub">Prise en charge active</span>
+          </div>
+        </div>
+
+        <div class="kpi-card kpi-cyan">
+          <div class="kpi-icon"><i class="ri-heart-pulse-line"></i></div>
+          <div class="kpi-content">
+            <span class="kpi-label">Séjours en Soins</span>
+            <span class="kpi-value">{{ stats.sejoursEnCours }}</span>
+            <span class="kpi-sub">En cours de traitement</span>
+          </div>
+        </div>
+
+        <div class="kpi-card kpi-amber">
+          <div class="kpi-icon"><i class="ri-alarm-warning-line"></i></div>
+          <div class="kpi-content">
+            <span class="kpi-label">Urgences</span>
+            <span class="kpi-value">{{ stats.patientsUrgences }}</span>
+            <span class="kpi-sub">Accueil / Déchoquage</span>
+          </div>
+        </div>
+
+        <div class="kpi-card kpi-emerald">
+          <div class="kpi-icon"><i class="ri-hotel-bed-line"></i></div>
+          <div class="kpi-content">
+            <span class="kpi-label">Patients Hospitalisés</span>
+            <span class="kpi-value">{{ stats.patientsHospitalises }}</span>
+            <span class="kpi-sub">Affectés à un lit</span>
+          </div>
+        </div>
+
+        <div class="kpi-card kpi-purple">
+          <div class="kpi-icon"><i class="ri-checkbox-circle-line"></i></div>
+          <div class="kpi-content">
+            <span class="kpi-label">Lits Disponibles</span>
+            <span class="kpi-value">{{ stats.litsDisponibles }} / {{ stats.totalLits }}</span>
+            <span class="kpi-sub">Capacité d'accueil</span>
+          </div>
+        </div>
+
+        <div class="kpi-card kpi-slate">
+          <div class="kpi-icon"><i class="ri-arrow-left-right-line"></i></div>
+          <div class="kpi-content">
+            <span class="kpi-label">Transferts (24h)</span>
+            <span class="kpi-value">{{ stats.transfertsRecents }}</span>
+            <span class="kpi-sub">Mouvements inter-services</span>
+          </div>
+        </div>
+
+        <div class="kpi-card kpi-rose">
+          <div class="kpi-icon"><i class="ri-logout-box-r-line"></i></div>
+          <div class="kpi-content">
+            <span class="kpi-label">Sorties Récentes</span>
+            <span class="kpi-value">{{ stats.sortiesRecentes }}</span>
+            <span class="kpi-sub">Clôturées dernières 24h</span>
+          </div>
+        </div>
+      } @else {
+        <div class="kpi-card loading-card">
+          <div class="spinner"></div>
+          <span>Chargement des indicateurs...</span>
+        </div>
+      }
+    </section>
+
+    <!-- Grille : Séjours récents + Mouvements récents -->
+    <div class="dashboard-split-grid">
+      <!-- Tableau des patients récemment pris en charge -->
+      <section class="card table-card">
+        <div class="card-header">
+          <div class="header-title">
+            <h3><i class="ri-user-shared-line"></i> Patients Pris en Charge</h3>
+            <span class="header-count">{{ parcoursService.sejours().length }} séjours</span>
+          </div>
+          <button class="btn btn-sm btn-outline" (click)="changerOnglet('localisation')">
+            Voir Localisations &rarr;
+          </button>
+        </div>
+
+        <div class="card-body p-0">
+          @if (parcoursService.isLoading()) {
+            <div class="loading-state">
+              <div class="spinner"></div>
+              <span>Chargement des patients...</span>
+            </div>
+          } @else if (parcoursService.sejours().length === 0) {
+            <div class="empty-state">
+              <i class="ri-inbox-line"></i>
+              <p>Aucun patient trouvé avec ces critères</p>
+            </div>
+          } @else {
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Réf. Séjour</th>
+                    <th>Patient</th>
+                    <th>Admission</th>
+                    <th>Prise en charge</th>
+                    <th>Service / Lit</th>
+                    <th>Statut</th>
+                    <th class="text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (sejour of parcoursService.sejours(); track (sejour.idSejour || $index)) {
+                    <tr (click)="selectionnerSejour(sejour)" class="clickable-row">
+                      <td class="font-mono font-bold text-primary">{{ sejour.reference }}</td>
+                      <td>
+                        <div class="patient-cell">
+                          <span class="name font-semibold">
+                            {{ getPatientNomComplet(sejour.patientDetails) }}
+                          </span>
+                          <span class="nss">NSS: {{ sejour.patientDetails?.numeroSecuriteSociale || 'Non renseigné' }}</span>
+                        </div>
+                      </td>
+                      <td>{{ sejour.dateAdmission | date:'dd/MM/yyyy HH:mm' }}</td>
+                      <td>
+                        <span class="type-badge">{{ sejour.typePriseEnChargeDisplay || sejour.typePriseEnCharge }}</span>
+                      </td>
+                      <td>
+                        <div class="loc-summary">
+                          <span><i class="ri-hospital-line"></i> {{ sejour.serviceDetails?.nomService || 'Service #' + sejour.serviceResponsable }}</span>
+                          @if (sejour.localisationActuelleInfo?.litNumero) {
+                            <span class="lit-tag"><i class="ri-hotel-bed-line"></i> Lit {{ sejour.localisationActuelleInfo?.litNumero }}</span>
+                          }
+                        </div>
+                      </td>
+                      <td>
+                        <span class="status-pill status-{{ sejour.statut.toLowerCase() }}">
+                          {{ sejour.statutDisplay || sejour.statut }}
+                        </span>
+                      </td>
+                      <td class="text-right">
+                        <button class="btn btn-sm btn-primary-light" (click)="$event.stopPropagation(); selectionnerSejour(sejour)">
+                          <i class="ri-folder-open-line"></i> Dossier
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </section>
+
+      <!-- Panneau Mouvements récents -->
+      <section class="card mouvements-stream-card">
+        <div class="card-header">
+          <div class="header-title">
+            <h3><i class="ri-route-line"></i> Mouvements & Transferts Récents</h3>
+            <span class="header-count">{{ parcoursService.mouvements().length }} transferts</span>
+          </div>
+        </div>
+        <div class="card-body">
+          @if (parcoursService.mouvements().length === 0) {
+            <div class="empty-state">
+              <i class="ri-route-line"></i>
+              <p>Aucun mouvement récent enregistré</p>
+            </div>
+          } @else {
+            <div class="mouvements-stream">
+              @for (mvt of parcoursService.mouvements(); track (mvt.id || $index)) {
+                <div class="mvt-card">
+                  <div class="mvt-top">
+                    <span class="mvt-type">{{ mvt.typeMouvementDisplay || mvt.typeMouvement }}</span>
+                    <span class="mvt-date">{{ mvt.dateMouvement | date:'dd/MM HH:mm' }}</span>
+                  </div>
+                  <div class="mvt-ref">Séjour {{ mvt.sejourReference || '#' + mvt.sejour }}</div>
+                  <div class="mvt-path">
+                    <span class="source">{{ mvt.localisationOrigineDetails?.serviceDetails?.nomService || 'Admission' }}</span>
+                    <i class="ri-arrow-right-line"></i>
+                    <span class="dest">{{ mvt.localisationDestinationDetails?.serviceDetails?.nomService || 'Destination' }}</span>
+                  </div>
+                  @if (mvt.motif) {
+                    <div class="mvt-motif"><strong>Motif :</strong> {{ mvt.motif }}</div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </section>
+    </div>
+  }
+
+  <!-- ========================================== -->
+  <!-- ONGLET 2 : LOCALISATION ACTUELLE           -->
+  <!-- ========================================== -->
+  @if (activeTab() === 'localisation') {
+    <section class="card localisation-full-card">
+      <div class="card-header">
+        <div class="header-title">
+          <h3><i class="ri-map-pin-user-line"></i> Carte de Localisation des Patients Présents</h3>
+          <span class="header-count">{{ parcoursService.localisations().length }} emplacements occupés</span>
+        </div>
+        <div class="filter-toggle">
+          <label class="toggle-label">
+            <input
+              type="checkbox"
+              [checked]="filterEstActuelle()"
+              (change)="filterEstActuelle.set(!filterEstActuelle()); chargerLocalisations()"
+            />
+            <span>Présents actuellement uniquement</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="card-body p-0">
+        @if (parcoursService.isLoading()) {
+          <div class="loading-state">
+            <div class="spinner"></div>
+            <span>Chargement des localisations en direct...</span>
+          </div>
+        } @else if (parcoursService.localisations().length === 0) {
+          <div class="empty-state">
+            <i class="ri-map-pin-line"></i>
+            <p>Aucune localisation active trouvée avec ces filtres</p>
+          </div>
+        } @else {
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Patient</th>
+                  <th>Réf. Séjour</th>
+                  <th>Pôle / Service</th>
+                  <th>Bâtiment</th>
+                  <th>Chambre</th>
+                  <th>Lit Hospitalier</th>
+                  <th>Début Présence</th>
+                  <th>Statut</th>
+                  <th class="text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (loc of parcoursService.localisations(); track (loc.id || $index)) {
+                  <tr>
+                    <td>
+                      <div class="patient-cell">
+                        <span class="name font-semibold">
+                          {{ (loc.patientPrenom && loc.patientNom) ? (loc.patientPrenom + ' ' + loc.patientNom) : (loc.patientNom || loc.patientNomComplet || 'Patient') }}
+                        </span>
+                        @if (loc.patientNss) {
+                          <span class="nss">NSS: {{ loc.patientNss }}</span>
+                        }
+                      </div>
+                    </td>
+                    <td class="font-mono font-bold">{{ loc.sejourReference || '#' + loc.sejour }}</td>
+                    <td>
+                      <span class="service-pill"><i class="ri-hospital-line"></i> {{ loc.serviceDetails?.nomService || loc.service }}</span>
+                    </td>
+                    <td>{{ loc.batimentDetails?.nom || (loc.batiment ? 'Bâtiment #' + loc.batiment : '—') }}</td>
+                    <td>
+                      @if (loc.chambreDetails?.numeroChambre) {
+                        <span class="room-pill">Ch. {{ loc.chambreDetails.numeroChambre }}</span>
+                      } @else {
+                        <span class="text-muted">—</span>
+                      }
+                    </td>
+                    <td>
+                      @if (loc.litDetails?.numeroLit) {
+                        <span class="lit-badge has-bed">
+                          <i class="ri-hotel-bed-line"></i> Lit {{ loc.litDetails.numeroLit }}
+                        </span>
+                      } @else {
+                        <span class="lit-badge">Sans lit assigné</span>
+                      }
+                    </td>
+                    <td>{{ loc.dateDebut | date:'dd/MM/yyyy HH:mm' }}</td>
+                    <td>
+                      <span class="status-pill" [class.status-en_cours]="loc.estActuelle" [class.status-termine]="!loc.estActuelle">
+                        {{ loc.estActuelle ? 'ACTUELLE' : 'PASSÉE' }}
+                      </span>
+                    </td>
+                    <td class="text-right">
+                      <button class="btn btn-sm btn-primary-light" (click)="chargerDossierParId(loc.sejour); activeTab.set('dossier')">
+                        <i class="ri-eye-line"></i> Voir Parcours
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    </section>
+  }
+
+  <!-- ========================================== -->
+  <!-- ONGLET 3 : DOSSIER PATIENT & CHRONOLOGIE   -->
+  <!-- ========================================== -->
+  @if (activeTab() === 'dossier') {
+    <div class="dossier-view-layout">
+      @if (parcoursService.activeDossier(); as dossier) {
+        <!-- En-tête du patient sélectionné (Inspiration WellSky / MediCare) -->
+        <section class="dossier-hero">
+          <div class="patient-profile">
+            <div class="avatar-circle">
+              <span class="avatar-initials">{{ getPatientInitials(dossier.sejour.patientDetails) }}</span>
+            </div>
+            <div class="profile-info">
+              <div class="badge-row">
+                <span class="ref-tag font-mono">{{ dossier.sejour.reference }}</span>
+                <span class="type-tag">{{ dossier.sejour.typePriseEnChargeDisplay || dossier.sejour.typePriseEnCharge }}</span>
+                <span class="status-tag status-{{ dossier.sejour.statut.toLowerCase() }}">
+                  {{ dossier.sejour.statutDisplay || dossier.sejour.statut }}
+                </span>
+                @if (dossier.sejour.patientDetails?.dateNaissance) {
+                  <span class="age-pill">{{ getPatientAge(dossier.sejour.patientDetails?.dateNaissance) }}</span>
+                }
+              </div>
+              <h2 class="patient-title">
+                {{ getPatientNomComplet(dossier.sejour.patientDetails) }}
+              </h2>
+              <div class="vital-meta">
+                <span><i class="ri-id-card-line"></i> <strong>NSS :</strong> {{ dossier.sejour.patientDetails?.numeroSecuriteSociale || 'Non précisé' }}</span>
+                <span><i class="ri-user-3-line"></i> <strong>Genre :</strong> {{ getSexeBadge(dossier.sejour.patientDetails?.sexe) }}</span>
+                <span><i class="ri-drop-line text-rose"></i> <strong>Groupe :</strong> {{ dossier.sejour.patientDetails?.groupeSanguin || 'N/A' }}</span>
+                <span><i class="ri-calendar-check-line"></i> <strong>Admission :</strong> {{ dossier.sejour.dateAdmission | date:'dd/MM/yyyy à HH:mm' }}</span>
+                @if (dossier.sejour.patientDetails?.telephone) {
+                  <span><i class="ri-phone-line"></i> {{ dossier.sejour.patientDetails?.telephone }}</span>
+                }
+                @if (dossier.sejour.dateSortie) {
+                  <span class="text-rose"><i class="ri-logout-box-r-line"></i> <strong>Sortie :</strong> {{ dossier.sejour.dateSortie | date:'dd/MM/yyyy à HH:mm' }}</span>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions de gestion -->
+          <div class="quick-actions">
+            <button
+              class="btn btn-primary"
+              (click)="ouvrirTransfertModal()"
+              [disabled]="!dossier.sejour.actif || dossier.sejour.statut === 'TERMINE'"
+            >
+              <i class="ri-arrow-left-right-line"></i> Nouveau Transfert
+            </button>
+            <button
+              class="btn btn-secondary"
+              (click)="ouvrirEventModal()"
+              [disabled]="!dossier.sejour.actif || dossier.sejour.statut === 'TERMINE'"
+            >
+              <i class="ri-add-circle-line"></i> Consigner Événement
+            </button>
+            <button
+              class="btn btn-danger-outline"
+              (click)="ouvrirSortieModal()"
+              [disabled]="dossier.sejour.statut === 'TERMINE'"
+            >
+              <i class="ri-logout-box-r-line"></i> Clôturer Sortie
+            </button>
+          </div>
+        </section>
+
+        <!-- Carte Localisation Actuelle -->
+        <section class="localisation-hero-card">
+          <div class="loc-header">
+            <div class="loc-title">
+              <span class="live-dot"></span>
+              <h3>Localisation Physique Actuelle</h3>
+            </div>
+            <span class="since">Depuis le {{ dossier.localisationActuelle?.dateDebut | date:'dd/MM/yyyy à HH:mm' }}</span>
+          </div>
+
+          <div class="loc-body">
+            @if (dossier.localisationActuelle; as loc) {
+              <div class="loc-metric">
+                <span class="label">Pôle / Service Actuel</span>
+                <span class="val highlight"><i class="ri-hospital-line"></i> {{ loc.serviceDetails?.nomService || loc.service }}</span>
+              </div>
+              <div class="loc-metric">
+                <span class="label">Bâtiment</span>
+                <span class="val">{{ loc.batimentDetails?.nom || (loc.batiment ? 'Bâtiment #' + loc.batiment : 'Zone Urgences / Non spécifié') }}</span>
+              </div>
+              <div class="loc-metric">
+                <span class="label">Chambre</span>
+                <span class="val">{{ loc.chambreDetails?.numeroChambre ? 'Chambre ' + loc.chambreDetails.numeroChambre : 'Sans chambre fixe' }}</span>
+              </div>
+              <div class="loc-metric">
+                <span class="label">Lit Hospitalier</span>
+                <span class="val lit-badge" [class.has-bed]="loc.lit">
+                  <i class="ri-hotel-bed-line"></i>
+                  {{ loc.litDetails?.numeroLit ? 'Lit ' + loc.litDetails.numeroLit : (loc.lit ? 'Lit #' + loc.lit : 'Box / Brancard') }}
+                </span>
+              </div>
+            } @else {
+              <div class="no-loc">
+                <i class="ri-map-pin-user-line"></i>
+                <p>Aucune localisation active (Séjour clôturé définitivement ou patient en attente)</p>
+              </div>
+            }
+          </div>
+        </section>
+
+        <!-- Grille Chronologie & Mouvements -->
+        <div class="timeline-mouvements-grid">
+          <!-- Timeline Clinique & Administrative -->
+          <div class="card timeline-card">
+            <div class="card-header">
+              <h3><i class="ri-pulse-line"></i> Chronologie des Événements du Séjour</h3>
+              <span class="count">{{ dossier.evenements.length }} événements</span>
+            </div>
+            <div class="card-body">
+              @if (dossier.evenements.length === 0) {
+                <div class="empty-state">
+                  <i class="ri-calendar-line"></i>
+                  <p>Aucun événement consigné pour le moment</p>
+                </div>
+              } @else {
+                <div class="timeline-list">
+                  @for (evt of dossier.evenements; track (evt.id || $index)) {
+                    <div class="timeline-item importance-{{ evt.importance.toLowerCase() }}">
+                      <div class="timeline-bullet"></div>
+                      <div class="timeline-content">
+                        <div class="evt-top">
+                          <div class="evt-title-group">
+                            <span class="evt-type-tag">{{ evt.typeEvenementDisplay || evt.typeEvenement }}</span>
+                            <span class="evt-title">{{ evt.titre }}</span>
+                          </div>
+                          <span class="evt-date">{{ evt.dateEvenement | date:'dd/MM/yyyy HH:mm' }}</span>
+                        </div>
+                        <p class="evt-desc">{{ evt.description }}</p>
+                        @if (evt.declareParNom) {
+                          <div class="evt-author"><i class="ri-user-line"></i> Consigné par : {{ evt.declareParNom }}</div>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Historique des Déplacements & Transferts -->
+          <div class="card mouvements-card">
+            <div class="card-header">
+              <h3><i class="ri-route-line"></i> Historique Chronologique des Déplacements</h3>
+              <span class="count">{{ dossier.mouvements.length }} mouvements</span>
+            </div>
+            <div class="card-body">
+              @if (dossier.mouvements.length === 0) {
+                <div class="empty-state">
+                  <i class="ri-route-line"></i>
+                  <p>Aucun déplacement enregistré</p>
+                </div>
+              } @else {
+                <div class="mouvements-list">
+                  @for (mvt of dossier.mouvements; track (mvt.id || $index)) {
+                    <div class="mouvement-item">
+                      <div class="mvt-icon"><i class="ri-exchange-line"></i></div>
+                      <div class="mvt-details">
+                        <div class="mvt-header">
+                          <span class="mvt-type">{{ mvt.typeMouvementDisplay || mvt.typeMouvement }}</span>
+                          <span class="mvt-time">{{ mvt.dateMouvement | date:'dd/MM/yyyy à HH:mm' }}</span>
+                        </div>
+                        <div class="mvt-route">
+                          <span class="from">{{ mvt.localisationOrigineDetails?.serviceDetails?.nomService || 'Admission initiale' }}</span>
+                          <i class="ri-arrow-right-line"></i>
+                          <span class="to">{{ mvt.localisationDestinationDetails?.serviceDetails?.nomService || 'Sortie' }}</span>
+                        </div>
+                        <div class="mvt-motif"><strong>Motif :</strong> {{ mvt.motif || 'Non précisé' }}</div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      } @else {
+        <div class="card empty-dossier-state">
+          <i class="ri-folder-user-line"></i>
+          <h3>Sélectionnez un patient ou un séjour</h3>
+          <p>Choisissez un séjour dans la liste ou recherchez un patient par nom ou référence.</p>
+          <button class="btn btn-primary" (click)="changerOnglet('dashboard')">
+            Retour au tableau de bord
+          </button>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- ========================================== -->
+<!-- MODALE 1 : TRANSFERT DYNAMIQUE DE PATIENT  -->
+<!-- ========================================== -->
+@if (showTransfertModal()) {
+  <div class="modal-backdrop" (click)="showTransfertModal.set(false)">
+    <div class="modal-dialog" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3><i class="ri-arrow-left-right-line"></i> Transférer le Patient</h3>
+        <button class="close-btn" (click)="showTransfertModal.set(false)">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-intro">
+          Le transfert met fin à la localisation active actuelle et affecte le patient au nouveau service/lit sélectionné de manière atomique.
+        </p>
+
+        <div class="form-group">
+          <label>Service de destination *</label>
+          <select [(ngModel)]="transfertData.service" class="form-control">
+            @for (srv of servicesList(); track (srv.id_service || srv.idService || srv.id || $index)) {
+              <option [value]="srv.id_service || srv.idService || srv.id">
+                {{ srv.nom_service || srv.nomService || srv.nom }}
+              </option>
+            }
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group col">
+            <label>Bâtiment (optionnel)</label>
+            <select
+              [ngModel]="transfertData.batiment"
+              (ngModelChange)="transfertData.batiment = $event; onBatimentChange($event)"
+              class="form-control"
+            >
+              <option [ngValue]="null">Sélectionner un bâtiment</option>
+              @for (bat of batimentsList(); track (bat.id_batiment || bat.idBatiment || bat.id || $index)) {
+                <option [value]="bat.id_batiment || bat.idBatiment || bat.id">{{ bat.nom_batiment || bat.nom || bat.nomBatiment }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="form-group col">
+            <label>Chambre (optionnel)</label>
+            <select
+              [ngModel]="transfertData.chambre"
+              (ngModelChange)="transfertData.chambre = $event; onChambreChange($event)"
+              class="form-control"
+              [disabled]="!transfertData.batiment"
+            >
+              <option [ngValue]="null">Sélectionner une chambre</option>
+              @for (ch of chambresList(); track (ch.id_chambre || ch.id || $index)) {
+                <option [value]="ch.id_chambre || ch.id">Chambre {{ ch.numero_chambre || ch.numeroChambre }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Lit d'hospitalisation disponible (optionnel)</label>
+          <select [(ngModel)]="transfertData.lit" class="form-control" [disabled]="!transfertData.chambre">
+            <option [ngValue]="null">Sans attribution de lit (ou transfert de box)</option>
+            @for (lit of litsDisponiblesList(); track (lit.id_lit || lit.id || $index)) {
+              <option [value]="lit.id_lit || lit.id">Lit {{ lit.numero_lit || lit.numeroLit || '#' + (lit.id_lit || lit.id) }} (Disponible)</option>
+            }
+          </select>
+          @if (transfertData.chambre && litsDisponiblesList().length === 0) {
+            <span class="field-hint text-amber">Aucun lit disponible actuellement dans cette chambre.</span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label>Motif clinique du transfert *</label>
+          <input
+            type="text"
+            [(ngModel)]="transfertData.motif"
+            class="form-control"
+            placeholder="Ex: Admission en soins intensifs, transfert post-examen labo"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Consignes / Observations de relève</label>
+          <textarea
+            [(ngModel)]="transfertData.commentaire"
+            class="form-control"
+            rows="2"
+            placeholder="Instructions de transmission soignante..."
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="showTransfertModal.set(false)" [disabled]="isSubmitting()">
+          Annuler
+        </button>
+        <button class="btn btn-primary" (click)="validerTransfert()" [disabled]="isSubmitting() || !transfertData.motif">
+          <i class="ri-check-line" *ngIf="!isSubmitting()"></i>
+          <span class="spinner-sm" *ngIf="isSubmitting()"></span>
+          Confirmer le Transfert
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ========================================== -->
+<!-- MODALE 2 : CLÔTURE SORTIE DÉFINITIVE       -->
+<!-- ========================================== -->
+@if (showSortieModal()) {
+  <div class="modal-backdrop" (click)="showSortieModal.set(false)">
+    <div class="modal-dialog" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3><i class="ri-logout-box-r-line"></i> Clôture Définitive du Séjour</h3>
+        <button class="close-btn" (click)="showSortieModal.set(false)">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="alert-info-box">
+          <i class="ri-information-line"></i>
+          <div>
+            <strong>Attention :</strong> Cette action clôture définitivement le séjour patient, libère automatiquement le lit d'hospitalisation attribué et archive le parcours médico-légal.
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Motif de sortie / Compte-rendu médical *</label>
+          <textarea
+            [(ngModel)]="sortieData.motifSortie"
+            class="form-control"
+            rows="3"
+            placeholder="Ex: Fin de traitement, guérison clinique, retour à domicile avec ordonnance de sortie."
+          ></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="showSortieModal.set(false)" [disabled]="isSubmitting()">
+          Annuler
+        </button>
+        <button class="btn btn-danger" (click)="validerSortie()" [disabled]="isSubmitting() || !sortieData.motifSortie">
+          <span class="spinner-sm" *ngIf="isSubmitting()"></span>
+          Valider la Sortie Définitive
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ========================================== -->
+<!-- MODALE 3 : CONSIGNATION D'ÉVÉNEMENT         -->
+<!-- ========================================== -->
+@if (showEventModal()) {
+  <div class="modal-backdrop" (click)="showEventModal.set(false)">
+    <div class="modal-dialog" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3><i class="ri-add-circle-line"></i> Consigner un Événement Clinique</h3>
+        <button class="close-btn" (click)="showEventModal.set(false)">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Catégorie de l'événement</label>
+          <select [(ngModel)]="newEventData.typeEvenement" class="form-control">
+            <option value="OBSERVATION">Observation clinique</option>
+            <option value="CONSULTATION">Consultation médicale</option>
+            <option value="PRESCRIPTION_EXAMEN">Prescription d'examen / analyse</option>
+            <option value="SOIN_ADMINISTRE">Administration d'un soin / traitement</option>
+            <option value="SORTIE_AUTORISEE">Validation médicale de la sortie</option>
+            <option value="AUTRE">Autre événement</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Titre de l'événement *</label>
+          <input
+            type="text"
+            [(ngModel)]="newEventData.titre"
+            class="form-control"
+            placeholder="Ex: Constantes vitales stables, perfusion posée"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Compte-rendu détaillé</label>
+          <textarea
+            [(ngModel)]="newEventData.description"
+            class="form-control"
+            rows="3"
+            placeholder="Détails circonstanciés ou observations soignantes..."
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Degré d'importance / Vigilance</label>
+          <select [(ngModel)]="newEventData.importance" class="form-control">
+            <option value="INFO">Information standard (INFO)</option>
+            <option value="ATTENTION">Vigilance soignante requise (ATTENTION)</option>
+            <option value="CRITIQUE">Urgence médicale / Alerte (CRITIQUE)</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="showEventModal.set(false)" [disabled]="isSubmitting()">
+          Annuler
+        </button>
+        <button class="btn btn-primary" (click)="validerEvenement()" [disabled]="isSubmitting() || !newEventData.titre">
+          <span class="spinner-sm" *ngIf="isSubmitting()"></span>
+          Consigner dans la Timeline
+        </button>
+      </div>
+    </div>
+  </div>
+}

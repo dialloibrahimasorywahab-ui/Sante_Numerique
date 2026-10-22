@@ -15,16 +15,15 @@ from pathlib import Path
 
 
 import environ
-from environ.environ import Env
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Initialisation de django-environ
-env = Env()
+env = environ.Env()
 
 # Lecture du fichier .env à la racine du projet
-Env.read_env(BASE_DIR / '.env')
+environ.Env.read_env(BASE_DIR / '.env')
 
 
 # Quick-start development settings - unsuitable for production
@@ -70,6 +69,10 @@ INSTALLED_APPS = [
     'consultation',
     'ordonnance',
     'ligne_ordonnance',
+    'sejour',
+    'localisation',
+    'mouvement',
+    'evenement',
     'simple_history',
 ]
 
@@ -135,34 +138,8 @@ JWT_COOKIE_SAMESITE = env('JWT_COOKIE_SAMESITE', default='Lax')
 JWT_COOKIE_SECURE = env.bool('JWT_COOKIE_SECURE', default=not DEBUG)
 
 # CORS Configuration
-# En développement, localhost:4200 est autorisé par défaut.
-# En production, définir CORS_ALLOWED_ORIGINS dans .env avec les domaines officiels uniquement.
-if DEBUG:
-    CORS_ALLOWED_ORIGINS = env.list(
-        'CORS_ALLOWED_ORIGINS',
-        default=['http://localhost:4200', 'http://127.0.0.1:4200']
-    )
-else:
-    # En production, cette variable DOIT être définie dans .env (pas de fallback permissif)
-    CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS')
-
+CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=['http://localhost:4200', 'http://127.0.0.1:4200'])
 CORS_ALLOW_CREDENTIALS = True
-
-# CSRF : liste des origines de confiance pour les requêtes multi-domaines.
-# Angular doit envoyer le header X-CSRFToken sur toute requête mutante (POST/PUT/PATCH/DELETE).
-# Ajouter ici tous les domaines officiels en production.
-CSRF_TRUSTED_ORIGINS = env.list(
-    'CSRF_TRUSTED_ORIGINS',
-    default=['http://localhost:4200', 'http://127.0.0.1:4200']
-)
-
-# CSRF_COOKIE_HTTPONLY=False permet au frontend JavaScript (Angular) de lire
-# le cookie csrftoken et de l'injecter dans le header X-CSRFToken.
-CSRF_COOKIE_HTTPONLY = False
-CSRF_COOKIE_SECURE = not DEBUG   # Cookie CSRF transmis uniquement en HTTPS en production
-
-# Exposer X-CSRFToken dans les réponses CORS pour qu'Angular puisse le récupérer
-CORS_EXPOSE_HEADERS = ['X-CSRFToken']
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'API Santé Numérique',
@@ -220,22 +197,28 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
-DATABASES = {
-    'default': env.db(
-        'DATABASE_URL',
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
-    )
-}
-
-if not env('DATABASE_URL', default=None) and env('DB_NAME', default=None):
-    DATABASES['default'] = {
-        'ENGINE': env('DB_ENGINE', default='django.db.backends.postgresql'),
-        'NAME': env('DB_NAME'),
-        'USER': env('DB_USER', default='postgres'),
-        'PASSWORD': env('DB_PASSWORD', default=''),
-        'HOST': env('DB_HOST', default='localhost'),
-        'PORT': env('DB_PORT', default='5432'),
+if env('DATABASE_URL', default=None):
+    DATABASES = {
+        'default': env.db('DATABASE_URL')
     }
+if env('DB_NAME', default=None):
+    DATABASES = {
+        'default': {
+            'ENGINE': env('DB_ENGINE', default='django.db.backends.postgresql'),
+            'NAME': env('DB_NAME'),
+            'USER': env('DB_USER', default='postgres'),
+            'PASSWORD': env('DB_PASSWORD', default=''),
+            'HOST': env('DB_HOST', default='localhost'),
+            'PORT': env('DB_PORT', default='5432'),
+        }
+    }
+# else:
+#     DATABASES = {
+#         'default': {
+#             'ENGINE': 'django.db.backends.sqlite3',
+#             'NAME': BASE_DIR / 'db.sqlite3',
+#         }
+#     }
 
 
 # Password validation

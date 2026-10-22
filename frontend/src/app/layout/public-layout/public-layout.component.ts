@@ -47,7 +47,7 @@ export class PublicLayoutComponent {
     const raw = this.currentUrl() || '';
     const cleanUrl = raw.split('?')[0].split('#')[0].toLowerCase().trim();
     if (cleanUrl === '/login' || cleanUrl === '/register') return false;
-    if (cleanUrl.startsWith('/patient') || cleanUrl.startsWith('/admin') || cleanUrl.startsWith('/medecin')) return false;
+    if (cleanUrl.startsWith('/patient') || cleanUrl.startsWith('/admin') || cleanUrl.startsWith('/medecin') || cleanUrl.startsWith('/parcours')) return false;
     return true;
   });
 }

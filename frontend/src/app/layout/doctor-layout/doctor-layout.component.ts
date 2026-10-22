@@ -32,6 +32,7 @@ export class DoctorLayoutComponent implements OnInit {
     { label: 'Mes Rendez-vous', route: '/medecin/rendez-vous', icon: 'calendar' },
     { label: 'Mes Patients', route: '/medecin/patients', icon: 'users' },
     { label: 'Mes Consultations', route: '/medecin/consultations', icon: 'stethoscope' },
+    { label: 'Parcours & Localisation', route: '/parcours', icon: 'route' },
     { label: 'Mes Ordonnances', route: '/medecin/ordonnances', icon: 'prescription' },
     { label: 'Disponibilités & Absences', route: '/medecin/disponibilites', icon: 'clock' },
     { label: 'Mon Profil', route: '/medecin/profil', icon: 'user' }

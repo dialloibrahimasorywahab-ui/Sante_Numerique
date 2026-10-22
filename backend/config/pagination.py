@@ -25,11 +25,19 @@ class StandardResultsSetPagination(PageNumberPagination):
         })
 
 
-def paginate_response(queryset, request, serializer_class, context=None):
+def paginate_response(arg1, arg2, serializer_class, context=None):
     """
     Helper pour paginer facilement une liste ou un QuerySet dans une vue @api_view.
     Retourne une Response paginée conforme à StandardResultsSetPagination.
+    Accepte indifféremment (queryset, request, ...) ou (request, queryset, ...).
     """
+    if hasattr(arg1, "query_params") or hasattr(arg1, "_request") or hasattr(arg1, "GET"):
+        request = arg1
+        queryset = arg2
+    else:
+        queryset = arg1
+        request = arg2
+
     paginator = StandardResultsSetPagination()
     page = paginator.paginate_queryset(queryset, request)
     ctx = context or {"request": request}

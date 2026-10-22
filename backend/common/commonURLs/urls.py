@@ -17,7 +17,10 @@ urlpatterns = [
     path('frais_consultations/', include('frais_consultation.fraisUrls')),
     path('ordonnances/', include('ordonnance.ordonnanceUrls')),
     path('lignes_ordonnances/', include('ligne_ordonnance.ligneUrls')),
-    path('lignes-ordonnances/', include('ligne_ordonnance.ligneUrls')),
+    path('sejours/', include('sejour.sejourUrls')),
+    path('localisations/', include('localisation.localisationUrls')),
+    path('mouvements/', include('mouvement.mouvementUrls')),
+    path('evenements/', include('evenement.evenementUrls')),
 ]
 
 

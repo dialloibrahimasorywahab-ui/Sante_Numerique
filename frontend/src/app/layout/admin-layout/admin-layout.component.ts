@@ -40,7 +40,8 @@ export class AdminLayoutComponent {
     {
       title: 'Vue d\'ensemble',
       items: [
-        { label: 'Tableau de bord', route: '/admin/dashboard', icon: 'dashboard' }
+        { label: 'Tableau de bord', route: '/admin/dashboard', icon: 'dashboard' },
+        { label: 'Parcours & Localisation', route: '/parcours', icon: 'route' }
       ]
     },
     {
