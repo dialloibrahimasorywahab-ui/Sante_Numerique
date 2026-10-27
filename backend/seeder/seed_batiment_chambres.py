@@ -16,71 +16,71 @@ from lit.models import Lit
 
 BATIMENTS_SEED_DATA = [
     {
-        "nom": "Bâtiment Principal — Pavillon A",
+        "nom": "Bâtiment Principal A",
         "description": "Consultations externes, Médecine Générale et Soins Polyvalents",
         "chambres": [
-            {"numero_chambre": 1, "type_chambre": Chambre.TypeChambre.INDIVIDUELLE, "capacite": 1},
-            {"numero_chambre": 2, "type_chambre": Chambre.TypeChambre.INDIVIDUELLE, "capacite": 1},
-            {"numero_chambre": 3, "type_chambre": Chambre.TypeChambre.DOUBLE, "capacite": 2},
-            {"numero_chambre": 4, "type_chambre": Chambre.TypeChambre.DOUBLE, "capacite": 2},
-            {"numero_chambre": 5, "type_chambre": Chambre.TypeChambre.SUITE, "capacite": 2},
-            {"numero_chambre": 6, "type_chambre": Chambre.TypeChambre.INDIVIDUELLE, "capacite": 1},
-            {"numero_chambre": 7, "type_chambre": Chambre.TypeChambre.DOUBLE, "capacite": 2},
-            {"numero_chambre": 8, "type_chambre": Chambre.TypeChambre.DOUBLE, "capacite": 2},
-            {"numero_chambre": 9, "type_chambre": Chambre.TypeChambre.INDIVIDUELLE, "capacite": 1},
-            {"numero_chambre": 10, "type_chambre": Chambre.TypeChambre.SUITE, "capacite": 2},
-            {"numero_chambre": 11, "type_chambre": Chambre.TypeChambre.COMMUNE, "capacite": 4},
-            {"numero_chambre": 12, "type_chambre": Chambre.TypeChambre.COMMUNE, "capacite": 6},
+            {"numero_chambre": 101, "type_chambre": Chambre.TypeChambre.INDIVIDUELLE, "capacite": 1},
+            {"numero_chambre": 102, "type_chambre": Chambre.TypeChambre.INDIVIDUELLE, "capacite": 1},
+            {"numero_chambre": 103, "type_chambre": Chambre.TypeChambre.DOUBLE, "capacite": 2},
+            {"numero_chambre": 104, "type_chambre": Chambre.TypeChambre.DOUBLE, "capacite": 2},
+            {"numero_chambre": 105, "type_chambre": Chambre.TypeChambre.SUITE, "capacite": 2},
+            {"numero_chambre": 106, "type_chambre": Chambre.TypeChambre.INDIVIDUELLE, "capacite": 1},
+            {"numero_chambre": 107, "type_chambre": Chambre.TypeChambre.DOUBLE, "capacite": 2},
+            {"numero_chambre": 108, "type_chambre": Chambre.TypeChambre.DOUBLE, "capacite": 2},
+            {"numero_chambre": 109, "type_chambre": Chambre.TypeChambre.INDIVIDUELLE, "capacite": 1},
+            {"numero_chambre": 110, "type_chambre": Chambre.TypeChambre.SUITE, "capacite": 2},
+            {"numero_chambre": 111, "type_chambre": Chambre.TypeChambre.COMMUNE, "capacite": 4},
+            {"numero_chambre": 112, "type_chambre": Chambre.TypeChambre.COMMUNE, "capacite": 6},
         ]
     },
     {
-        "nom": "Pavillon des Urgences & Réanimation",
+        "nom": "Pavillon des Urgences",
         "description": "Accueil des urgences, soins intensifs et unité de réanimation",
         "chambres": [
-            {"numero_chambre": 1, "type_chambre": Chambre.TypeChambre.URGENCES, "capacite": 1},
-            {"numero_chambre": 2, "type_chambre": Chambre.TypeChambre.URGENCES, "capacite": 1},
-            {"numero_chambre": 3, "type_chambre": Chambre.TypeChambre.URGENCES, "capacite": 2},
-            {"numero_chambre": 4, "type_chambre": Chambre.TypeChambre.URGENCES, "capacite": 2},
-            {"numero_chambre": 5, "type_chambre": Chambre.TypeChambre.REANIMATION, "capacite": 1},
-            {"numero_chambre": 6, "type_chambre": Chambre.TypeChambre.REANIMATION, "capacite": 1},
-            {"numero_chambre": 7, "type_chambre": Chambre.TypeChambre.REANIMATION, "capacite": 1},
-            {"numero_chambre": 8, "type_chambre": Chambre.TypeChambre.URGENCES, "capacite": 2},
+            {"numero_chambre": 201, "type_chambre": Chambre.TypeChambre.URGENCES, "capacite": 1},
+            {"numero_chambre": 202, "type_chambre": Chambre.TypeChambre.URGENCES, "capacite": 1},
+            {"numero_chambre": 203, "type_chambre": Chambre.TypeChambre.URGENCES, "capacite": 2},
+            {"numero_chambre": 204, "type_chambre": Chambre.TypeChambre.URGENCES, "capacite": 2},
+            {"numero_chambre": 205, "type_chambre": Chambre.TypeChambre.REANIMATION, "capacite": 1},
+            {"numero_chambre": 206, "type_chambre": Chambre.TypeChambre.REANIMATION, "capacite": 1},
+            {"numero_chambre": 207, "type_chambre": Chambre.TypeChambre.REANIMATION, "capacite": 1},
+            {"numero_chambre": 208, "type_chambre": Chambre.TypeChambre.URGENCES, "capacite": 2},
         ]
     },
     {
-        "nom": "Pôle Maternité & Gynécologie — Pavillon B",
+        "nom": "Bâtiment Maternité B",
         "description": "Services de gynécologie, obstétrique, salles d'accouchement et suites",
         "chambres": [
-            {"numero_chambre": 1, "type_chambre": Chambre.TypeChambre.INDIVIDUELLE, "capacite": 1},
-            {"numero_chambre": 2, "type_chambre": Chambre.TypeChambre.INDIVIDUELLE, "capacite": 1},
-            {"numero_chambre": 3, "type_chambre": Chambre.TypeChambre.DOUBLE, "capacite": 2},
-            {"numero_chambre": 4, "type_chambre": Chambre.TypeChambre.DOUBLE, "capacite": 2},
-            {"numero_chambre": 5, "type_chambre": Chambre.TypeChambre.SUITE, "capacite": 2},
-            {"numero_chambre": 6, "type_chambre": Chambre.TypeChambre.SUITE, "capacite": 2},
+            {"numero_chambre": 301, "type_chambre": Chambre.TypeChambre.INDIVIDUELLE, "capacite": 1},
+            {"numero_chambre": 302, "type_chambre": Chambre.TypeChambre.INDIVIDUELLE, "capacite": 1},
+            {"numero_chambre": 303, "type_chambre": Chambre.TypeChambre.DOUBLE, "capacite": 2},
+            {"numero_chambre": 304, "type_chambre": Chambre.TypeChambre.DOUBLE, "capacite": 2},
+            {"numero_chambre": 305, "type_chambre": Chambre.TypeChambre.SUITE, "capacite": 2},
+            {"numero_chambre": 306, "type_chambre": Chambre.TypeChambre.SUITE, "capacite": 2},
         ]
     },
     {
-        "nom": "Bloc Opératoire & Chirurgie Centrale",
+        "nom": "Bloc Opératoire & Chirurgie",
         "description": "Interventions chirurgicales et hospitalisation post-opératoire",
         "chambres": [
-            {"numero_chambre": 1, "type_chambre": Chambre.TypeChambre.INDIVIDUELLE, "capacite": 1},
-            {"numero_chambre": 2, "type_chambre": Chambre.TypeChambre.INDIVIDUELLE, "capacite": 1},
-            {"numero_chambre": 3, "type_chambre": Chambre.TypeChambre.REANIMATION, "capacite": 1},
-            {"numero_chambre": 4, "type_chambre": Chambre.TypeChambre.REANIMATION, "capacite": 1},
-            {"numero_chambre": 5, "type_chambre": Chambre.TypeChambre.DOUBLE, "capacite": 2},
-            {"numero_chambre": 6, "type_chambre": Chambre.TypeChambre.DOUBLE, "capacite": 2},
+            {"numero_chambre": 401, "type_chambre": Chambre.TypeChambre.INDIVIDUELLE, "capacite": 1},
+            {"numero_chambre": 402, "type_chambre": Chambre.TypeChambre.INDIVIDUELLE, "capacite": 1},
+            {"numero_chambre": 403, "type_chambre": Chambre.TypeChambre.REANIMATION, "capacite": 1},
+            {"numero_chambre": 404, "type_chambre": Chambre.TypeChambre.REANIMATION, "capacite": 1},
+            {"numero_chambre": 405, "type_chambre": Chambre.TypeChambre.DOUBLE, "capacite": 2},
+            {"numero_chambre": 406, "type_chambre": Chambre.TypeChambre.DOUBLE, "capacite": 2},
         ]
     },
     {
-        "nom": "Pavillon des Spécialités Médicales — Pavillon C",
+        "nom": "Pavillon Spécialités C",
         "description": "Cardiologie, Neurologie, Dermatologie et Radiologie",
         "chambres": [
-            {"numero_chambre": 1, "type_chambre": Chambre.TypeChambre.INDIVIDUELLE, "capacite": 1},
-            {"numero_chambre": 2, "type_chambre": Chambre.TypeChambre.INDIVIDUELLE, "capacite": 1},
-            {"numero_chambre": 3, "type_chambre": Chambre.TypeChambre.DOUBLE, "capacite": 2},
-            {"numero_chambre": 4, "type_chambre": Chambre.TypeChambre.DOUBLE, "capacite": 2},
-            {"numero_chambre": 5, "type_chambre": Chambre.TypeChambre.SUITE, "capacite": 2},
-            {"numero_chambre": 6, "type_chambre": Chambre.TypeChambre.COMMUNE, "capacite": 4},
+            {"numero_chambre": 501, "type_chambre": Chambre.TypeChambre.INDIVIDUELLE, "capacite": 1},
+            {"numero_chambre": 502, "type_chambre": Chambre.TypeChambre.INDIVIDUELLE, "capacite": 1},
+            {"numero_chambre": 503, "type_chambre": Chambre.TypeChambre.DOUBLE, "capacite": 2},
+            {"numero_chambre": 504, "type_chambre": Chambre.TypeChambre.DOUBLE, "capacite": 2},
+            {"numero_chambre": 505, "type_chambre": Chambre.TypeChambre.SUITE, "capacite": 2},
+            {"numero_chambre": 506, "type_chambre": Chambre.TypeChambre.COMMUNE, "capacite": 4},
         ]
     }
 ]
@@ -121,13 +121,18 @@ def run_seed():
         )
         total_batiments_crees += 1
 
+        # pyrefly: ignore [missing-attribute]
         print(f"\n Bâtiment : {batiment.nom} (ID: {batiment.idBatiment})")
 
         for ch_data in chambres_list:
+            # pyrefly: ignore [bad-index]
             num = ch_data["numero_chambre"]
+            # pyrefly: ignore [bad-index]
             type_ch = ch_data["type_chambre"]
+            # pyrefly: ignore [bad-index]
             cap = ch_data["capacite"]
 
+            # pyrefly: ignore [missing-attribute]
             existing_chambres = Chambre.objects.filter(
                 batiment=batiment,
                 numero_chambre=num
@@ -161,17 +166,25 @@ def run_seed():
             nb_lits_chambre = len(lits)
             print(f"   |- Chambre {chambre.numero_chambre} | Type: {chambre.get_type_chambre_display()} | Capacite: {chambre.capacite} | Lits: {nb_lits_chambre}")
 
+        # pyrefly: ignore [missing-attribute]
         batiment_svc.sync_nombre_chambres(batiment.idBatiment)
+        # pyrefly: ignore [missing-attribute]
         print(f"   Total chambres enregistrees : {batiment.nombre_chambre}")
 
     print("\n=========================================================")
     print("  SEEDING TERMINE AVEC SUCCES !")
     print(f" Total Batiments traites : {total_batiments_crees}")
+    # pyrefly: ignore [missing-attribute]
     print(f" Total Chambres : {Chambre.objects.count()}")
+    # pyrefly: ignore [missing-attribute]
     print(f" Total Lits en base de donnees : {Lit.objects.count()}")
+    # pyrefly: ignore [missing-attribute]
     print("   - Lits Disponibles  :", Lit.objects.filter(etat=Lit.EtatLit.DISPONIBLE).count())
+    # pyrefly: ignore [missing-attribute]
     print("   - Lits Occupes      :", Lit.objects.filter(etat=Lit.EtatLit.OCCUPE).count())
+    # pyrefly: ignore [missing-attribute]
     print("   - Lits Reserves     :", Lit.objects.filter(etat=Lit.EtatLit.RESERVE).count())
+    # pyrefly: ignore [missing-attribute]
     print("   - Lits En Nettoyage :", Lit.objects.filter(etat=Lit.EtatLit.EN_NETTOYAGE).count())
     print("=========================================================")
 

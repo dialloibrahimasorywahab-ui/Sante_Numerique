@@ -1,6 +1,5 @@
 import { Injectable, signal } from '@angular/core';
 import { SpecialiteMedecin } from '../../medecins/models/models';
-import { addDays, toIsoDate } from '../../../shared/utils';
 
 export interface ServiceSpecialite {
   id: string;
@@ -295,7 +294,11 @@ export class HospitalService {
    * Retourne la date d'aujourd'hui au format YYYY-MM-DD
    */
   getTodayString(): string {
-    return toIsoDate();
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   /**
@@ -308,7 +311,12 @@ export class HospitalService {
     if (validTodaySlots.length > 0) {
       return today;
     }
-    return toIsoDate(addDays(new Date(), 1));
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const year = tomorrow.getFullYear();
+    const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
+    const day = String(tomorrow.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   /**

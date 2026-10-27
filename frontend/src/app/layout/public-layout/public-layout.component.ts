@@ -47,7 +47,18 @@ export class PublicLayoutComponent {
     const raw = this.currentUrl() || '';
     const cleanUrl = raw.split('?')[0].split('#')[0].toLowerCase().trim();
     if (cleanUrl === '/login' || cleanUrl === '/register') return false;
-    if (cleanUrl.startsWith('/patient') || cleanUrl.startsWith('/admin') || cleanUrl.startsWith('/medecin') || cleanUrl.startsWith('/parcours')) return false;
+
+    // Portails privés internes avec leur propre layout (Sidebar + Topbar)
+    const privatePortals = ['/patient', '/admin', '/parcours'];
+    if (privatePortals.some(portal => cleanUrl === portal || cleanUrl.startsWith(portal + '/'))) {
+      return false;
+    }
+
+    // Espace praticien privé (/medecin/...) — Ne pas masquer pour le répertoire public (/medecins)
+    if (cleanUrl === '/medecin' || cleanUrl.startsWith('/medecin/')) {
+      return false;
+    }
+
     return true;
   });
 }

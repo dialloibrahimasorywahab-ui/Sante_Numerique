@@ -93,7 +93,7 @@ def run_seed_hospitalisations():
         crees += 1
 
         patient_nom = f"{patient.id_utilisateur.prenom} {patient.id_utilisateur.nom}" if patient.id_utilisateur else f"Patient #{patient.id_patient}"
-        med_nom = f"Dr. {medecin.idUtilisateur.prenom} {medecin.idUtilisateur.nom}" if medecin.idUtilisateur else f"Dr. #{medecin.idMedecin}"
+        med_nom = f"Dr. {medecin.id_utilisateur.prenom} {medecin.id_utilisateur.nom}" if medecin.id_utilisateur else f"Dr. #{medecin.id_medecin}"
         lit_label = f"Lit #{lit.id} ({lit.numero_lit})" if lit else "Aucun lit"
 
         print(f"   |- Hosp #{hosp.id} | {patient_nom} | {med_nom} | {lit_label} | Statut: {hosp.get_statut_display()}")

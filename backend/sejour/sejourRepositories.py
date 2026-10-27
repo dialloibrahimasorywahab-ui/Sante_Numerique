@@ -62,11 +62,31 @@ class SejourRepository:
         if patient_id:
             qs = qs.filter(patient_id=patient_id)
         if service_id:
-            qs = qs.filter(service_responsable_id=service_id)
+            try:
+                service_id_int = int(service_id)
+                qs = qs.filter(
+                    Q(service_responsable_id=service_id_int)
+                    | Q(localisations__service_id=service_id_int, localisations__est_actuelle=True)
+                ).distinct()
+            except (ValueError, TypeError):
+                qs = qs.filter(
+                    Q(service_responsable__nom_service__iexact=str(service_id))
+                    | Q(localisations__service__nom_service__iexact=str(service_id), localisations__est_actuelle=True)
+                ).distinct()
         if medecin_id:
             qs = qs.filter(medecin_responsable_id=medecin_id)
         if statut:
-            qs = qs.filter(statut=statut)
+            if statut == "TRANSFERE":
+                qs = qs.filter(
+                    Q(statut=Sejour.StatutSejour.TRANSFERE)
+                    | Q(mouvements__type_mouvement__in=[
+                        "TRANSFERT_SERVICE",
+                        "CHANGEMENT_CHAMBRE",
+                        "CHANGEMENT_LIT",
+                    ])
+                ).distinct()
+            else:
+                qs = qs.filter(statut=statut)
         if type_prise_en_charge:
             qs = qs.filter(type_prise_en_charge=type_prise_en_charge)
         if date_debut:
@@ -128,6 +148,7 @@ class SejourRepository:
             ).distinct().count(),
             "lits_occupes": Lit.objects.filter(etat="OCCUPE").count(),
             "lits_disponibles": Lit.objects.filter(etat="DISPONIBLE").count(),
+            "lits_indisponibles": Lit.objects.exclude(etat__in=["OCCUPE", "DISPONIBLE"]).count(),
             "total_lits": Lit.objects.count(),
             "transferts_recents": MouvementPatient.objects.filter(date_mouvement__gte=hier).count(),
             "sorties_recentes": Sejour.objects.filter(statut=Sejour.StatutSejour.TERMINE, date_sortie__gte=hier).count(),

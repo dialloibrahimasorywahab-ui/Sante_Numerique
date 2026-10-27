@@ -44,6 +44,7 @@ export class ParcoursService {
         patientsHospitalises: raw.patients_hospitalises ?? raw.patientsHospitalises ?? 0,
         litsOccupes: raw.lits_occupes ?? raw.litsOccupes ?? 0,
         litsDisponibles: raw.lits_disponibles ?? raw.litsDisponibles ?? 0,
+        litsIndisponibles: raw.lits_indisponibles ?? raw.litsIndisponibles ?? Math.max(0, (raw.total_lits ?? 0) - (raw.lits_occupes ?? 0) - (raw.lits_disponibles ?? 0)),
         totalLits: raw.total_lits ?? raw.totalLits ?? 0,
         transfertsRecents: raw.transferts_recents ?? raw.transfertsRecents ?? 0,
         sortiesRecentes: raw.sorties_recentes ?? raw.sortiesRecentes ?? 0,
@@ -179,6 +180,7 @@ export class ParcoursService {
           sejour: {
             ...s,
             idSejour: s.id_sejour ?? s.idSejour ?? s.id,
+            serviceResponsable: s.service_responsable ?? s.serviceResponsable ?? s.service_details?.id_service ?? s.service_details?.id,
             reference: s.reference,
             patientDetails: p ? {
               id: p.id_patient || p.idPatient || p.id || s.patient,
@@ -212,44 +214,45 @@ export class ParcoursService {
           },
           localisationActuelle: raw.localisation_actuelle || raw.localisationActuelle,
           historiqueLocalisations: (raw.historique_localisations || raw.localisations || []).map((l: any) => ({
-          ...l,
-          id: l.id_localisation ?? l.id,
-          dateDebut: l.date_debut || l.dateDebut,
-          dateFin: l.date_fin || l.dateFin,
-          estActuelle: l.est_actuelle ?? l.estActuelle,
-          serviceNom: l.service_nom || l.serviceNom || l.service_details?.nom_service,
-          batimentNom: l.batiment_nom || l.batimentNom || l.batiment_details?.nom_batiment,
-          chambreNumero: l.chambre_numero || l.chambreNumero || l.chambre_details?.numero_chambre,
-          litNumero: l.lit_numero || l.litNumero || l.lit_details?.numero_lit,
-        })),
-        localisations: (raw.localisations || raw.historique_localisations || []).map((l: any) => ({
-          ...l,
-          id: l.id_localisation ?? l.id,
-          dateDebut: l.date_debut || l.dateDebut,
-          dateFin: l.date_fin || l.dateFin,
-          estActuelle: l.est_actuelle ?? l.estActuelle,
-          serviceNom: l.service_nom || l.serviceNom || l.service_details?.nom_service,
-          batimentNom: l.batiment_nom || l.batimentNom || l.batiment_details?.nom_batiment,
-          chambreNumero: l.chambre_numero || l.chambreNumero || l.chambre_details?.numero_chambre,
-          litNumero: l.lit_numero || l.litNumero || l.lit_details?.numero_lit,
-        })),
-        mouvements: (raw.mouvements || []).map((m: any) => ({
-          ...m,
-          id: m.id_mouvement ?? m.id,
-          dateMouvement: m.date_mouvement || m.dateMouvement,
-          typeMouvement: m.type_mouvement || m.typeMouvement,
-          typeMouvementDisplay: m.type_mouvement_display || m.typeMouvementDisplay,
-          effectueParNom: m.effectue_par_nom || m.effectueParNom,
-        })),
-        evenements: (raw.evenements || []).map((e: any) => ({
-          ...e,
-          id: e.id_evenement ?? e.id,
-          dateEvenement: e.date_evenement || e.dateEvenement,
-          typeEvenement: e.type_evenement || e.typeEvenement,
-          typeEvenementDisplay: e.type_evenement_display || e.typeEvenementDisplay,
-          declareParNom: e.declare_par_nom || e.declareParNom,
-        })),
-        analyses: raw.analyses || [],
+            ...l,
+            id: l.id_localisation ?? l.id,
+            dateDebut: l.date_debut || l.dateDebut,
+            dateFin: l.date_fin || l.dateFin,
+            estActuelle: l.est_actuelle ?? l.estActuelle,
+            serviceNom: l.service_nom || l.serviceNom || l.service_details?.nom_service,
+            batimentNom: l.batiment_nom || l.batimentNom || l.batiment_details?.nom_batiment,
+            chambreNumero: l.chambre_numero || l.chambreNumero || l.chambre_details?.numero_chambre,
+            litNumero: l.lit_numero || l.litNumero || l.lit_details?.numero_lit,
+          })),
+          localisations: (raw.localisations || raw.historique_localisations || []).map((l: any) => ({
+            ...l,
+            id: l.id_localisation ?? l.id,
+            dateDebut: l.date_debut || l.dateDebut,
+            dateFin: l.date_fin || l.dateFin,
+            estActuelle: l.est_actuelle ?? l.estActuelle,
+            serviceNom: l.service_nom || l.serviceNom || l.service_details?.nom_service,
+            batimentNom: l.batiment_nom || l.batimentNom || l.batiment_details?.nom_batiment,
+            chambreNumero: l.chambre_numero || l.chambreNumero || l.chambre_details?.numero_chambre,
+            litNumero: l.lit_numero || l.litNumero || l.lit_details?.numero_lit,
+          })),
+          mouvements: (raw.mouvements || []).map((m: any) => ({
+            ...m,
+            id: m.id_mouvement ?? m.id,
+            dateMouvement: m.date_mouvement || m.dateMouvement,
+            typeMouvement: m.type_mouvement || m.typeMouvement,
+            typeMouvementDisplay: m.type_mouvement_display || m.typeMouvementDisplay,
+            effectueParNom: m.effectue_par_nom || m.effectueParNom,
+          })),
+          evenements: (raw.evenements || []).map((e: any) => ({
+            ...e,
+            id: e.id_evenement ?? e.id,
+            dateEvenement: e.date_evenement || e.dateEvenement,
+            typeEvenement: e.type_evenement || e.typeEvenement,
+            typeEvenementDisplay: e.type_evenement_display || e.typeEvenementDisplay,
+            declareParNom: e.declare_par_nom || e.declareParNom,
+          })),
+          analyses: raw.analyses || [],
+        };
       }),
       tap({
         next: (data: DossierSyntheseSejour) => {
@@ -411,12 +414,13 @@ export class ParcoursService {
           dateMouvement: m.date_mouvement || m.dateMouvement,
           typeMouvement: m.type_mouvement || m.typeMouvement,
           typeMouvementDisplay: m.type_mouvement_display || m.typeMouvementDisplay,
-          sourceDetails: m.source_details || m.sourceDetails,
-          destinationDetails: m.destination_details || m.destinationDetails,
+          sourceDetails: m.localisation_origine_details || m.source_details || m.sourceDetails,
+          destinationDetails: m.localisation_destination_details || m.destination_details || m.destinationDetails,
           motif: m.motif,
           commentaire: m.commentaire,
-          effectuePar: m.effectue_par || m.effectuePar,
-          effectueParNom: m.effectue_par_nom || m.effectueParNom,
+          effectuePar: m.enregistre_par || m.effectue_par || m.effectuePar,
+          effectueParNom: m.enregistre_par_nom || m.effectue_par_nom || m.effectueParNom,
+          effectueParRole: m.enregistre_par_role || (m as any).effectue_par_role,
           actif: m.actif,
         }));
         return {
@@ -441,30 +445,71 @@ export class ParcoursService {
    * Infrastructure hospitalière (pour le formulaire de transfert dynamique)
    */
   getServicesList(): Observable<any[]> {
-    return this.http.get<any>(`${this.baseUrl}/services/`).pipe(
-      map((res: any) => res.results || (Array.isArray(res) ? res : []))
+    return this.http.get<any>(`${this.baseUrl}/services/?page_size=100`).pipe(
+      map((res: any) => {
+        const raw = res.results || (Array.isArray(res) ? res : []);
+        return raw.map((s: any) => ({
+          ...s,
+          id: s.id ?? s.id_service ?? s.idService,
+          nom: s.nom_service_display || s.nomServiceDisplay || s.nom_service || s.nomService || s.nom,
+        }));
+      })
     );
   }
 
   getBatimentsList(): Observable<any[]> {
-    return this.http.get<any>(`${this.baseUrl}/batiments/`).pipe(
-      map((res: any) => res.results || (Array.isArray(res) ? res : []))
+    return this.http.get<any>(`${this.baseUrl}/batiments/?page_size=100`).pipe(
+      map((res: any) => {
+        const raw = res.results || (Array.isArray(res) ? res : []);
+        return raw.map((b: any) => ({
+          ...b,
+          id: b.id ?? b.id_batiment ?? b.idBatiment,
+          nom: b.nom,
+        }));
+      })
     );
   }
 
   getChambresList(batimentId?: number): Observable<any[]> {
-    let params = new HttpParams();
-    if (batimentId) params = params.set('batiment', batimentId.toString());
+    let params = new HttpParams().set('page_size', '100');
+    if (batimentId) {
+      params = params.set('batiment_id', batimentId.toString());
+      params = params.set('batiment', batimentId.toString());
+    }
     return this.http.get<any>(`${this.baseUrl}/chambres/`, { params }).pipe(
-      map((res: any) => res.results || (Array.isArray(res) ? res : []))
+      map((res: any) => {
+        const raw = res.results || (Array.isArray(res) ? res : []);
+        return raw.map((ch: any) => ({
+          ...ch,
+          id: ch.id ?? ch.idChambre,
+          numeroChambre: ch.numero_chambre ?? ch.numeroChambre,
+          statut: ch.statut,
+          statutDisplay: ch.statutDisplay || ch.statut_display,
+          litsDisponiblesCount: ch.litsDisponiblesCount ?? ch.lits_disponibles_count ?? 0,
+        }));
+      })
     );
   }
 
-  getLitsDisponibles(chambreId?: number): Observable<any[]> {
-    let params = new HttpParams().set('etat', 'DISPONIBLE');
-    if (chambreId) params = params.set('chambre', chambreId.toString());
+  getLitsDisponibles(chambreId?: number, batimentId?: number): Observable<any[]> {
+    let params = new HttpParams().set('etat', 'DISPONIBLE').set('page_size', '100');
+    if (chambreId) {
+      params = params.set('chambre_id', chambreId.toString());
+      params = params.set('chambre', chambreId.toString());
+    }
+    if (batimentId) {
+      params = params.set('batiment_id', batimentId.toString());
+      params = params.set('batiment', batimentId.toString());
+    }
     return this.http.get<any>(`${this.baseUrl}/lits/`, { params }).pipe(
-      map((res: any) => res.results || (Array.isArray(res) ? res : []))
+      map((res: any) => {
+        const raw = res.results || (Array.isArray(res) ? res : []);
+        return raw.map((l: any) => ({
+          ...l,
+          id: l.id ?? l.idLit,
+          numeroLit: l.numero_lit ?? l.numeroLit ?? `Lit ${l.id}`,
+        }));
+      })
     );
   }
 }

@@ -1,4 +1,4 @@
-from django.db import IntegrityError
+from django.db import IntegrityError, models
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiExample, OpenApiParameter, extend_schema
 from rest_framework import status
@@ -11,6 +11,7 @@ from config.permissions import IsAdmin
 from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer, PAGINATION_PARAMS, SEARCH_PARAM
 from .chambreSerializers import ChambreSerializer
 from .chambreServices import ChambreService
+from .models import Chambre
 
 chambre_service = ChambreService()
 
@@ -40,23 +41,33 @@ chambre_service = ChambreService()
 def create_chambre(request):
     if request.method == "GET":
         actif_only = request.query_params.get("all", "false").lower() != "true"
-        batiment_id = request.query_params.get('batiment_id') or request.query_params.get('id_batiment')
+        batiment_id = (
+            request.query_params.get('batiment_id')
+            or request.query_params.get('id_batiment')
+            or request.query_params.get('batiment')
+        )
         type_chambre = request.query_params.get('type_chambre') or request.query_params.get('type')
         statut = request.query_params.get('statut')
         search_q = request.query_params.get('search') or request.query_params.get('q')
 
+        qs = Chambre.objects.select_related('batiment').all()
+        if actif_only:
+            qs = qs.exclude(statut=Chambre.StatutChambre.HORS_SERVICE)
         if batiment_id:
-            chambres = chambre_service.get_chambres_by_batiment(batiment_id, actif_only=actif_only)
-        elif type_chambre:
-            chambres = chambre_service.get_chambres_by_type(type_chambre, actif_only=actif_only)
-        elif statut:
-            chambres = chambre_service.get_chambres_by_statut(statut, actif_only=actif_only)
-        elif search_q:
-            chambres = chambre_service.search_chambres(search_q, actif_only=actif_only)
-        else:
-            chambres = chambre_service.get_all_chambres(actif_only=actif_only)
+            qs = qs.filter(batiment_id=batiment_id)
+        if type_chambre:
+            qs = qs.filter(type_chambre__iexact=str(type_chambre).strip())
+        if statut:
+            qs = qs.filter(statut__iexact=str(statut).strip())
+        if search_q:
+            q_clean = str(search_q).strip()
+            qs = qs.filter(
+                models.Q(numero_chambre__icontains=q_clean) |
+                models.Q(batiment__nom__icontains=q_clean)
+            )
+        qs = qs.order_by("numero_chambre", "id")
 
-        return paginate_response(chambres, request, ChambreSerializer)
+        return paginate_response(qs, request, ChambreSerializer)
 
     if getattr(request.user, "role", None) not in ["ADMINISTRATEUR"]:
         return Response({"error": "Seul un administrateur peut créer une chambre."}, status=status.HTTP_403_FORBIDDEN)
@@ -95,23 +106,33 @@ def create_chambre(request):
 @permission_classes([IsAuthenticated])
 def get_all_chambres(request):
     actif_only = request.query_params.get("all", "false").lower() != "true"
-    batiment_id = request.query_params.get('batiment_id') or request.query_params.get('id_batiment')
+    batiment_id = (
+        request.query_params.get('batiment_id')
+        or request.query_params.get('id_batiment')
+        or request.query_params.get('batiment')
+    )
     type_chambre = request.query_params.get('type_chambre') or request.query_params.get('type')
     statut = request.query_params.get('statut')
     search_q = request.query_params.get('search') or request.query_params.get('q')
 
+    qs = Chambre.objects.select_related('batiment').all()
+    if actif_only:
+        qs = qs.exclude(statut=Chambre.StatutChambre.HORS_SERVICE)
     if batiment_id:
-        chambres = chambre_service.get_chambres_by_batiment(batiment_id, actif_only=actif_only)
-    elif type_chambre:
-        chambres = chambre_service.get_chambres_by_type(type_chambre, actif_only=actif_only)
-    elif statut:
-        chambres = chambre_service.get_chambres_by_statut(statut, actif_only=actif_only)
-    elif search_q:
-        chambres = chambre_service.search_chambres(search_q, actif_only=actif_only)
-    else:
-        chambres = chambre_service.get_all_chambres(actif_only=actif_only)
+        qs = qs.filter(batiment_id=batiment_id)
+    if type_chambre:
+        qs = qs.filter(type_chambre__iexact=str(type_chambre).strip())
+    if statut:
+        qs = qs.filter(statut__iexact=str(statut).strip())
+    if search_q:
+        q_clean = str(search_q).strip()
+        qs = qs.filter(
+            models.Q(numero_chambre__icontains=q_clean) |
+            models.Q(batiment__nom__icontains=q_clean)
+        )
+    qs = qs.order_by("numero_chambre", "id")
 
-    return paginate_response(chambres, request, ChambreSerializer)
+    return paginate_response(qs, request, ChambreSerializer)
 
 
 @extend_schema(

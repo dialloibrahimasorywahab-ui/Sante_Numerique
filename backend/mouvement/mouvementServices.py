@@ -66,10 +66,13 @@ class MouvementService:
             user=user,
         )
 
-        # Si le service change, mettre à jour le service responsable du séjour
+        # Mise à jour du séjour : passage au statut TRANSFERE et mise à jour du service responsable
+        update_fields = ["updated_at", "statut"]
+        sejour.statut = Sejour.StatutSejour.TRANSFERE
         if loc_destination.service_id and loc_destination.service_id != sejour.service_responsable_id:
             sejour.service_responsable_id = loc_destination.service_id
-            sejour.save(update_fields=["service_responsable_id", "updated_at"])
+            update_fields.append("service_responsable_id")
+        sejour.save(update_fields=update_fields)
 
         # Création du mouvement
         mouvement = MouvementPatient.objects.create(
@@ -84,13 +87,25 @@ class MouvementService:
         )
 
         # Timeline événement
-        from_str = str(loc_origine) if loc_origine else "Accueil / Inconnu"
-        to_str = str(loc_destination)
+        from_str = loc_origine.format_medical() if loc_origine else "Accueil / Admissions"
+        to_str = loc_destination.format_medical()
+        service_dest = (
+            loc_destination.service.get_nom_service_display()
+            if hasattr(loc_destination.service, "get_nom_service_display")
+            else str(loc_destination.service)
+        )
+        titre = f"Transfert vers {service_dest}"
+        description = f"Transfert depuis {from_str} vers {to_str}."
+        if motif:
+            description += f" Motif : {motif}."
+        if commentaire:
+            description += f" Note : {commentaire}."
+
         EvenementParcours.objects.create(
             sejour=sejour,
             type_evenement=EvenementParcours.TypeEvenement.TRANSFERT_INTERNE,
-            titre=f"Transfert patient : {mouvement.get_type_mouvement_display()}",
-            description=f"Transfert de [{from_str}] vers [{to_str}]. Motif : {motif}",
+            titre=titre,
+            description=description,
             date_evenement=date_mouvement,
             declare_par=user,
             importance=EvenementParcours.NiveauImportance.INFO,

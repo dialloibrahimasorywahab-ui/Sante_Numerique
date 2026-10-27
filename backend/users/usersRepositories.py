@@ -21,9 +21,9 @@ class UserRepository:
             return None
         clean_login = str(login).strip()
         try:
-            return User.objects.get(Q(login__iexact=clean_login) | Q(email__iexact=clean_login))
+            return User.objects.get(Q(login__iexact=clean_login) | Q(email__exact=clean_login))
         except (User.DoesNotExist, User.MultipleObjectsReturned):
-            return User.objects.filter(Q(login__iexact=clean_login) | Q(email__iexact=clean_login)).first()
+            return User.objects.filter(Q(login__iexact=clean_login) | Q(email__exact=clean_login)).first()
 
 
     # recuperer tous les utilisateurs et les afficher

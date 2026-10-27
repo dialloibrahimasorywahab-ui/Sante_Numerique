@@ -95,17 +95,30 @@ class LocalisationPatient(models.Model):
         ordering = ["-date_debut", "-id"]
 
     def __str__(self):
-        lieu_elements = [str(self.service.get_nom_service_display() if hasattr(self.service, "get_nom_service_display") else self.service)]
+        return self.format_medical()
+
+    def format_medical(self) -> str:
+        """Libellé concis, clair et compréhensible par les soignants."""
+        srv = (
+            self.service.get_nom_service_display()
+            if hasattr(self.service, "get_nom_service_display")
+            else str(self.service.nom_service if hasattr(self.service, "nom_service") else self.service)
+        )
+        parts = []
         if self.batiment:
-            lieu_elements.append(self.batiment.nom)
+            nom_bat = self.batiment.nom.replace("Bâtiment ", "Bât. ").replace("Pavillon ", "Pav. ")
+            parts.append(nom_bat)
         if self.chambre:
-            lieu_elements.append(f"Ch. {self.chambre.numero_chambre}")
+            parts.append(f"Ch. {self.chambre.numero_chambre}")
         if self.lit:
-            lieu_elements.append(f"Lit {self.lit.numero_lit or self.lit.id}")
-        lieu = " / ".join(lieu_elements)
-        statut = "ACTUELLE" if self.est_actuelle else "PASSÉE"
-        ref_sejour = self.sejour.reference if self.sejour_id else "Séjour inconnu"
-        return f"{ref_sejour} @ {lieu} ({statut})"
+            lit_num = str(self.lit.numero_lit or self.lit.id)
+            if not lit_num.lower().startswith("lit"):
+                lit_num = f"Lit {lit_num}"
+            parts.append(lit_num)
+
+        if parts:
+            return f"{srv} ({' · '.join(parts)})"
+        return srv
 
     def clean(self):
         super().clean()

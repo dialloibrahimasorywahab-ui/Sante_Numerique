@@ -7,6 +7,7 @@ from chambre.chambreSerializers import ChambreSerializer
 
 class LitSerializer(serializers.ModelSerializer):
     idLit = serializers.IntegerField(source="id", read_only=True)
+    chambre_id = serializers.IntegerField(source='chambre_id', read_only=True)
     id_chambre = serializers.PrimaryKeyRelatedField(
         queryset=Chambre.objects.all(),
         source='chambre',
@@ -21,6 +22,7 @@ class LitSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'idLit',
+            'chambre_id',
             'id_chambre',
             'chambre_detail',
             'numero_lit',

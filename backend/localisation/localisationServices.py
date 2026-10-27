@@ -58,6 +58,8 @@ class LocalisationService:
             
             nouveau_lit.etat = "OCCUPE"
             nouveau_lit.save(update_fields=["etat"])
+            if nouveau_lit.chambre:
+                nouveau_lit.chambre.sync_statut()
 
             if not chambre_id:
                 chambre_id = nouveau_lit.chambre_id
@@ -77,6 +79,8 @@ class LocalisationService:
                 if ancien_lit:
                     ancien_lit.etat = "DISPONIBLE"
                     ancien_lit.save(update_fields=["etat"])
+                    if ancien_lit.chambre:
+                        ancien_lit.chambre.sync_statut()
 
         nouvelle_loc = LocalisationPatient(
             sejour=sejour,

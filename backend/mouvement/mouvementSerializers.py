@@ -9,6 +9,9 @@ class MouvementReadSerializer(serializers.ModelSerializer):
     type_mouvement_display = serializers.CharField(source="get_type_mouvement_display", read_only=True)
     sejour_reference = serializers.CharField(source="sejour.reference", read_only=True)
 
+    enregistre_par_nom = serializers.SerializerMethodField()
+    enregistre_par_role = serializers.SerializerMethodField()
+
     class Meta:
         model = MouvementPatient
         fields = [
@@ -25,7 +28,20 @@ class MouvementReadSerializer(serializers.ModelSerializer):
             "motif",
             "commentaire",
             "enregistre_par",
+            "enregistre_par_nom",
+            "enregistre_par_role",
         ]
+
+    def get_enregistre_par_nom(self, obj):
+        if obj.enregistre_par:
+            nom = f"{obj.enregistre_par.prenom} {obj.enregistre_par.nom}".strip()
+            return nom or obj.enregistre_par.login
+        return None
+
+    def get_enregistre_par_role(self, obj):
+        if obj.enregistre_par:
+            return getattr(obj.enregistre_par, "role", None)
+        return None
 
 
 class MouvementTransfertCreateSerializer(serializers.Serializer):

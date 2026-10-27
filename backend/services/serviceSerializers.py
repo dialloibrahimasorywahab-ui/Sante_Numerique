@@ -3,6 +3,7 @@ from .models import Service
 
 
 class ServiceSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(source="id_service", read_only=True)
     idService = serializers.IntegerField(source="id_service", read_only=True)
     nom_service = serializers.CharField(required=False)
     nomService = serializers.CharField(source="nom_service", read_only=True)
@@ -14,6 +15,7 @@ class ServiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Service
         fields = [
+            "id",
             "id_service",
             "idService",
             "nom_service",

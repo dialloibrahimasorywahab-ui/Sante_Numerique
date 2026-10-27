@@ -4,6 +4,7 @@ from .models import Batiment
 
 
 class BatimentSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(source="id_batiment", read_only=True)
     id_batiment = serializers.IntegerField(read_only=True)
     idBatiment = serializers.IntegerField(source="id_batiment", read_only=True)
     nombre_chambre = serializers.IntegerField(
@@ -31,6 +32,7 @@ class BatimentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Batiment
         fields = [
+            'id',
             'id_batiment',
             'idBatiment',
             'reference',

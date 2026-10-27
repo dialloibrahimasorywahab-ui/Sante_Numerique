@@ -48,6 +48,7 @@ export interface DashboardStats {
   patientsHospitalises: number;
   litsOccupes: number;
   litsDisponibles: number;
+  litsIndisponibles?: number;
   totalLits: number;
   transfertsRecents: number;
   sortiesRecentes: number;
@@ -129,6 +130,10 @@ export interface MouvementPatient {
   motif?: string;
   commentaire?: string;
   enregistrePar?: number | null;
+  effectueParNom?: string;
+  effectueParRole?: string;
+  sourceDetails?: any;
+  destinationDetails?: any;
 }
 
 export interface EvenementParcours {

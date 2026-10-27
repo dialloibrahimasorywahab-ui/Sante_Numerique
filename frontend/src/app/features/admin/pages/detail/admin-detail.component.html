@@ -1,31 +1,351 @@
 <div class="admin-detail-page">
-  <a routerLink="/admin/dashboard" class="back-link">← Retour au tableau de bord</a>
+  <div class="breadcrumb-nav">
+    <a routerLink="/admin/dashboard" class="back-link">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+      </svg>
+      <span>Tableau de bord</span>
+    </a>
+    <span class="breadcrumb-sep">/</span>
+    <a [routerLink]="['/admin', listRoute]" class="back-list">{{ listRoute }}</a>
+  </div>
 
   <div class="detail-header">
     <div>
-      <p class="eyebrow">Espace administrateur</p>
+      <p class="eyebrow">Santé Numérique — Infrastructure</p>
       <h1>{{ title }}</h1>
-      <p class="subtitle">Toutes les informations associées à cet élément.</p>
+      <p class="subtitle">Consultez l'état d'occupation, l'attribution et l'emplacement hospitalier.</p>
     </div>
-    <a [routerLink]="['/admin', listRoute]" class="back-list">Retour à la liste</a>
+    <div class="header-actions">
+      <a [routerLink]="['/admin', listRoute]" class="btn-back">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+        </svg>
+        <span>Retour à la liste</span>
+      </a>
+      @if (isLit() || isChambre()) {
+        <a routerLink="/parcours" class="btn-parcours">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+          </svg>
+          <span>Suivi Parcours & Localisation</span>
+        </a>
+      }
+    </div>
   </div>
 
   @if (isLoading()) {
-    <div class="state">Chargement des informations...</div>
+    <div class="state loading">
+      <div class="spinner-small"></div>
+      <span>Chargement des informations en cours…</span>
+    </div>
   } @else if (errorMessage()) {
     <div class="state error">{{ errorMessage() }}</div>
   } @else if (entity()) {
-    <section class="detail-card">
-      <div class="detail-grid">
-        @for (field of (entity() | keyvalue); track field.key) {
-          <div class="detail-field">
-            <dt>{{ field.key }}</dt>
-            <dd>
-              {{ formatValue(field.value) }}
-            </dd>
+
+    <!-- ═════════════════════════════════════════════════════════════════ -->
+    <!-- VUE DÉDIÉE : FICHE LIT D'HOSPITALISATION                          -->
+    <!-- ═════════════════════════════════════════════════════════════════ -->
+    @if (isLit()) {
+      <div class="lit-detail-container">
+        <!-- Carte principale d'état du lit -->
+        <div class="lit-hero-card">
+          <div class="lit-hero-left">
+            <div class="lit-icon-box">
+              <span class="lit-emoji">🛏️</span>
+            </div>
+            <div class="lit-hero-info">
+              <h2 class="lit-title">{{ entity().numero_lit || entity().numeroLit || ('Lit #' + entity().id) }}</h2>
+              <p class="lit-id">Identifiant système : #{{ entity().id || entity().idLit }}</p>
+            </div>
           </div>
-        }
+          <div class="lit-hero-right">
+            <span class="bed-status-badge" [ngClass]="getBedStateClass(entity().etat || entity().etatDisplay)">
+              <span class="status-dot"></span>
+              {{ entity().etatDisplay || entity().etat_display || entity().etat || 'DISPONIBLE' }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Grille des informations : Chambre & Bâtiment -->
+        <div class="infra-cards-grid">
+          <!-- Carte 1 : Chambre associée -->
+          <div class="infra-section-card">
+            <div class="card-header-row">
+              <div class="card-icon-title">
+                <span class="card-icon">🚪</span>
+                <h3>Chambre Hospitalière</h3>
+              </div>
+              @if (chambreId()) {
+                <a [routerLink]="['/admin/details', 'chambres', chambreId()]" class="sub-link">
+                  Voir la chambre &rarr;
+                </a>
+              }
+            </div>
+
+            <div class="card-key-values">
+              <div class="kv-item">
+                <span class="kv-label">Numéro de chambre</span>
+                <span class="kv-val font-bold">Chambre {{ chambreDuLit()?.numero_chambre || chambreDuLit()?.numeroChambre || 'Non attribuée' }}</span>
+              </div>
+              <div class="kv-item">
+                <span class="kv-label">Type / Catégorie</span>
+                <span class="kv-val">{{ chambreDuLit()?.typeChambreDisplay || chambreDuLit()?.type_chambre || 'Standard' }}</span>
+              </div>
+              <div class="kv-item">
+                <span class="kv-label">Capacité d’accueil</span>
+                <span class="kv-val">{{ chambreDuLit()?.capacite ?? 1 }} place(s)</span>
+              </div>
+              <div class="kv-item">
+                <span class="kv-label">Statut chambre</span>
+                <span class="kv-val status-text">{{ chambreDuLit()?.statutDisplay || chambreDuLit()?.statut || 'Opérationnelle' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Carte 2 : Bâtiment & Pavillon -->
+          <div class="infra-section-card">
+            <div class="card-header-row">
+              <div class="card-icon-title">
+                <span class="card-icon">🏥</span>
+                <h3>Bâtiment & Pavillon</h3>
+              </div>
+              @if (batimentId()) {
+                <a [routerLink]="['/admin/details', 'batiments', batimentId()]" class="sub-link">
+                  Voir le bâtiment &rarr;
+                </a>
+              }
+            </div>
+
+            <div class="card-key-values">
+              <div class="kv-item">
+                <span class="kv-label">Pavillon</span>
+                <span class="kv-val font-bold text-primary">{{ batimentDuLit()?.nom || 'Bâtiment Principal' }}</span>
+              </div>
+              <div class="kv-item">
+                <span class="kv-label">Référence campus</span>
+                <span class="kv-val">{{ batimentDuLit()?.reference || 'BAT-01' }}</span>
+              </div>
+              <div class="kv-item full-width">
+                <span class="kv-label">Affectation / Spécialités</span>
+                <span class="kv-val desc-text">{{ batimentDuLit()?.description || 'Soins polyvalents et hospitalisation' }}</span>
+              </div>
+              <div class="kv-item">
+                <span class="kv-label">État du bâtiment</span>
+                <span class="kv-val badge-operational">Opérationnel</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    </section>
+    }
+
+    <!-- ═════════════════════════════════════════════════════════════════ -->
+    <!-- VUE DÉDIÉE : FICHE CHAMBRE HOSPITALIÈRE                          -->
+    <!-- ═════════════════════════════════════════════════════════════════ -->
+    @else if (isChambre()) {
+      <div class="lit-detail-container">
+        <!-- Carte principale d'état de la chambre -->
+        <div class="lit-hero-card">
+          <div class="lit-hero-left">
+            <div class="lit-icon-box">
+              <span class="lit-emoji">🚪</span>
+            </div>
+            <div class="lit-hero-info">
+              <h2 class="lit-title">Chambre {{ entity().numero_chambre || entity().numeroChambre || ('Chambre #' + entity().id) }}</h2>
+              <p class="lit-id">Identifiant système : #{{ entity().id || entity().idChambre }} &bull; Étage : {{ entity().etage || 'Rez-de-chaussée' }}</p>
+            </div>
+          </div>
+          <div class="lit-hero-right">
+            <span class="bed-status-badge" [ngClass]="getRoomStateBadge(entity()).class">
+              <span class="status-dot"></span>
+              {{ getRoomStateBadge(entity()).label }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Grille des informations : Capacité/Occupation & Bâtiment -->
+        <div class="infra-cards-grid">
+          <!-- Carte 1 : Capacité & Disponibilité des lits -->
+          <div class="infra-section-card">
+            <div class="card-header-row">
+              <div class="card-icon-title">
+                <span class="card-icon">🛏️</span>
+                <h3>Capacité & Disponibilité</h3>
+              </div>
+              <a routerLink="/admin/lits" class="sub-link">
+                Voir tous les lits &rarr;
+              </a>
+            </div>
+
+            <div class="card-key-values">
+              <div class="kv-item">
+                <span class="kv-label">Capacité d'accueil</span>
+                <span class="kv-val font-bold text-primary">{{ entity().capacite ?? 1 }} place(s)</span>
+              </div>
+              <div class="kv-item">
+                <span class="kv-label">Type / Catégorie</span>
+                <span class="kv-val">{{ entity().typeChambreDisplay || entity().type_chambre || 'Standard' }}</span>
+              </div>
+              <div class="kv-item">
+                <span class="kv-label">Lits disponibles</span>
+                <span class="kv-val badge-operational">
+                  {{ entity().litsDisponiblesCount ?? entity().lits_disponibles_count ?? 0 }} lit(s) libre(s)
+                </span>
+              </div>
+              <div class="kv-item">
+                <span class="kv-label">Lits occupés</span>
+                <span class="kv-val status-text">
+                  {{ entity().litsOccupesCount ?? entity().lits_occupes_count ?? 0 }} lit(s) occupé(s)
+                </span>
+              </div>
+              <div class="kv-item">
+                <span class="kv-label">Niveau / Étage</span>
+                <span class="kv-val">{{ entity().etage || 'Rez-de-chaussée' }}</span>
+              </div>
+              <div class="kv-item">
+                <span class="kv-label">Statut opérationnel</span>
+                <span class="kv-val">{{ entity().statutDisplay || entity().statut || 'En service' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Carte 2 : Pavillon / Bâtiment d'accueil -->
+          <div class="infra-section-card">
+            <div class="card-header-row">
+              <div class="card-icon-title">
+                <span class="card-icon">🏥</span>
+                <h3>Bâtiment & Pavillon</h3>
+              </div>
+              @if (batimentDeLaChambreId()) {
+                <a [routerLink]="['/admin/details', 'batiments', batimentDeLaChambreId()]" class="sub-link">
+                  Voir le pavillon &rarr;
+                </a>
+              }
+            </div>
+
+            <div class="card-key-values">
+              <div class="kv-item">
+                <span class="kv-label">Nom du pavillon</span>
+                <span class="kv-val font-bold text-primary">{{ batimentDeLaChambre()?.nom || 'Bâtiment Principal — Pavillon A' }}</span>
+              </div>
+              <div class="kv-item">
+                <span class="kv-label">Référence campus</span>
+                <span class="kv-val">{{ batimentDeLaChambre()?.reference || 'BAT-01' }}</span>
+              </div>
+              <div class="kv-item full-width">
+                <span class="kv-label">Affectation / Spécialités</span>
+                <span class="kv-val desc-text">{{ batimentDeLaChambre()?.description || 'Consultations externes, Médecine Générale et Soins Polyvalents' }}</span>
+              </div>
+              <div class="kv-item">
+                <span class="kv-label">Capacité totale du pavillon</span>
+                <span class="kv-val">{{ batimentDeLaChambre()?.totalChambresEffectif || batimentDeLaChambre()?.nombreChambre || 12 }} chambres</span>
+              </div>
+              <div class="kv-item">
+                <span class="kv-label">État du bâtiment</span>
+                <span class="kv-val badge-operational">Opérationnel</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ═════════════════════════════════════════════════════════════════ -->
+    <!-- VUE DÉDIÉE : FICHE BÂTIMENT / PAVILLON                           -->
+    <!-- ═════════════════════════════════════════════════════════════════ -->
+    @else if (isBatiment()) {
+      <div class="lit-detail-container">
+        <!-- Hero Bâtiment -->
+        <div class="lit-hero-card">
+          <div class="lit-hero-left">
+            <div class="lit-icon-box">
+              <span class="lit-emoji">🏥</span>
+            </div>
+            <div class="lit-hero-info">
+              <h2 class="lit-title">{{ entity().nom || ('Bâtiment #' + entity().id) }}</h2>
+              <p class="lit-id">Référence campus : {{ entity().reference || ('BAT-0' + entity().id) }} &bull; Identifiant : #{{ entity().id || entity().idBatiment }}</p>
+            </div>
+          </div>
+          <div class="lit-hero-right">
+            <span class="bed-status-badge badge-disponible">
+              <span class="status-dot"></span>
+              {{ entity().actif ? 'Pavillon Ouvert & Opérationnel' : 'Inactif' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="infra-cards-grid">
+          <div class="infra-section-card">
+            <div class="card-header-row">
+              <div class="card-icon-title">
+                <span class="card-icon">📋</span>
+                <h3>Informations & Spécialités</h3>
+              </div>
+            </div>
+            <div class="card-key-values">
+              <div class="kv-item">
+                <span class="kv-label">Référence</span>
+                <span class="kv-val font-bold">{{ entity().reference }}</span>
+              </div>
+              <div class="kv-item">
+                <span class="kv-label">Nom du pavillon</span>
+                <span class="kv-val">{{ entity().nom }}</span>
+              </div>
+              <div class="kv-item full-width">
+                <span class="kv-label">Description & Spécialités</span>
+                <span class="kv-val desc-text">{{ entity().description || 'Services et consultations' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="infra-section-card">
+            <div class="card-header-row">
+              <div class="card-icon-title">
+                <span class="card-icon">🚪</span>
+                <h3>Capacité Hospitalière</h3>
+              </div>
+              <a routerLink="/admin/chambres" class="sub-link">
+                Voir les chambres &rarr;
+              </a>
+            </div>
+            <div class="card-key-values">
+              <div class="kv-item">
+                <span class="kv-label">Chambres prévues</span>
+                <span class="kv-val font-bold text-primary">{{ entity().nombreChambre || entity().nombre_chambre || 0 }}</span>
+              </div>
+              <div class="kv-item">
+                <span class="kv-label">Total chambres effectif</span>
+                <span class="kv-val font-bold text-primary">{{ entity().totalChambresEffectif || entity().total_chambres_effectif || entity().nombreChambre || 0 }}</span>
+              </div>
+              <div class="kv-item">
+                <span class="kv-label">Statut infrastructure</span>
+                <span class="kv-val badge-operational">En exploitation</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ═════════════════════════════════════════════════════════════════ -->
+    <!-- VUE GÉNÉRALE POUR AUTRES RESSOURCES                              -->
+    <!-- ═════════════════════════════════════════════════════════════════ -->
+    @else {
+      <section class="detail-card">
+        <div class="detail-grid">
+          @for (field of (entity() | keyvalue); track field.key) {
+            @if (shouldShowField(field.key, field.value)) {
+              <div class="detail-field">
+                <dt>{{ formatKeyLabel(field.key) }}</dt>
+                <dd>
+                  {{ formatValue(field.value) }}
+                </dd>
+              </div>
+            }
+          }
+        </div>
+      </section>
+    }
   }
 </div>

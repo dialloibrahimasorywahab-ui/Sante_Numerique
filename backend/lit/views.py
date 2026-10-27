@@ -1,5 +1,5 @@
 import logging
-from django.db import IntegrityError
+from django.db import IntegrityError, models
 from drf_spectacular.types import OpenApiTypes
 
 logger = logging.getLogger(__name__)
@@ -14,6 +14,7 @@ from config.permissions import IsAdmin
 from config.schema_helpers import ErrorResponseSerializer, HARD_DELETE_PARAM, MessageResponseSerializer, PAGINATION_PARAMS, SEARCH_PARAM
 from .litSerializers import LitSerializer
 from .litServices import LitService
+from .models import Lit
 
 lit_service = LitService()
 
@@ -25,11 +26,13 @@ lit_service = LitService()
     description="Retourne la liste des lits (GET avec filtres ?chambre_id=, ?etat=, ?search=, ?all=) ou enregistre un nouveau lit (POST).",
     parameters=[
         OpenApiParameter(name="all", type=OpenApiTypes.BOOL, location=OpenApiParameter.QUERY, required=False,
-                          description="Inclure aussi les lits hors service / inactifs si true."),
+                          description="Inclure aussi les lits hors service / inactives si true."),
         OpenApiParameter(name="chambre_id", type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=False,
-                          description="Filtre par identifiant de chambre."),
+                          description="Filtre par identifiant de chambre (alias: chambre, id_chambre)."),
+        OpenApiParameter(name="batiment_id", type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=False,
+                          description="Filtre par identifiant de bâtiment (alias: batiment, id_batiment)."),
         OpenApiParameter(name="etat", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False,
-                          description="Filtre par état du lit."),
+                          description="Filtre par état du lit (ex: DISPONIBLE, OCCUPE)."),
         SEARCH_PARAM,
         *PAGINATION_PARAMS,
     ],
@@ -41,20 +44,38 @@ lit_service = LitService()
 def create_lit(request):
     if request.method == "GET":
         actif_only = request.query_params.get("all", "false").lower() != "true"
-        chambre_id = request.query_params.get('chambre_id') or request.query_params.get('id_chambre')
+        chambre_id = (
+            request.query_params.get('chambre_id')
+            or request.query_params.get('id_chambre')
+            or request.query_params.get('chambre')
+        )
+        batiment_id = (
+            request.query_params.get('batiment_id')
+            or request.query_params.get('id_batiment')
+            or request.query_params.get('batiment')
+        )
         etat = request.query_params.get('etat')
         search_q = request.query_params.get('search') or request.query_params.get('q')
 
+        qs = Lit.objects.select_related('chambre', 'chambre__batiment').all()
+        if actif_only:
+            qs = qs.exclude(etat=Lit.EtatLit.HORS_SERVICE)
         if chambre_id:
-            lits = lit_service.get_lits_by_chambre(chambre_id, actif_only=actif_only)
-        elif etat:
-            lits = lit_service.get_lits_by_etat(etat, actif_only=actif_only)
-        elif search_q:
-            lits = lit_service.search_lits(search_q, actif_only=actif_only)
-        else:
-            lits = lit_service.get_all_lits(actif_only=actif_only)
+            qs = qs.filter(chambre_id=chambre_id)
+        if batiment_id:
+            qs = qs.filter(chambre__batiment_id=batiment_id)
+        if etat:
+            qs = qs.filter(etat__iexact=str(etat).strip())
+        if search_q:
+            q_clean = str(search_q).strip()
+            qs = qs.filter(
+                models.Q(numero_lit__icontains=q_clean) |
+                models.Q(etat__icontains=q_clean) |
+                models.Q(chambre__batiment__nom__icontains=q_clean)
+            )
+        qs = qs.order_by("numero_lit", "id")
 
-        return paginate_response(lits, request, LitSerializer)
+        return paginate_response(qs, request, LitSerializer)
 
     if getattr(request.user, "role", None) not in ["ADMINISTRATEUR"]:
         return Response({"error": "Seul un administrateur peut créer un lit."}, status=status.HTTP_403_FORBIDDEN)
@@ -75,12 +96,14 @@ def create_lit(request):
 @extend_schema(
     tags=["Lits"],
     summary="Lister les lits",
-    description="Retourne la liste des lits, avec filtres optionnels (chambre, état, recherche ou inclusion inactifs ?all=true).",
+    description="Retourne la liste des lits, avec filtres optionnels (chambre, bâtiment, état, recherche ou inclusion inactifs ?all=true).",
     parameters=[
         OpenApiParameter(name="all", type=OpenApiTypes.BOOL, location=OpenApiParameter.QUERY, required=False,
                           description="Inclure aussi les lits hors service / inactifs si true."),
         OpenApiParameter(name="chambre_id", type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=False,
-                          description="Filtre par identifiant de chambre (alias : id_chambre)."),
+                          description="Filtre par identifiant de chambre (alias: chambre, id_chambre)."),
+        OpenApiParameter(name="batiment_id", type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=False,
+                          description="Filtre par identifiant de bâtiment (alias: batiment, id_batiment)."),
         OpenApiParameter(name="etat", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False,
                           description="Filtre par état du lit."),
         SEARCH_PARAM,
@@ -92,20 +115,38 @@ def create_lit(request):
 @permission_classes([IsAuthenticated])
 def get_all_lits(request):
     actif_only = request.query_params.get("all", "false").lower() != "true"
-    chambre_id = request.query_params.get('chambre_id') or request.query_params.get('id_chambre')
+    chambre_id = (
+        request.query_params.get('chambre_id')
+        or request.query_params.get('id_chambre')
+        or request.query_params.get('chambre')
+    )
+    batiment_id = (
+        request.query_params.get('batiment_id')
+        or request.query_params.get('id_batiment')
+        or request.query_params.get('batiment')
+    )
     etat = request.query_params.get('etat')
     search_q = request.query_params.get('search') or request.query_params.get('q')
 
+    qs = Lit.objects.select_related('chambre', 'chambre__batiment').all()
+    if actif_only:
+        qs = qs.exclude(etat=Lit.EtatLit.HORS_SERVICE)
     if chambre_id:
-        lits = lit_service.get_lits_by_chambre(chambre_id, actif_only=actif_only)
-    elif etat:
-        lits = lit_service.get_lits_by_etat(etat, actif_only=actif_only)
-    elif search_q:
-        lits = lit_service.search_lits(search_q, actif_only=actif_only)
-    else:
-        lits = lit_service.get_all_lits(actif_only=actif_only)
+        qs = qs.filter(chambre_id=chambre_id)
+    if batiment_id:
+        qs = qs.filter(chambre__batiment_id=batiment_id)
+    if etat:
+        qs = qs.filter(etat__iexact=str(etat).strip())
+    if search_q:
+        q_clean = str(search_q).strip()
+        qs = qs.filter(
+            models.Q(numero_lit__icontains=q_clean) |
+            models.Q(etat__icontains=q_clean) |
+            models.Q(chambre__batiment__nom__icontains=q_clean)
+        )
+    qs = qs.order_by("numero_lit", "id")
 
-    return paginate_response(lits, request, LitSerializer)
+    return paginate_response(qs, request, LitSerializer)
 
 
 @extend_schema(
