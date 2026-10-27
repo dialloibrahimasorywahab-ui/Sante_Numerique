@@ -8,7 +8,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from config.pagination import paginate_response
-from config.permissions import IsStaffOrAdmin
+from config.permissions import (
+    IsAuthenticatedReadOnly_IsStaffOrAdminWrite,
+    IsStaffOrAdmin,
+    ensure_can_access_sejour,
+    scope_to_accessible_sejours,
+)
 from config.schema_helpers import ErrorResponseSerializer, PAGINATION_PARAMS
 from .localisationSerializers import LocalisationCreateSerializer, LocalisationReadSerializer
 from .localisationServices import LocalisationService
@@ -36,7 +41,7 @@ localisation_service = LocalisationService()
     },
 )
 @api_view(["GET", "POST"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticatedReadOnly_IsStaffOrAdminWrite])
 def localisation_list_create_view(request):
     if request.method == "GET":
         est_actuelle_param = request.query_params.get("est_actuelle")
@@ -51,6 +56,7 @@ def localisation_list_create_view(request):
             lit_id=request.query_params.get("lit_id"),
             est_actuelle=est_actuelle,
         )
+        qs = scope_to_accessible_sejours(request, qs)
         return paginate_response(request, qs, LocalisationReadSerializer)
 
     elif request.method == "POST":
@@ -80,4 +86,5 @@ def localisation_detail_view(request, pk: int):
     loc = localisation_service.repository.get_by_id(pk)
     if not loc:
         return Response({"detail": "Localisation introuvable."}, status=status.HTTP_404_NOT_FOUND)
+    ensure_can_access_sejour(request, loc.sejour)
     return Response(LocalisationReadSerializer(loc).data, status=status.HTTP_200_OK)

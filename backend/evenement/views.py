@@ -8,7 +8,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from config.pagination import paginate_response
-from config.permissions import IsStaffOrAdmin
+from config.permissions import (
+    IsAuthenticatedReadOnly_IsStaffOrAdminWrite,
+    IsStaffOrAdmin,
+    ensure_can_access_sejour,
+    scope_to_accessible_sejours,
+)
 from config.schema_helpers import ErrorResponseSerializer, PAGINATION_PARAMS
 from .evenementSerializers import EvenementCreateSerializer, EvenementReadSerializer
 from .evenementServices import EvenementService
@@ -34,7 +39,7 @@ evenement_service = EvenementService()
     },
 )
 @api_view(["GET", "POST"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticatedReadOnly_IsStaffOrAdminWrite])
 def evenement_list_create_view(request):
     if request.method == "GET":
         qs = evenement_service.repository.get_all(
@@ -42,6 +47,7 @@ def evenement_list_create_view(request):
             type_evenement=request.query_params.get("type_evenement"),
             importance=request.query_params.get("importance"),
         )
+        qs = scope_to_accessible_sejours(request, qs)
         return paginate_response(request, qs, EvenementReadSerializer)
 
     elif request.method == "POST":
@@ -71,4 +77,5 @@ def evenement_detail_view(request, pk: int):
     event = evenement_service.repository.get_by_id(pk)
     if not event:
         return Response({"detail": "Événement introuvable."}, status=status.HTTP_404_NOT_FOUND)
+    ensure_can_access_sejour(request, event.sejour)
     return Response(EvenementReadSerializer(event).data, status=status.HTTP_200_OK)
