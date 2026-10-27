@@ -9,7 +9,11 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from config.pagination import paginate_response
-from config.permissions import IsMedecinOuAdmin, IsStaffOrAdmin
+from config.permissions import (
+    IsMedecinOuAdmin,
+    IsStaffOrAdmin,
+    ensure_can_access_sejour,
+)
 from config.schema_helpers import (
     ErrorResponseSerializer,
     MessageResponseSerializer,
@@ -165,6 +169,7 @@ def sejour_synthese_view(request, pk: int):
     sejour = sejour_service.repository.get_by_id(pk)
     if not sejour:
         return Response({"detail": "Séjour introuvable."}, status=status.HTTP_404_NOT_FOUND)
+    ensure_can_access_sejour(request, sejour)
 
     from localisation.localisationSerializers import LocalisationReadSerializer
     from mouvement.mouvementSerializers import MouvementReadSerializer
@@ -188,7 +193,7 @@ def sejour_synthese_view(request, pk: int):
     responses={200: OpenApiTypes.OBJECT},
 )
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, IsStaffOrAdmin])
 def sejour_dashboard_stats_view(request):
     stats = sejour_service.repository.get_statistiques_dashboard()
     return Response(stats, status=status.HTTP_200_OK)

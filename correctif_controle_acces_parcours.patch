@@ -1,0 +1,377 @@
+diff -ruN -x __pycache__ -x '*.pyc' -x '*.sqlite3' /tmp/orig_backend/config/permissions.py backend/config/permissions.py
+--- a/backend/config/permissions.py	2026-10-22 16:27:36.295152032 +0000
++++ b/backend/config/permissions.py	2026-10-22 16:27:36.460990192 +0000
+@@ -171,3 +171,52 @@
+             return True
+ 
+     raise PermissionDenied("Vous n'êtes pas autorisé à accéder ou modifier cette ressource.")
++
++
++# ---------------------------------------------------------------------------
++# Contrôle d'accès au parcours patient (séjour, localisation, mouvement, événement)
++# ---------------------------------------------------------------------------
++STAFF_ROLES = ("ADMINISTRATEUR", "MEDECIN", "INFIRMIER")
++
++
++def is_staff_role(user) -> bool:
++    """True si l'utilisateur connecté est du personnel soignant ou administrateur."""
++    return bool(
++        user
++        and user.is_authenticated
++        and getattr(user, "role", None) in STAFF_ROLES
++    )
++
++
++def scope_to_accessible_sejours(request, queryset, sejour_lookup: str = "sejour"):
++    """
++    Restreint un queryset aux séjours que l'utilisateur a le droit de voir :
++    - personnel / administrateur : tout ;
++    - patient : uniquement les objets rattachés à ses propres séjours ;
++    - tout autre rôle : rien.
++    """
++    user = request.user
++    if is_staff_role(user):
++        return queryset
++    if getattr(user, "role", None) == "PATIENT":
++        return queryset.filter(**{f"{sejour_lookup}__patient__id_utilisateur": user})
++    return queryset.none()
++
++
++def ensure_can_access_sejour(request, sejour) -> bool:
++    """
++    Contrôle d'accès à un séjour précis (vues de détail / synthèse).
++    Lève PermissionDenied (403) si l'utilisateur n'est ni du personnel
++    ni le patient concerné par ce séjour.
++    """
++    user = request.user
++    if is_staff_role(user):
++        return True
++    if (
++        getattr(user, "role", None) == "PATIENT"
++        and sejour is not None
++        and sejour.patient.id_utilisateur_id == user.pk
++    ):
++        return True
++    raise PermissionDenied("Vous n'êtes pas autorisé à accéder à ce séjour.")
++
+diff -ruN -x __pycache__ -x '*.pyc' -x '*.sqlite3' /tmp/orig_backend/evenement/views.py backend/evenement/views.py
+--- a/backend/evenement/views.py	2026-10-22 16:27:36.366245901 +0000
++++ b/backend/evenement/views.py	2026-10-22 16:27:36.462246231 +0000
+@@ -8,7 +8,12 @@
+ from rest_framework.response import Response
+ 
+ from config.pagination import paginate_response
+-from config.permissions import IsStaffOrAdmin
++from config.permissions import (
++    IsAuthenticatedReadOnly_IsStaffOrAdminWrite,
++    IsStaffOrAdmin,
++    ensure_can_access_sejour,
++    scope_to_accessible_sejours,
++)
+ from config.schema_helpers import ErrorResponseSerializer, PAGINATION_PARAMS
+ from .evenementSerializers import EvenementCreateSerializer, EvenementReadSerializer
+ from .evenementServices import EvenementService
+@@ -34,7 +39,7 @@
+     },
+ )
+ @api_view(["GET", "POST"])
+-@permission_classes([IsAuthenticated])
++@permission_classes([IsAuthenticatedReadOnly_IsStaffOrAdminWrite])
+ def evenement_list_create_view(request):
+     if request.method == "GET":
+         qs = evenement_service.repository.get_all(
+@@ -42,6 +47,7 @@
+             type_evenement=request.query_params.get("type_evenement"),
+             importance=request.query_params.get("importance"),
+         )
++        qs = scope_to_accessible_sejours(request, qs)
+         return paginate_response(request, qs, EvenementReadSerializer)
+ 
+     elif request.method == "POST":
+@@ -71,4 +77,5 @@
+     event = evenement_service.repository.get_by_id(pk)
+     if not event:
+         return Response({"detail": "Événement introuvable."}, status=status.HTTP_404_NOT_FOUND)
++    ensure_can_access_sejour(request, event.sejour)
+     return Response(EvenementReadSerializer(event).data, status=status.HTTP_200_OK)
+diff -ruN -x __pycache__ -x '*.pyc' -x '*.sqlite3' /tmp/orig_backend/localisation/views.py backend/localisation/views.py
+--- a/backend/localisation/views.py	2026-10-22 16:27:36.374859289 +0000
++++ b/backend/localisation/views.py	2026-10-22 16:27:36.461822499 +0000
+@@ -8,7 +8,12 @@
+ from rest_framework.response import Response
+ 
+ from config.pagination import paginate_response
+-from config.permissions import IsStaffOrAdmin
++from config.permissions import (
++    IsAuthenticatedReadOnly_IsStaffOrAdminWrite,
++    IsStaffOrAdmin,
++    ensure_can_access_sejour,
++    scope_to_accessible_sejours,
++)
+ from config.schema_helpers import ErrorResponseSerializer, PAGINATION_PARAMS
+ from .localisationSerializers import LocalisationCreateSerializer, LocalisationReadSerializer
+ from .localisationServices import LocalisationService
+@@ -36,7 +41,7 @@
+     },
+ )
+ @api_view(["GET", "POST"])
+-@permission_classes([IsAuthenticated])
++@permission_classes([IsAuthenticatedReadOnly_IsStaffOrAdminWrite])
+ def localisation_list_create_view(request):
+     if request.method == "GET":
+         est_actuelle_param = request.query_params.get("est_actuelle")
+@@ -51,6 +56,7 @@
+             lit_id=request.query_params.get("lit_id"),
+             est_actuelle=est_actuelle,
+         )
++        qs = scope_to_accessible_sejours(request, qs)
+         return paginate_response(request, qs, LocalisationReadSerializer)
+ 
+     elif request.method == "POST":
+@@ -80,4 +86,5 @@
+     loc = localisation_service.repository.get_by_id(pk)
+     if not loc:
+         return Response({"detail": "Localisation introuvable."}, status=status.HTTP_404_NOT_FOUND)
++    ensure_can_access_sejour(request, loc.sejour)
+     return Response(LocalisationReadSerializer(loc).data, status=status.HTTP_200_OK)
+diff -ruN -x __pycache__ -x '*.pyc' -x '*.sqlite3' /tmp/orig_backend/mouvement/views.py backend/mouvement/views.py
+--- a/backend/mouvement/views.py	2026-10-22 16:27:36.380022995 +0000
++++ b/backend/mouvement/views.py	2026-10-22 16:27:36.462544124 +0000
+@@ -8,7 +8,11 @@
+ from rest_framework.response import Response
+ 
+ from config.pagination import paginate_response
+-from config.permissions import IsStaffOrAdmin
++from config.permissions import (
++    IsStaffOrAdmin,
++    ensure_can_access_sejour,
++    scope_to_accessible_sejours,
++)
+ from config.schema_helpers import ErrorResponseSerializer, PAGINATION_PARAMS
+ from .mouvementSerializers import MouvementReadSerializer, MouvementTransfertCreateSerializer
+ from .mouvementServices import MouvementService
+@@ -34,6 +38,7 @@
+         sejour_id=request.query_params.get("sejour_id"),
+         type_mouvement=request.query_params.get("type_mouvement"),
+     )
++    qs = scope_to_accessible_sejours(request, qs)
+     return paginate_response(request, qs, MouvementReadSerializer)
+ 
+ 
+@@ -76,4 +81,5 @@
+     mouvement = mouvement_service.repository.get_by_id(pk)
+     if not mouvement:
+         return Response({"detail": "Mouvement introuvable."}, status=status.HTTP_404_NOT_FOUND)
++    ensure_can_access_sejour(request, mouvement.sejour)
+     return Response(MouvementReadSerializer(mouvement).data, status=status.HTTP_200_OK)
+diff -ruN -x __pycache__ -x '*.pyc' -x '*.sqlite3' /tmp/orig_backend/sejour/tests_acces_parcours.py backend/sejour/tests_acces_parcours.py
+--- a/backend/sejour/tests_acces_parcours.py	1970-01-01 00:00:00.000000000 +0000
++++ b/backend/sejour/tests_acces_parcours.py	2026-10-22 16:27:59.433110386 +0000
+@@ -0,0 +1,174 @@
++"""
++Tests de contrôle d'accès sur le parcours patient :
++séjour (synthèse, statistiques), localisation, mouvement, événement.
++
++Règles vérifiées :
++- le personnel (médecin, infirmier, administrateur) accède à tout ;
++- un patient ne voit que ses propres séjours et ne peut rien écrire ;
++- un utilisateur non authentifié est refusé.
++"""
++from django.test import TestCase
++from django.urls import reverse
++from rest_framework import status
++from rest_framework.test import APIClient
++
++from common.test_helpers import creer_test_patient, creer_test_utilisateur
++from evenement.models import EvenementParcours
++from localisation.models import LocalisationPatient
++from mouvement.models import MouvementPatient
++from sejour.models import Sejour
++from sejour.sejourServices import SejourService
++from services.models import Service
++
++
++def _items(response):
++    """Extrait la liste d'éléments d'une réponse paginée ou non."""
++    data = response.data
++    if isinstance(data, dict) and "results" in data:
++        return data["results"]
++    return data
++
++
++class AccesParcoursPatientTests(TestCase):
++    def setUp(self):
++        self.admin = creer_test_utilisateur("acces_admin", role="ADMINISTRATEUR")
++        self.infirmier = creer_test_utilisateur("acces_infirmier", role="INFIRMIER")
++
++        self.service_urgences = Service.objects.create(nom_service="Urgences", actif=True)
++
++        self.patient_a = creer_test_patient("acces_patient_a")
++        self.patient_b = creer_test_patient("acces_patient_b")
++
++        svc = SejourService()
++        self.sejour_a = svc.admettre_patient(
++            data={
++                "patient": self.patient_a.id_patient,
++                "service_responsable": self.service_urgences.id_service,
++                "type_prise_en_charge": Sejour.TypePriseEnCharge.URGENCE,
++                "motif_admission": "Séjour du patient A",
++            },
++            user=self.admin,
++        )
++        self.sejour_b = svc.admettre_patient(
++            data={
++                "patient": self.patient_b.id_patient,
++                "service_responsable": self.service_urgences.id_service,
++                "type_prise_en_charge": Sejour.TypePriseEnCharge.URGENCE,
++                "motif_admission": "Séjour du patient B",
++            },
++            user=self.admin,
++        )
++
++        self.loc_a = LocalisationPatient.objects.get(sejour=self.sejour_a, est_actuelle=True)
++        self.mvt_a = MouvementPatient.objects.filter(sejour=self.sejour_a).first()
++        self.evt_a = EvenementParcours.objects.filter(sejour=self.sejour_a).first()
++
++        self.client = APIClient()
++
++    # ------------------------------------------------------------------ anonyme
++    def test_anonyme_refuse_partout(self):
++        urls = [
++            reverse("sejour-synthese", args=[self.sejour_a.id_sejour]),
++            reverse("sejour-dashboard-stats"),
++            reverse("localisation-list-create"),
++            reverse("evenement-list-create"),
++            reverse("mouvement-list"),
++        ]
++        for url in urls:
++            with self.subTest(url=url):
++                self.assertEqual(self.client.get(url).status_code, status.HTTP_401_UNAUTHORIZED)
++
++    # ------------------------------------------------------------------ synthèse
++    def test_patient_ne_peut_pas_lire_la_synthese_d_un_autre_patient(self):
++        self.client.force_authenticate(user=self.patient_b.id_utilisateur)
++        url = reverse("sejour-synthese", args=[self.sejour_a.id_sejour])
++        self.assertEqual(self.client.get(url).status_code, status.HTTP_403_FORBIDDEN)
++
++    def test_patient_peut_lire_sa_propre_synthese(self):
++        self.client.force_authenticate(user=self.patient_a.id_utilisateur)
++        url = reverse("sejour-synthese", args=[self.sejour_a.id_sejour])
++        self.assertEqual(self.client.get(url).status_code, status.HTTP_200_OK)
++
++    def test_personnel_peut_lire_toute_synthese(self):
++        self.client.force_authenticate(user=self.infirmier)
++        for sejour in (self.sejour_a, self.sejour_b):
++            url = reverse("sejour-synthese", args=[sejour.id_sejour])
++            self.assertEqual(self.client.get(url).status_code, status.HTTP_200_OK)
++
++    # ------------------------------------------------------------------ statistiques
++    def test_statistiques_dashboard_reservees_au_personnel(self):
++        url = reverse("sejour-dashboard-stats")
++        self.client.force_authenticate(user=self.patient_a.id_utilisateur)
++        self.assertEqual(self.client.get(url).status_code, status.HTTP_403_FORBIDDEN)
++        self.client.force_authenticate(user=self.infirmier)
++        self.assertEqual(self.client.get(url).status_code, status.HTTP_200_OK)
++
++    # ------------------------------------------------------------------ localisation
++    def test_patient_ne_voit_que_ses_localisations_dans_la_liste(self):
++        self.client.force_authenticate(user=self.patient_b.id_utilisateur)
++        response = self.client.get(reverse("localisation-list-create"), {"est_actuelle": "true"})
++        self.assertEqual(response.status_code, status.HTTP_200_OK)
++        ids = {item["id"] for item in _items(response)}
++        self.assertNotIn(self.loc_a.id, ids)
++        self.assertEqual(len(ids), 1)  # uniquement sa propre localisation
++
++    def test_personnel_voit_toutes_les_localisations(self):
++        self.client.force_authenticate(user=self.infirmier)
++        response = self.client.get(reverse("localisation-list-create"), {"est_actuelle": "true"})
++        self.assertEqual(response.status_code, status.HTTP_200_OK)
++        self.assertGreaterEqual(len(_items(response)), 2)
++
++    def test_patient_ne_peut_pas_lire_le_detail_d_une_localisation_d_autrui(self):
++        self.client.force_authenticate(user=self.patient_b.id_utilisateur)
++        url = reverse("localisation-detail", args=[self.loc_a.id])
++        self.assertEqual(self.client.get(url).status_code, status.HTTP_403_FORBIDDEN)
++
++    def test_patient_ne_peut_pas_deplacer_un_patient(self):
++        self.client.force_authenticate(user=self.patient_b.id_utilisateur)
++        response = self.client.post(
++            reverse("localisation-list-create"),
++            {"sejour": self.sejour_a.id_sejour, "service": self.service_urgences.id_service},
++            format="json",
++        )
++        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
++        # La localisation du patient A n'a pas bougé
++        self.assertEqual(
++            LocalisationPatient.objects.filter(sejour=self.sejour_a, est_actuelle=True).count(), 1
++        )
++
++    # ------------------------------------------------------------------ événements
++    def test_patient_ne_peut_pas_creer_d_evenement_clinique(self):
++        self.client.force_authenticate(user=self.patient_a.id_utilisateur)
++        avant = EvenementParcours.objects.filter(sejour=self.sejour_a).count()
++        response = self.client.post(
++            reverse("evenement-list-create"),
++            {"sejour": self.sejour_a.id_sejour, "titre": "Injection", "type_evenement": "OBSERVATION"},
++            format="json",
++        )
++        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
++        self.assertEqual(EvenementParcours.objects.filter(sejour=self.sejour_a).count(), avant)
++
++    def test_patient_ne_voit_pas_les_evenements_d_autrui(self):
++        self.client.force_authenticate(user=self.patient_b.id_utilisateur)
++        response = self.client.get(reverse("evenement-list-create"))
++        self.assertEqual(response.status_code, status.HTTP_200_OK)
++        ids = {item["id"] for item in _items(response)}
++        self.assertNotIn(self.evt_a.id, ids)
++
++    def test_patient_ne_peut_pas_lire_le_detail_d_un_evenement_d_autrui(self):
++        self.client.force_authenticate(user=self.patient_b.id_utilisateur)
++        url = reverse("evenement-detail", args=[self.evt_a.id])
++        self.assertEqual(self.client.get(url).status_code, status.HTTP_403_FORBIDDEN)
++
++    # ------------------------------------------------------------------ mouvements
++    def test_patient_ne_voit_pas_les_mouvements_d_autrui(self):
++        self.client.force_authenticate(user=self.patient_b.id_utilisateur)
++        response = self.client.get(reverse("mouvement-list"))
++        self.assertEqual(response.status_code, status.HTTP_200_OK)
++        ids = {item["id"] for item in _items(response)}
++        self.assertNotIn(self.mvt_a.id, ids)
++
++    def test_patient_ne_peut_pas_lire_le_detail_d_un_mouvement_d_autrui(self):
++        self.client.force_authenticate(user=self.patient_b.id_utilisateur)
++        url = reverse("mouvement-detail", args=[self.mvt_a.id])
++        self.assertEqual(self.client.get(url).status_code, status.HTTP_403_FORBIDDEN)
+diff -ruN -x __pycache__ -x '*.pyc' -x '*.sqlite3' /tmp/orig_backend/sejour/views.py backend/sejour/views.py
+--- a/backend/sejour/views.py	2026-10-22 16:27:36.390444839 +0000
++++ b/backend/sejour/views.py	2026-10-22 16:27:36.461457871 +0000
+@@ -9,7 +9,11 @@
+ from rest_framework.response import Response
+ 
+ from config.pagination import paginate_response
+-from config.permissions import IsMedecinOuAdmin, IsStaffOrAdmin
++from config.permissions import (
++    IsMedecinOuAdmin,
++    IsStaffOrAdmin,
++    ensure_can_access_sejour,
++)
+ from config.schema_helpers import (
+     ErrorResponseSerializer,
+     MessageResponseSerializer,
+@@ -165,6 +169,7 @@
+     sejour = sejour_service.repository.get_by_id(pk)
+     if not sejour:
+         return Response({"detail": "Séjour introuvable."}, status=status.HTTP_404_NOT_FOUND)
++    ensure_can_access_sejour(request, sejour)
+ 
+     from localisation.localisationSerializers import LocalisationReadSerializer
+     from mouvement.mouvementSerializers import MouvementReadSerializer
+@@ -188,7 +193,7 @@
+     responses={200: OpenApiTypes.OBJECT},
+ )
+ @api_view(["GET"])
+-@permission_classes([IsAuthenticated])
++@permission_classes([IsAuthenticated, IsStaffOrAdmin])
+ def sejour_dashboard_stats_view(request):
+     stats = sejour_service.repository.get_statistiques_dashboard()
+     return Response(stats, status=status.HTTP_200_OK)
