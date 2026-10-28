@@ -1,0 +1,269 @@
+<div class="parcours-page">
+  <!-- NAVIGATION RETOUR -->
+  <div class="back-nav">
+    <a routerLink="/personnel/accueil" class="back-link">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+      </svg>
+      <span>Retour à l'accueil soignant</span>
+    </a>
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <span>Chargement du dossier de parcours patient...</span>
+    </div>
+  } @else if (parcoursData(); as data) {
+    <!-- EN-TÊTE ET CARTE PATIENT -->
+    <header class="patient-header-card">
+      <div class="patient-profile-main">
+        <div class="patient-avatar-large">
+          {{ data.patient.prenom.charAt(0) }}{{ data.patient.nom.charAt(0) }}
+        </div>
+        <div class="patient-profile-info">
+          <div class="name-status-row">
+            <h1 class="patient-fullname">{{ data.patient.prenom }} {{ data.patient.nom }}</h1>
+            @if (data.isHospitalise) {
+              <span class="status-badge-hospitalise">
+                <span class="live-pulse"></span>
+                Hospitalisation en cours
+              </span>
+            } @else {
+              <span class="status-badge-externe">
+                Non hospitalisé(e) / Ambulatoire
+              </span>
+            }
+          </div>
+          <p class="patient-meta-row">
+            @if (data.patient.dateNaissance) {
+              <span>Né(e) le {{ data.patient.dateNaissance | date:'dd/MM/yyyy' }}</span>
+              <span class="dot-separator">•</span>
+            }
+            @if (data.patient.sexe) {
+              <span>Genre : {{ data.patient.sexe === 'M' ? 'Masculin' : (data.patient.sexe === 'F' ? 'Féminin' : data.patient.sexe) }}</span>
+              <span class="dot-separator">•</span>
+            }
+            @if (data.patient.groupeSanguin) {
+              <span class="blood-group-tag">Groupe {{ data.patient.groupeSanguin }}</span>
+            }
+          </p>
+        </div>
+      </div>
+
+      <div class="patient-contact-grid">
+        <div class="contact-item">
+          <span class="label">Téléphone</span>
+          <span class="val">{{ data.patient.telephone || 'Non renseigné' }}</span>
+        </div>
+        <div class="contact-item">
+          <span class="label">Email</span>
+          <span class="val">{{ data.patient.email || 'Non renseigné' }}</span>
+        </div>
+        <div class="contact-item">
+          <span class="label">N° Sécurité Sociale</span>
+          <span class="val">{{ data.patient.numeroSecuriteSociale || 'Non renseigné' }}</span>
+        </div>
+        <div class="contact-item">
+          <span class="label">Contact d'urgence</span>
+          <span class="val">{{ data.patient.personneAContacter || 'Non renseigné' }}</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- SECTION 1 : LOCALISATION ACTUELLE -->
+    <section class="parcours-section">
+      <div class="section-title-wrap">
+        <div class="section-icon">📍</div>
+        <div>
+          <h2 class="section-title">Localisation Actuelle du Patient</h2>
+          <span class="section-hint">Emplacement physique en temps réel dans l'établissement</span>
+        </div>
+      </div>
+
+      @if (data.localisationActuelle; as loc) {
+        <div class="location-card active-location">
+          <div class="location-pill-header">
+            <span class="pulse-indicator"></span>
+            <span>Lit actif attribué</span>
+          </div>
+
+          <div class="location-details-grid">
+            <div class="loc-detail-box">
+              <span class="loc-box-icon">🏥</span>
+              <div class="loc-box-data">
+                <span class="box-label">Service de Soins</span>
+                <span class="box-value">{{ loc.serviceNom }}</span>
+              </div>
+            </div>
+
+            <div class="loc-detail-box">
+              <span class="loc-box-icon">🏢</span>
+              <div class="loc-box-data">
+                <span class="box-label">Bâtiment Hospitalier</span>
+                <span class="box-value">{{ loc.batimentNom || 'Bâtiment Principal' }}</span>
+              </div>
+            </div>
+
+            <div class="loc-detail-box highlight-box">
+              <span class="loc-box-icon">🚪</span>
+              <div class="loc-box-data">
+                <span class="box-label">Chambre</span>
+                <span class="box-value">{{ loc.chambreNumero }}</span>
+              </div>
+            </div>
+
+            <div class="loc-detail-box highlight-box">
+              <span class="loc-box-icon">🛏️</span>
+              <div class="loc-box-data">
+                <span class="box-label">Lit</span>
+                <span class="box-value">{{ loc.litNumero }}</span>
+              </div>
+            </div>
+          </div>
+
+          @if (loc.dateDebut) {
+            <div class="loc-footer">
+              <span>Date d'affectation : <strong>{{ loc.dateDebut | date:'dd/MM/yyyy à HH:mm' }}</strong></span>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="location-card empty-location">
+          <div class="empty-icon-sub">🏠</div>
+          <div class="empty-text-wrap">
+            <h3 class="empty-sub-title">Aucune localisation de lit active</h3>
+            <p class="empty-sub-desc">
+              Ce patient n'est actuellement affecté à aucun lit ni chambre d'hospitalisation. Il est soit en suivi externe / ambulatoire, soit son hospitalisation est clôturée.
+            </p>
+          </div>
+        </div>
+      }
+    </section>
+
+    <!-- SECTION 2 : HISTORIQUE DE SÉJOUR -->
+    <section class="parcours-section">
+      <div class="section-title-wrap">
+        <div class="section-icon">🗂️</div>
+        <div>
+          <h2 class="section-title">Historique des Séjours & Mouvements</h2>
+          <span class="section-hint">Traçabilité complète des admissions, transferts et sorties</span>
+        </div>
+      </div>
+
+      @if (data.sejours.length === 0) {
+        <div class="empty-block">
+          <span class="empty-icon-lg">📋</span>
+          <h3 class="empty-block-title">Aucun séjour hospitalier enregistré</h3>
+          <p class="empty-block-desc">
+            Aucun enregistrement de séjour ou d'admission n'a encore été consigné pour ce patient dans le backend.
+          </p>
+        </div>
+      } @else {
+        <div class="sejours-timeline">
+          @for (sejour of data.sejours; track sejour.id) {
+            <div class="timeline-sejour-card" [class.current-sejour]="sejour.statut === 'EN_COURS'">
+              <div class="sejour-header">
+                <div class="sejour-ref-block">
+                  <span class="sejour-badge">Séjour #{{ sejour.id }}</span>
+                  @if (sejour.reference) {
+                    <span class="sejour-code">{{ sejour.reference }}</span>
+                  }
+                </div>
+                <span
+                  class="statut-pill"
+                  [class.statut-en-cours]="sejour.statut === 'EN_COURS'"
+                  [class.statut-cloture]="sejour.statut === 'CLOTURE' || sejour.statut === 'TERMINEE'"
+                >
+                  {{ sejour.statutDisplay }}
+                </span>
+              </div>
+
+              <div class="sejour-details-grid">
+                <div class="s-detail">
+                  <span class="s-label">Admission</span>
+                  <span class="s-value">{{ sejour.dateAdmission | date:'dd/MM/yyyy' }}</span>
+                </div>
+                <div class="s-detail">
+                  <span class="s-label">Sortie</span>
+                  <span class="s-value">{{ sejour.dateSortie ? (sejour.dateSortie | date:'dd/MM/yyyy') : 'En cours' }}</span>
+                </div>
+                <div class="s-detail">
+                  <span class="s-label">Service</span>
+                  <span class="s-value">{{ sejour.serviceNom || 'Non spécifié' }}</span>
+                </div>
+                <div class="s-detail">
+                  <span class="s-label">Médecin</span>
+                  <span class="s-value">{{ sejour.medecinNom || 'Non assigné' }}</span>
+                </div>
+              </div>
+
+              @if (sejour.motif) {
+                <div class="sejour-motif">
+                  <strong>Motif :</strong> {{ sejour.motif }}
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      <!-- HISTORIQUE DES MOUVEMENTS DE LIT / TRANSFERTS -->
+      @if (data.mouvements && data.mouvements.length > 0) {
+        <div class="sub-timeline-block">
+          <h3 class="sub-title">Mouvements & Transferts Internes</h3>
+          <div class="mouvements-list">
+            @for (mvt of data.mouvements; track mvt.id) {
+              <div class="mvt-card">
+                <div class="mvt-icon">🔄</div>
+                <div class="mvt-body">
+                  <div class="mvt-head">
+                    <span class="mvt-type">{{ mvt.typeMouvementDisplay || mvt.typeMouvement }}</span>
+                    <span class="mvt-date">{{ mvt.dateMouvement | date:'dd/MM/yyyy à HH:mm' }}</span>
+                  </div>
+                  <p class="mvt-desc">
+                    @if (mvt.chambreOrigine || mvt.chambreDestination) {
+                      <span>De Chambre {{ mvt.chambreOrigine || 'N/D' }} vers Chambre {{ mvt.chambreDestination || 'N/D' }}</span>
+                    }
+                    @if (mvt.motif) {
+                      <span class="mvt-motif">— Motif : {{ mvt.motif }}</span>
+                    }
+                  </p>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- ÉVÉNEMENTS DU PARCOURS -->
+      @if (data.evenements && data.evenements.length > 0) {
+        <div class="sub-timeline-block">
+          <h3 class="sub-title">Journal des Événements de Soins</h3>
+          <div class="evenements-list">
+            @for (evt of data.evenements; track evt.id) {
+              <div class="evt-card">
+                <div class="evt-head">
+                  <span class="evt-title">{{ evt.titre }}</span>
+                  <span class="evt-date">{{ evt.dateEvenement | date:'dd/MM/yyyy HH:mm' }}</span>
+                </div>
+                @if (evt.description) {
+                  <p class="evt-desc">{{ evt.description }}</p>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </section>
+  } @else {
+    <div class="empty-state">
+      <div class="empty-icon">❌</div>
+      <h3 class="empty-title">Dossier introuvable</h3>
+      <p class="empty-desc">
+        Aucun patient ou dossier médical n'a été trouvé avec l'identifiant #{{ patientId() }}.
+      </p>
+      <a routerLink="/personnel/patients" class="btn-primary">Retour à la liste des patients</a>
+    </div>
+  }
+</div>

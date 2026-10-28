@@ -1,0 +1,228 @@
+<div class="dashboard-page">
+  <!-- EN-TÊTE DASHBOARD -->
+  <header class="dash-header">
+    <div>
+      <div class="badge-tag">📊 Pilotage & Statistiques de Soins</div>
+      <h1 class="dash-title">Tableau de Bord Activité Soignante</h1>
+      <p class="dash-subtitle">
+        Indicateurs hospitaliers, taux de charge des lits et synthèse analytique en direct.
+      </p>
+    </div>
+    <div class="dash-actions">
+      @if (metrics()) {
+        <span class="refresh-badge">
+          Mis à jour à {{ metrics()?.derniereMiseAJour }}
+        </span>
+      }
+      <button type="button" class="btn-refresh" (click)="loadMetrics()">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        <span>Actualiser</span>
+      </button>
+    </div>
+  </header>
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <span>Calcul des indicateurs analytiques...</span>
+    </div>
+  } @else if (metrics()) {
+    <!-- GRILLE D'INDICATEURS STATISTIQUES -->
+    <section class="kpi-grid">
+      <!-- TAUX D'OCCUPATION DES LITS -->
+      <div class="kpi-card kpi-primary">
+        <div class="kpi-header">
+          <span class="kpi-title">Taux d'occupation des lits</span>
+          <span class="kpi-icon">📈</span>
+        </div>
+        <div class="kpi-number">{{ metrics()?.tauxOccupation }}%</div>
+        <div class="kpi-progress">
+          <div
+            class="kpi-bar"
+            [style.width.%]="metrics()?.tauxOccupation"
+            [class.high-occupancy]="(metrics()?.tauxOccupation || 0) > 85"
+          ></div>
+        </div>
+        <span class="kpi-subtext">
+          {{ metrics()?.litsOccupes }} lits occupés sur {{ metrics()?.totalLits }} au total
+        </span>
+      </div>
+
+      <!-- PATIENTS HOSPITALISÉS -->
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-title">Patients actuellement hospitalisés</span>
+          <span class="kpi-icon">🛏️</span>
+        </div>
+        <div class="kpi-number">{{ metrics()?.patientsHospitalises }}</div>
+        <span class="kpi-subtext">
+          Présents dans les différents services de soins
+        </span>
+      </div>
+
+      <!-- LITS DISPONIBLES -->
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-title">Lits immédiatement disponibles</span>
+          <span class="kpi-icon">✅</span>
+        </div>
+        <div class="kpi-number text-success">{{ metrics()?.litsDisponibles }}</div>
+        <span class="kpi-subtext">
+          Prêts pour de nouvelles admissions
+        </span>
+      </div>
+
+      <!-- RENDEZ-VOUS DU JOUR -->
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-title">Rendez-vous programmés aujourd'hui</span>
+          <span class="kpi-icon">📅</span>
+        </div>
+        <div class="kpi-number text-info">{{ metrics()?.rdvAujourdhui }}</div>
+        <span class="kpi-subtext">
+          Sur un volume total de {{ metrics()?.totalRdv }} rendez-vous enregistrés
+        </span>
+      </div>
+    </section>
+
+    <!-- SECTION SYNTHÈSE ANALYTIQUE DE L'ACTIVITÉ -->
+    <section class="analytics-row">
+      <!-- RÉPARTITION DES RENDEZ-VOUS PAR STATUT -->
+      <div class="chart-card">
+        <div class="card-head">
+          <h2 class="card-title">Répartition des Rendez-vous</h2>
+          <span class="card-tag">Par statut</span>
+        </div>
+        <div class="stat-bars">
+          <div class="stat-bar-item">
+            <div class="bar-info">
+              <span class="label">Confirmés</span>
+              <span class="val">{{ metrics()?.repartitionRdv?.confirmes }}</span>
+            </div>
+            <div class="bar-track">
+              <div
+                class="bar-fill bg-success"
+                [style.width.%]="metrics()?.totalRdv ? (metrics()!.repartitionRdv.confirmes / metrics()!.totalRdv) * 100 : 0"
+              ></div>
+            </div>
+          </div>
+
+          <div class="stat-bar-item">
+            <div class="bar-info">
+              <span class="label">En attente de validation</span>
+              <span class="val">{{ metrics()?.repartitionRdv?.enAttente }}</span>
+            </div>
+            <div class="bar-track">
+              <div
+                class="bar-fill bg-warning"
+                [style.width.%]="metrics()?.totalRdv ? (metrics()!.repartitionRdv.enAttente / metrics()!.totalRdv) * 100 : 0"
+              ></div>
+            </div>
+          </div>
+
+          <div class="stat-bar-item">
+            <div class="bar-info">
+              <span class="label">Consultations terminées</span>
+              <span class="val">{{ metrics()?.repartitionRdv?.termines }}</span>
+            </div>
+            <div class="bar-track">
+              <div
+                class="bar-fill bg-info"
+                [style.width.%]="metrics()?.totalRdv ? (metrics()!.repartitionRdv.termines / metrics()!.totalRdv) * 100 : 0"
+              ></div>
+            </div>
+          </div>
+
+          <div class="stat-bar-item">
+            <div class="bar-info">
+              <span class="label">Annulés</span>
+              <span class="val">{{ metrics()?.repartitionRdv?.annules }}</span>
+            </div>
+            <div class="bar-track">
+              <div
+                class="bar-fill bg-danger"
+                [style.width.%]="metrics()?.totalRdv ? (metrics()!.repartitionRdv.annules / metrics()!.totalRdv) * 100 : 0"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FLUX D'ACTIVITÉ RÉCENTE DE SÉJOUR -->
+      <div class="chart-card">
+        <div class="card-head">
+          <h2 class="card-title">Flux de Soins & Mouvements Récents</h2>
+          <span class="card-tag">Séjours hospitaliers</span>
+        </div>
+        <div class="flux-metrics">
+          <div class="flux-item">
+            <div class="flux-icon-wrap icon-blue">
+              <span>🔄</span>
+            </div>
+            <div class="flux-data">
+              <span class="flux-value">{{ metrics()?.transfertsRecents }}</span>
+              <span class="flux-label">Transferts internes récents</span>
+              <span class="flux-desc">Changements de lit ou réorientations de service</span>
+            </div>
+          </div>
+
+          <div class="flux-item">
+            <div class="flux-icon-wrap icon-green">
+              <span>🚪</span>
+            </div>
+            <div class="flux-data">
+              <span class="flux-value">{{ metrics()?.sortiesRecentes }}</span>
+              <span class="flux-label">Sorties autorisées récentes</span>
+              <span class="flux-desc">Fin de séjour et clôtures de dossier</span>
+            </div>
+          </div>
+
+          <div class="flux-item">
+            <div class="flux-icon-wrap icon-purple">
+              <span>🛏️</span>
+            </div>
+            <div class="flux-data">
+              <span class="flux-value">{{ metrics()?.litsOccupes }}</span>
+              <span class="flux-label">Lits sous surveillance active</span>
+              <span class="flux-desc">Actuellement attribués à un séjour actif</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- INDICATEUR DE SÉCURITÉ DE CHARGE HOSPITALIÈRE -->
+    <section class="charge-indicator-card">
+      <div class="indicator-header">
+        <div class="indicator-icon">🏥</div>
+        <div>
+          <h3 class="indicator-title">Indicateur de Vigilance Capacité</h3>
+          <p class="indicator-subtitle">
+            Basé sur le rapport lits occupés / lits totaux déclarés dans la base de données.
+          </p>
+        </div>
+      </div>
+      <div class="gauge-display">
+        <div class="gauge-meter">
+          <div class="gauge-fill" [style.width.%]="metrics()?.tauxOccupation"></div>
+        </div>
+        <div class="gauge-labels">
+          <span>Faible charge (&lt; 50%)</span>
+          <span>Charge nominale (50% - 80%)</span>
+          <span>Tension capacitaire (&gt; 80%)</span>
+        </div>
+      </div>
+    </section>
+  } @else {
+    <div class="empty-state">
+      <div class="empty-icon">⚠️</div>
+      <h3 class="empty-title">Indicateurs momentanément indisponibles</h3>
+      <p class="empty-desc">
+        Impossible de charger les statistiques consolidées depuis le backend Django.
+      </p>
+      <button type="button" class="btn-refresh" (click)="loadMetrics()">Réessayer</button>
+    </div>
+  }
+</div>

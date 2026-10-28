@@ -1,0 +1,148 @@
+<div class="hosp-page">
+  <header class="page-header">
+    <div>
+      <div class="badge-tag">🏥 Services Cliniques</div>
+      <h1 class="page-title">Hospitalisations & Lits</h1>
+      <p class="page-subtitle">
+        Surveillance des admissions en cours, des séjours et des affectations de lits.
+      </p>
+    </div>
+
+    <div class="search-box">
+      <svg class="search-icon w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        (keyup.enter)="onSearch()"
+        placeholder="Rechercher patient, chambre, médecin..."
+        class="search-input"
+      />
+      @if (searchTerm) {
+        <button type="button" class="clear-btn" (click)="clearSearch()">✕</button>
+      }
+      <button type="button" class="btn-search" (click)="onSearch()">Rechercher</button>
+    </div>
+  </header>
+
+  <!-- FILTRES PAR STATUT -->
+  <div class="filter-tabs">
+    @for (opt of statusOptions; track opt.value) {
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="activeStatut === opt.value"
+        (click)="setStatut(opt.value)"
+      >
+        {{ opt.label }}
+      </button>
+    }
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <span>Chargement des hospitalisations...</span>
+    </div>
+  } @else if (hospitalisations().length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon">🏥</div>
+      <h3 class="empty-title">Aucune hospitalisation trouvée</h3>
+      <p class="empty-desc">
+        Aucun enregistrement ne correspond aux filtres appliqués.
+      </p>
+      @if (activeStatut || searchTerm) {
+        <button type="button" class="btn-secondary" (click)="activeStatut = ''; clearSearch()">
+          Réinitialiser les filtres
+        </button>
+      }
+    </div>
+  } @else {
+    <div class="table-card">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Patient</th>
+              <th>Localisation (Chambre & Lit)</th>
+              <th>Pôle & Bâtiment</th>
+              <th>Médecin traitant</th>
+              <th>Date d'admission</th>
+              <th>Motif d'hospitalisation</th>
+              <th>Statut</th>
+              <th class="text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (h of hospitalisations(); track h.id) {
+              <tr>
+                <td>
+                  <div class="patient-cell">
+                    <div class="avatar-sm">
+                      {{ h.patientNom.charAt(0) }}
+                    </div>
+                    <div class="patient-info">
+                      <span class="patient-name">{{ h.patientNom }}</span>
+                      @if (h.patientTelephone) {
+                        <span class="patient-sub">{{ h.patientTelephone }}</span>
+                      }
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="location-badge">
+                    <span class="badge-chambre">{{ h.chambreNumero }}</span>
+                    <span class="badge-lit">{{ h.litNumero }}</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="service-cell">
+                    <span class="service-name">{{ h.serviceNom }}</span>
+                    @if (h.batimentNom) {
+                      <span class="batiment-name">{{ h.batimentNom }}</span>
+                    }
+                  </div>
+                </td>
+                <td>
+                  <span class="medecin-tag">{{ h.medecinNom }}</span>
+                </td>
+                <td>
+                  <span class="date-tag">{{ h.dateEntree | date:'dd/MM/yyyy' }}</span>
+                </td>
+                <td>
+                  <span class="motif-text" [title]="h.motif">{{ h.motif }}</span>
+                </td>
+                <td>
+                  <span
+                    class="statut-badge"
+                    [class.statut-en-cours]="h.statut === 'EN_COURS'"
+                    [class.statut-terminee]="h.statut === 'TERMINEE'"
+                    [class.statut-programmee]="h.statut === 'PROGRAMMEE'"
+                    [class.statut-annulee]="h.statut === 'ANNULEE'"
+                  >
+                    {{ h.statut === 'EN_COURS' ? 'En cours' : (h.statut === 'TERMINEE' ? 'Terminée' : (h.statut === 'PROGRAMMEE' ? 'Programmée' : h.statut)) }}
+                  </span>
+                </td>
+                <td class="text-right">
+                  @if (h.patientId) {
+                    <a
+                      [routerLink]="['/personnel/patients', h.patientId, 'parcours']"
+                      class="btn-parcours"
+                      title="Consulter le parcours complet du patient"
+                    >
+                      <span>Voir le parcours</span>
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                      </svg>
+                    </a>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>

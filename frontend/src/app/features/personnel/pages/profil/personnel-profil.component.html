@@ -1,0 +1,91 @@
+<div class="profil-page">
+  <header class="page-header">
+    <div>
+      <div class="badge-tag">👤 Identité & Informations Professionnelles</div>
+      <h1 class="page-title">Mon Profil Soignant</h1>
+      <p class="page-subtitle">
+        Coordonnées professionnelles, rôle d'accès et paramètres de compte.
+      </p>
+    </div>
+  </header>
+
+  <div class="profil-grid">
+    <!-- CARTE D'IDENTITÉ -->
+    <div class="profile-card">
+      <div class="avatar-banner">
+        <div class="avatar-circle">
+          {{ authService.currentUser()?.prenom?.charAt(0) || 'S' }}{{ authService.currentUser()?.nom?.charAt(0) || '' }}
+        </div>
+      </div>
+      <div class="profile-title-block">
+        <h2 class="profile-name">
+          {{ authService.currentUser()?.prenom }} {{ authService.currentUser()?.nom }}
+        </h2>
+        <span class="role-badge">
+          {{ authService.currentUser()?.role === 'INFIRMIER' ? 'Infirmier(ère) Diplômé(e)' : 'Personnel Hospitalier' }}
+        </span>
+        <div class="status-online">
+          <span class="dot"></span>
+          <span>Compte actif en service</span>
+        </div>
+      </div>
+
+      <div class="details-list">
+        <div class="detail-row">
+          <span class="detail-label">Identifiant</span>
+          <span class="detail-value">#{{ authService.currentUser()?.id_user || authService.currentUser()?.idUser }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Nom d'utilisateur / Login</span>
+          <span class="detail-value">{{ authService.currentUser()?.login }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Adresse Email</span>
+          <span class="detail-value">{{ authService.currentUser()?.email || 'Non renseigné' }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Numéro de téléphone</span>
+          <span class="detail-value">{{ authService.currentUser()?.telephone || 'Non renseigné' }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Rôle système</span>
+          <span class="detail-value">{{ authService.currentUser()?.role }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARTE SÉCURITÉ & SESSION -->
+    <div class="security-card">
+      <h3 class="card-title">Sécurité & Authentification</h3>
+      <p class="card-desc">
+        Votre session est protégée par un jeton JWT transmis de manière sécurisée via des cookies HttpOnly conformément aux standards de cybersécurité hospitalière.
+      </p>
+
+      <div class="security-features">
+        <div class="feature-item">
+          <span class="feat-icon">🔒</span>
+          <div>
+            <span class="feat-title">Cookies HttpOnly sécurisés</span>
+            <span class="feat-sub">Protection contre les attaques XSS et vol de session</span>
+          </div>
+        </div>
+
+        <div class="feature-item">
+          <span class="feat-icon">🛡️</span>
+          <div>
+            <span class="feat-title">Contrôle d'accès basé sur les rôles</span>
+            <span class="feat-sub">Accès restreint aux dossiers médicaux et hospitalisations autorisés</span>
+          </div>
+        </div>
+
+        <div class="feature-item">
+          <span class="feat-icon">📋</span>
+          <div>
+            <span class="feat-title">Journalisation des accès</span>
+            <span class="feat-sub">Traçabilité complète des consultations de parcours patient</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

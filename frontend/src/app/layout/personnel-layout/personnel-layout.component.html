@@ -1,0 +1,168 @@
+<div class="personnel-layout">
+  <!-- SIDEBAR DESKTOP -->
+  <aside class="sidebar-desktop">
+    <!-- Brand -->
+    <div class="sidebar-brand">
+      <div class="brand-logo">
+        <div class="brand-icon">
+          <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">Santé Numérique</span>
+          <span class="brand-badge">Espace Soignant</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Soignant Quick Badge -->
+    <div class="soignant-card">
+      <div class="soignant-avatar">
+        <span>{{ authService.currentUser()?.prenom?.charAt(0) || 'S' }}{{ authService.currentUser()?.nom?.charAt(0) || '' }}</span>
+      </div>
+      <div class="soignant-info">
+        <div class="soignant-name">
+          {{ authService.currentUser()?.prenom }} {{ authService.currentUser()?.nom }}
+        </div>
+        <div class="soignant-role">
+          {{ authService.currentUser()?.role === 'INFIRMIER' ? 'Infirmier(ère)' : 'Personnel soignant' }}
+        </div>
+      </div>
+      <div class="status-dot-active" title="Personnel en service"></div>
+    </div>
+
+    <!-- Navigation List -->
+    <nav class="sidebar-nav">
+      <div class="nav-section-title">Navigation Principale</div>
+      <ul class="nav-list">
+        @for (item of navItems; track item.route) {
+          <li>
+            <a
+              [routerLink]="item.route"
+              routerLinkActive="active"
+              [routerLinkActiveOptions]="{ exact: item.route === '/personnel/accueil' }"
+              class="nav-link"
+            >
+              <span class="nav-emoji">{{ item.emoji }}</span>
+              <span class="nav-label">{{ item.label }}</span>
+            </a>
+          </li>
+        }
+      </ul>
+    </nav>
+
+    <!-- Bottom Actions: Logout -->
+    <div class="sidebar-footer">
+      <button type="button" class="logout-btn" (click)="onLogout()">
+        <span class="logout-emoji">🚪</span>
+        <span class="logout-text">Déconnexion</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- MOBILE DRAWER BACKDROP -->
+  @if (isMobileSidebarOpen()) {
+    <div class="mobile-backdrop" (click)="closeMobileSidebar()"></div>
+  }
+
+  <!-- SIDEBAR MOBILE DRAWER -->
+  <aside class="sidebar-mobile" [class.open]="isMobileSidebarOpen()">
+    <div class="mobile-header">
+      <div class="brand-logo">
+        <div class="brand-icon">
+          <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">Santé Numérique</span>
+          <span class="brand-badge">Espace Soignant</span>
+        </div>
+      </div>
+      <button type="button" class="close-btn" (click)="closeMobileSidebar()" aria-label="Fermer le menu">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="soignant-card mobile-card">
+      <div class="soignant-avatar">
+        <span>{{ authService.currentUser()?.prenom?.charAt(0) || 'S' }}</span>
+      </div>
+      <div class="soignant-info">
+        <div class="soignant-name">
+          {{ authService.currentUser()?.prenom }} {{ authService.currentUser()?.nom }}
+        </div>
+        <div class="soignant-role">
+          {{ authService.currentUser()?.role === 'INFIRMIER' ? 'Infirmier(ère)' : 'Personnel soignant' }}
+        </div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <ul class="nav-list">
+        @for (item of navItems; track item.route) {
+          <li>
+            <a
+              [routerLink]="item.route"
+              routerLinkActive="active"
+              [routerLinkActiveOptions]="{ exact: item.route === '/personnel/accueil' }"
+              class="nav-link"
+              (click)="closeMobileSidebar()"
+            >
+              <span class="nav-emoji">{{ item.emoji }}</span>
+              <span class="nav-label">{{ item.label }}</span>
+            </a>
+          </li>
+        }
+      </ul>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button type="button" class="logout-btn" (click)="onLogout()">
+        <span class="logout-emoji">🚪</span>
+        <span class="logout-text">Déconnexion</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN WRAPPER -->
+  <div class="main-wrapper">
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <button
+          type="button"
+          class="hamburger-btn"
+          (click)="toggleMobileSidebar()"
+          aria-label="Ouvrir le menu"
+        >
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+        <div class="service-pill">
+          <span class="live-dot"></span>
+          <span>Poste Soignant actif</span>
+        </div>
+      </div>
+
+      <div class="topbar-right">
+        <div class="user-greeting">
+          <span class="greeting-text">Bienvenue,</span>
+          <span class="user-display-name">{{ authService.currentUser()?.prenom }} {{ authService.currentUser()?.nom }}</span>
+        </div>
+        <div class="topbar-avatar" [routerLink]="'/personnel/profil'" role="button" title="Voir mon profil">
+          <span>{{ authService.currentUser()?.prenom?.charAt(0) || 'S' }}</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- CONTENT OUTLET -->
+    <main class="page-content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

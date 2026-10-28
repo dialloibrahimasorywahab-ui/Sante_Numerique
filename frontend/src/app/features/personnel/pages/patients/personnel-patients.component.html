@@ -1,0 +1,120 @@
+<div class="patients-page">
+  <header class="page-header">
+    <div>
+      <div class="badge-tag">👥 Dossiers Médicaux</div>
+      <h1 class="page-title">Registre des Patients</h1>
+      <p class="page-subtitle">
+        Consultez l'ensemble des patients suivis et accédez à leur parcours de soins.
+      </p>
+    </div>
+
+    <div class="search-box">
+      <svg class="search-icon w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        (keyup.enter)="onSearch()"
+        placeholder="Rechercher par nom, prénom, téléphone..."
+        class="search-input"
+      />
+      @if (searchTerm) {
+        <button type="button" class="clear-btn" (click)="clearSearch()">✕</button>
+      }
+      <button type="button" class="btn-search" (click)="onSearch()">Rechercher</button>
+    </div>
+  </header>
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <span>Recherche des patients...</span>
+    </div>
+  } @else if (patients().length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon">👥</div>
+      <h3 class="empty-title">Aucun patient trouvé</h3>
+      <p class="empty-desc">
+        @if (searchTerm) {
+          Aucun résultat ne correspond à votre recherche « {{ searchTerm }} ».
+        } @else {
+          Aucun patient n'est actuellement enregistré dans la base de données.
+        }
+      </p>
+      @if (searchTerm) {
+        <button type="button" class="btn-secondary" (click)="clearSearch()">Réinitialiser le filtre</button>
+      }
+    </div>
+  } @else {
+    <div class="table-card">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Patient</th>
+              <th>Date de naissance</th>
+              <th>N° Sécurité Sociale</th>
+              <th>Téléphone</th>
+              <th>Groupe Sanguin</th>
+              <th>Contact d'urgence</th>
+              <th class="text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of patients(); track p.id) {
+              <tr>
+                <td>
+                  <div class="patient-cell">
+                    <div class="avatar-sm">
+                      {{ p.prenom.charAt(0) }}{{ p.nom.charAt(0) }}
+                    </div>
+                    <div class="patient-info">
+                      <span class="patient-name">{{ p.prenom }} {{ p.nom }}</span>
+                      @if (p.email) {
+                        <span class="patient-sub">{{ p.email }}</span>
+                      }
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span class="date-text">
+                    {{ p.dateNaissance ? (p.dateNaissance | date:'dd/MM/yyyy') : 'N/D' }}
+                  </span>
+                </td>
+                <td>
+                  <span class="ssn-code">{{ p.numeroSecuriteSociale || 'N/D' }}</span>
+                </td>
+                <td>
+                  <span class="phone-text">{{ p.telephone || 'N/D' }}</span>
+                </td>
+                <td>
+                  @if (p.groupeSanguin) {
+                    <span class="blood-tag">{{ p.groupeSanguin }}</span>
+                  } @else {
+                    <span class="text-muted">N/D</span>
+                  }
+                </td>
+                <td>
+                  <span class="contact-text">{{ p.personneAContacter || 'N/D' }}</span>
+                </td>
+                <td class="text-right">
+                  <a
+                    [routerLink]="['/personnel/patients', p.id, 'parcours']"
+                    class="btn-parcours"
+                    title="Consulter la localisation et l'historique de séjour"
+                  >
+                    <span>Voir le parcours</span>
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                    </svg>
+                  </a>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>

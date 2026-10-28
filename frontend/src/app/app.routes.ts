@@ -61,12 +61,9 @@ export const routes: Routes = [
   },
   {
     path: 'personnel',
-    redirectTo: 'medecin/dashboard'
-  },
-  {
-    path: 'personnel/dashboard',
-    redirectTo: 'medecin/dashboard',
-    pathMatch: 'full'
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['INFIRMIER', 'ADMINISTRATEUR'] },
+    loadChildren: () => import('./features/personnel/personnel.routes').then(m => m.personnelRoutes)
   },
   {
     path: 'parcours',

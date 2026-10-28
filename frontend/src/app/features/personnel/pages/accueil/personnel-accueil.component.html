@@ -1,0 +1,317 @@
+<div class="accueil-page">
+  <!-- BANNIÈRE DE BIENVENUE -->
+  <section class="welcome-hero">
+    <div class="hero-content">
+      <div class="hero-badge">
+        <span class="pulse-dot"></span>
+        <span>Espace Infirmier & Soignant</span>
+      </div>
+      <h1 class="hero-title">
+        Bonjour, {{ authService.currentUser()?.prenom || 'Soignant' }} ! 👋
+      </h1>
+      <p class="hero-subtitle">
+        Bienvenue sur votre console de soins. Suivez en temps réel les patients hospitalisés, les prochains rendez-vous et accédez au dossier de parcours de chaque patient.
+      </p>
+    </div>
+
+    <div class="hero-meta">
+      <div class="meta-card">
+        <span class="meta-label">Rôle actif</span>
+        <span class="meta-value">{{ authService.currentUser()?.role === 'INFIRMIER' ? 'Infirmier(ère)' : 'Personnel de santé' }}</span>
+      </div>
+      <div class="meta-card">
+        <span class="meta-label">Statut de garde</span>
+        <span class="meta-status">En service</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ACCÈS RAPIDE -->
+  <section class="quick-access-section">
+    <div class="section-header">
+      <h2 class="section-title">Accès Rapide</h2>
+      <span class="section-hint">Raccourcis vers vos outils principaux</span>
+    </div>
+
+    <div class="quick-access-grid">
+      <a routerLink="/personnel/patients" class="action-card action-patients">
+        <div class="card-icon-wrap">
+          <span class="card-emoji">👥</span>
+        </div>
+        <div class="card-body">
+          <h3 class="card-title">Patients</h3>
+          <p class="card-desc">Consulter le registre complet des patients et dossiers de santé.</p>
+          <span class="action-button-label">
+            <span>Voir mes patients</span>
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </span>
+        </div>
+      </a>
+
+      <a routerLink="/personnel/rendez-vous" class="action-card action-rdv">
+        <div class="card-icon-wrap">
+          <span class="card-emoji">📅</span>
+        </div>
+        <div class="card-body">
+          <h3 class="card-title">Rendez-vous</h3>
+          <p class="card-desc">Gérer le planning des consultations et visites programmées.</p>
+          <span class="action-button-label">
+            <span>Voir les rendez-vous</span>
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </span>
+        </div>
+      </a>
+
+      <a routerLink="/personnel/hospitalisations" class="action-card action-hosp">
+        <div class="card-icon-wrap">
+          <span class="card-emoji">🏥</span>
+        </div>
+        <div class="card-body">
+          <h3 class="card-title">Hospitalisations</h3>
+          <p class="card-desc">Surveiller les admissions en cours, lits occupés et services de soins.</p>
+          <span class="action-button-label">
+            <span>Voir les hospitalisations</span>
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </span>
+        </div>
+      </a>
+
+      <a routerLink="/personnel/dashboard" class="action-card action-dash">
+        <div class="card-icon-wrap">
+          <span class="card-emoji">📊</span>
+        </div>
+        <div class="card-body">
+          <h3 class="card-title">Dashboard Analytique</h3>
+          <p class="card-desc">Indicateurs de charge des lits, taux d'occupation et métriques.</p>
+          <span class="action-button-label">
+            <span>Voir le dashboard</span>
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </span>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- INFORMATIONS IMPORTANTES DE SERVICE -->
+  <section class="info-banner">
+    <div class="info-icon">💡</div>
+    <div class="info-content">
+      <h3 class="info-title">Transmissions et vigilances de soins</h3>
+      <p class="info-text">
+        Toutes les données ci-dessous proviennent en direct de la base de données hospitalière. Pour chaque patient hospitalisé ou ayant un rendez-vous, vous pouvez accéder directement à la traçabilité complète de son séjour et sa localisation en temps réel en cliquant sur <strong>« Voir le parcours »</strong>.
+      </p>
+    </div>
+  </section>
+
+  <!-- SECTION PATIENTS ACTUELLEMENT HOSPITALISÉS -->
+  <section class="data-section">
+    <div class="section-header-flex">
+      <div>
+        <h2 class="section-title">Patients actuellement hospitalisés</h2>
+        <span class="section-hint">Admissions actives nécessitant la surveillance de l'équipe de soins</span>
+      </div>
+      <a routerLink="/personnel/hospitalisations" class="view-all-link">
+        Voir toutes les hospitalisations &rarr;
+      </a>
+    </div>
+
+    @if (isLoadingHospitalises()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <span>Chargement des hospitalisations en cours...</span>
+      </div>
+    } @else if (hospitalises().length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon">🛏️</div>
+        <h3 class="empty-title">Aucune hospitalisation en cours</h3>
+        <p class="empty-desc">Aucun patient n'est actuellement enregistré avec le statut « En cours » dans le système hospitalier.</p>
+        <a routerLink="/personnel/hospitalisations" class="btn-secondary">Consulter l'historique</a>
+      </div>
+    } @else {
+      <div class="table-card">
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Patient</th>
+                <th>Localisation (Chambre & Lit)</th>
+                <th>Service & Bâtiment</th>
+                <th>Médecin référent</th>
+                <th>Date d'admission</th>
+                <th>Motif</th>
+                <th class="text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (hosp of hospitalises(); track hosp.id) {
+                <tr>
+                  <td>
+                    <div class="patient-cell">
+                      <div class="avatar-sm">
+                        {{ hosp.patientNom.charAt(0) }}
+                      </div>
+                      <div class="patient-info">
+                        <span class="patient-name">{{ hosp.patientNom }}</span>
+                        @if (hosp.patientTelephone) {
+                          <span class="patient-sub">{{ hosp.patientTelephone }}</span>
+                        }
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="location-badge">
+                      <span class="badge-chambre">{{ hosp.chambreNumero }}</span>
+                      <span class="badge-lit">{{ hosp.litNumero }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="service-cell">
+                      <span class="service-name">{{ hosp.serviceNom }}</span>
+                      @if (hosp.batimentNom) {
+                        <span class="batiment-name">{{ hosp.batimentNom }}</span>
+                      }
+                    </div>
+                  </td>
+                  <td>
+                    <span class="medecin-tag">{{ hosp.medecinNom }}</span>
+                  </td>
+                  <td>
+                    <span class="date-tag">{{ hosp.dateEntree | date:'dd/MM/yyyy' }}</span>
+                  </td>
+                  <td>
+                    <span class="motif-text" [title]="hosp.motif">{{ hosp.motif }}</span>
+                  </td>
+                  <td class="text-right">
+                    <a
+                      [routerLink]="['/personnel/patients', hosp.patientId, 'parcours']"
+                      class="btn-parcours"
+                      title="Consulter la localisation et l'historique de séjour"
+                    >
+                      <span>Voir le parcours</span>
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                      </svg>
+                    </a>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+  </section>
+
+  <!-- SECTION PROCHAINS RENDEZ-VOUS ACCESSIBLES AU PERSONNEL -->
+  <section class="data-section">
+    <div class="section-header-flex">
+      <div>
+        <h2 class="section-title">Prochains rendez-vous accessibles au personnel</h2>
+        <span class="section-hint">Consultations et visites médicales programmées</span>
+      </div>
+      <a routerLink="/personnel/rendez-vous" class="view-all-link">
+        Voir tous les rendez-vous &rarr;
+      </a>
+    </div>
+
+    @if (isLoadingRdv()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <span>Chargement des rendez-vous...</span>
+      </div>
+    } @else if (prochainsRdv().length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon">📅</div>
+        <h3 class="empty-title">Aucun rendez-vous planifié</h3>
+        <p class="empty-desc">Aucun rendez-vous à venir n'est actuellement programmé dans l'API.</p>
+        <a routerLink="/personnel/rendez-vous" class="btn-secondary">Voir l'ensemble des créneaux</a>
+      </div>
+    } @else {
+      <div class="table-card">
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Patient</th>
+                <th>Praticien</th>
+                <th>Date & Heure</th>
+                <th>Motif</th>
+                <th>Statut</th>
+                <th class="text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (rdv of prochainsRdv(); track rdv.id) {
+                <tr>
+                  <td>
+                    <div class="patient-cell">
+                      <div class="avatar-sm avatar-rdv">
+                        {{ rdv.patientNom.charAt(0) }}
+                      </div>
+                      <div class="patient-info">
+                        <span class="patient-name">{{ rdv.patientNom }}</span>
+                        @if (rdv.patientTelephone) {
+                          <span class="patient-sub">{{ rdv.patientTelephone }}</span>
+                        }
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="medecin-cell">
+                      <span class="medecin-name">{{ rdv.medecinNom }}</span>
+                      <span class="medecin-spec">{{ rdv.medecinSpecialite }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="datetime-cell">
+                      <span class="date-val">{{ rdv.dateRdv | date:'dd/MM/yyyy' }}</span>
+                      @if (rdv.heure) {
+                        <span class="time-val">à {{ rdv.heure }}</span>
+                      }
+                    </div>
+                  </td>
+                  <td>
+                    <span class="motif-text" [title]="rdv.motif">{{ rdv.motif }}</span>
+                  </td>
+                  <td>
+                    <span
+                      class="statut-badge"
+                      [class.statut-confirme]="rdv.statut === 'CONFIRME'"
+                      [class.statut-attente]="rdv.statut === 'EN_ATTENTE'"
+                      [class.statut-termine]="rdv.statut === 'TERMINE'"
+                      [class.statut-annule]="rdv.statut === 'ANNULE'"
+                    >
+                      {{ rdv.statutDisplay }}
+                    </span>
+                  </td>
+                  <td class="text-right">
+                    @if (rdv.patientId) {
+                      <a
+                        [routerLink]="['/personnel/patients', rdv.patientId, 'parcours']"
+                        class="btn-parcours"
+                        title="Consulter le parcours de ce patient"
+                      >
+                        <span>Voir le parcours</span>
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                        </svg>
+                      </a>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+  </section>
+</div>

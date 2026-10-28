@@ -183,7 +183,7 @@ export class AuthService {
       case 'MEDECIN':
         return '/medecin/dashboard';
       case 'INFIRMIER':
-        return '/personnel/dashboard';
+        return '/personnel/accueil';
       case 'ADMINISTRATEUR':
         return '/admin/dashboard';
       default:
