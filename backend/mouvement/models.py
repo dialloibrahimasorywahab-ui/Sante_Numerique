@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from simple_history.models import HistoricalRecords
 
 
 class MouvementPatient(models.Model):
@@ -77,6 +78,8 @@ class MouvementPatient(models.Model):
         related_name="mouvements_enregistres",
         help_text="Utilisateur ayant validé le transfert"
     )
+
+    history = HistoricalRecords()
 
     class Meta:
         verbose_name = "Mouvement du Patient"

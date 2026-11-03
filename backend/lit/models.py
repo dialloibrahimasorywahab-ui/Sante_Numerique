@@ -1,6 +1,7 @@
 # pyrefly: ignore [missing-import]
 from django.db import models
 from chambre.models import Chambre
+from simple_history.models import HistoricalRecords
 
 
 class Lit(models.Model):
@@ -30,6 +31,8 @@ class Lit(models.Model):
         choices=EtatLit.choices,
         default=EtatLit.DISPONIBLE
     )
+
+    history = HistoricalRecords()
 
     class Meta:
         verbose_name = "Lit"

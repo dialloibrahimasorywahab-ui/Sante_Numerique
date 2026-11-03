@@ -95,8 +95,13 @@ class UserSerializers(serializers.ModelSerializer):
 
         if not self.instance:
             # ---- CRÉATION ----
-            # Les créations publiques (non-admin) reçoivent systématiquement le rôle PATIENT.
+            # Si un non-admin tente de s'attribuer un rôle autre que PATIENT, rejet explicite
+            role_demande = self.initial_data.get("role")
             if not is_admin:
+                if role_demande and role_demande != User.Role.PATIENT:
+                    raise serializers.ValidationError({
+                        "role": "Seul un administrateur peut attribuer un rôle autre que PATIENT lors de la création d'un compte."
+                    })
                 attrs["role"] = User.Role.PATIENT
 
             # Champs obligatoires à la création
@@ -114,13 +119,23 @@ class UserSerializers(serializers.ModelSerializer):
 
         else:
             # ---- MISE À JOUR ----
-            # CORRECTION PROBLÈME 5 : le rôle ne doit JAMAIS être modifié par un non-admin.
-            # On retire "role" des données validées pour les non-admins afin d'éviter
-            # qu'une simple mise à jour de profil réinitialise le rôle.
+            # CORRECTION PROBLÈME 2 & PROBLÈME 5 :
+            # - Le rôle ne doit JAMAIS être modifié par un non-admin. Rejet explicite si modification tentée.
+            # - Le statut actif/inactif ne peut être modifié que par un administrateur.
+            # - Une valeur interdite ne doit jamais être acceptée silencieusement.
             if not is_admin:
+                if "role" in self.initial_data and self.initial_data.get("role") != self.instance.role:
+                    raise serializers.ValidationError({"role": "Seul un administrateur peut modifier le rôle d'un compte."})
                 attrs.pop("role", None)
-                # Un non-admin ne peut pas modifier actif ni id_user
+
+                if "actif" in self.initial_data and bool(self.initial_data.get("actif")) != bool(self.instance.actif):
+                    raise serializers.ValidationError({"actif": "Seul un administrateur peut modifier le statut actif d'un compte."})
                 attrs.pop("actif", None)
+
+                if any(k in self.initial_data for k in ["id_user", "idUser"]):
+                    val = str(self.initial_data.get("id_user") or self.initial_data.get("idUser"))
+                    if val != str(self.instance.pk):
+                        raise serializers.ValidationError({"id_user": "L'identifiant d'un compte utilisateur ne peut pas être modifié."})
                 attrs.pop("id_user", None)
                 attrs.pop("idUser", None)
 
@@ -156,7 +171,6 @@ class UserSerializers(serializers.ModelSerializer):
         """
         is_admin = self._is_admin_request()
         if not is_admin:
-            # Un non-admin ne peut jamais changer le rôle, actif ou l'id
             validated_data.pop("role", None)
             validated_data.pop("actif", None)
             validated_data.pop("id_user", None)

@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
+from simple_history.models import HistoricalRecords
 
 
 class LocalisationPatient(models.Model):
@@ -89,10 +90,24 @@ class LocalisationPatient(models.Model):
         related_name="localisations_enregistrees"
     )
 
+    history = HistoricalRecords()
+
     class Meta:
         verbose_name = "Localisation du Patient"
         verbose_name_plural = "Localisations des Patients"
         ordering = ["-date_debut", "-id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['sejour'],
+                condition=models.Q(est_actuelle=True),
+                name='unique_localisation_actuelle_par_sejour',
+            ),
+            models.UniqueConstraint(
+                fields=['lit'],
+                condition=models.Q(est_actuelle=True, lit__isnull=False),
+                name='unique_lit_actif_par_localisation',
+            ),
+        ]
 
     def __str__(self):
         return self.format_medical()

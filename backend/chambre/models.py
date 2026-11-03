@@ -1,6 +1,7 @@
 # pyrefly: ignore [missing-import]
 from django.db import models
 from batiment.models import Batiment
+from simple_history.models import HistoricalRecords
 
 
 class Chambre(models.Model):
@@ -43,6 +44,8 @@ class Chambre(models.Model):
         choices=StatutChambre.choices,
         default=StatutChambre.DISPONIBLE
     )
+
+    history = HistoricalRecords()
 
     class Meta:
         unique_together = ('batiment', 'numero_chambre')
@@ -95,5 +98,3 @@ class Chambre(models.Model):
             self.statut = nouveau_statut
             self.save(update_fields=["statut"])
         return self.statut
-
-

@@ -1,5 +1,6 @@
 from django.db import models
 from users.models import User
+from simple_history.models import HistoricalRecords
 
 
 class Personnel(models.Model):
@@ -63,6 +64,8 @@ class Personnel(models.Model):
     )
 
     date_embauche = models.DateField()
+
+    history = HistoricalRecords()
 
     class Meta:
         ordering = ['id_personnel']

@@ -1,6 +1,7 @@
 from django.db import models
 from patients.models import Patient
 from medecin.models import Medecin
+from simple_history.models import HistoricalRecords
 
 
 class Mortalite(models.Model):
@@ -30,6 +31,7 @@ class Mortalite(models.Model):
     observation = models.TextField(blank=True, null=True)
     actif = models.BooleanField(default=True)
 
+    history = HistoricalRecords()
 
     class Meta:
         verbose_name = "Mortalité"
@@ -47,4 +49,3 @@ class Mortalite(models.Model):
     @property
     def idDeces(self):
         return self.id_deces
-

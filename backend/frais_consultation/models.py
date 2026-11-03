@@ -1,4 +1,5 @@
 from django.db import models
+from simple_history.models import HistoricalRecords
 
 
 class FraisConsultation(models.Model):
@@ -35,6 +36,8 @@ class FraisConsultation(models.Model):
     )
 
     actif = models.BooleanField(default=True)
+
+    history = HistoricalRecords()
 
     class Meta:
         verbose_name = "Frais de Consultation"

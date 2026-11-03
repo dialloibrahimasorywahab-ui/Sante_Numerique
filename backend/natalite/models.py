@@ -1,6 +1,7 @@
 from django.db import models
 from patients.models import Patient
 from medecin.models import Medecin
+from simple_history.models import HistoricalRecords
 
 
 class Natalite(models.Model):
@@ -102,6 +103,7 @@ class Natalite(models.Model):
 
     actif = models.BooleanField(default=True)
 
+    history = HistoricalRecords()
 
     class Meta:
         verbose_name = "Natalité"
@@ -119,4 +121,4 @@ class Natalite(models.Model):
 
     @property
     def idNouveauNe(self):
-        return self.id_nouveau_ne
+        return self.id_nouveau_ne

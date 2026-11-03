@@ -1,5 +1,6 @@
 from django.db import models
 from users.models import User
+from simple_history.models import HistoricalRecords
 
 
 class Medecin(models.Model):
@@ -61,6 +62,8 @@ class Medecin(models.Model):
 
     date_embauche = models.DateField()
 
+    history = HistoricalRecords()
+
     class Meta:
         ordering = ["id_medecin"]
 
@@ -71,7 +74,6 @@ class Medecin(models.Model):
     # Propriétés de compatibilité camelCase
     @property
     def idMedecin(self):
-
         return self.id_medecin
 
     @idMedecin.setter
@@ -136,7 +138,6 @@ class DisponibiliteMedecin(models.Model):
         SAMEDI = 5, "Samedi"
         DIMANCHE = 6, "Dimanche"
 
-    id = models.AutoField(primary_key=True)
     medecin = models.ForeignKey(
         Medecin,
         on_delete=models.CASCADE,
@@ -145,31 +146,31 @@ class DisponibiliteMedecin(models.Model):
     )
     jour_semaine = models.IntegerField(
         choices=JourSemaine.choices,
-        help_text="Jour de la semaine (0=Lundi, ..., 6=Dimanche)"
+        help_text="0=Lundi, 1=Mardi, ..., 6=Dimanche"
     )
     heure_debut = models.TimeField(
-        default="08:30",
+        default="08:00:00",
         help_text="Heure de début de consultation"
     )
     heure_fin = models.TimeField(
-        default="16:30",
+        default="16:00:00",
         help_text="Heure de fin de consultation"
     )
     pause_debut = models.TimeField(
         null=True,
         blank=True,
-        default="12:30",
-        help_text="Début de la pause déjeuner (optionnel)"
+        default="12:00:00",
+        help_text="Début de pause déjeuner (optionnel)"
     )
     pause_fin = models.TimeField(
         null=True,
         blank=True,
-        default="14:00",
-        help_text="Fin de la pause déjeuner (optionnel)"
+        default="13:00:00",
+        help_text="Fin de pause déjeuner (optionnel)"
     )
-    duree_creneau = models.IntegerField(
-        default=45,
-        help_text="Durée moyenne d'une consultation en minutes"
+    duree_consultation = models.IntegerField(
+        default=30,
+        help_text="Durée moyenne d'un créneau en minutes (ex: 20, 30, 45)"
     )
     actif = models.BooleanField(
         default=True,
@@ -177,63 +178,67 @@ class DisponibiliteMedecin(models.Model):
     )
 
     class Meta:
-        verbose_name = "Disponibilité Médecin"
-        verbose_name_plural = "Disponibilités Médecins"
         unique_together = ("medecin", "jour_semaine")
         ordering = ["jour_semaine", "heure_debut"]
+        verbose_name = "Disponibilité Médecin"
+        verbose_name_plural = "Disponibilités Médecins"
 
     def __str__(self):
-        return f"{self.medecin} - {self.get_jour_semaine_display()} ({self.heure_debut} - {self.heure_fin})"
+        jour_label = self.get_jour_semaine_display()
+        statut = f"{self.heure_debut.strftime('%H:%M')} - {self.heure_fin.strftime('%H:%M')}" if self.actif else "Non disponible"
+        return f"{self.medecin} | {jour_label} : {statut}"
 
 
 class IndisponibiliteMedecin(models.Model):
     """
-    Périodes d'indisponibilité, congés, formations ou absences exceptionnelles du médecin.
-    Bloque automatiquement les créneaux concernés lors de la prise de rendez-vous.
+    Périodes d'absence ponctuelle d'un médecin (congés, arrêts, réunions, etc.).
+    Bloque la prise de rendez-vous sur cette plage temporelle.
     """
-    id = models.AutoField(primary_key=True)
+    class TypeIndisponibilite(models.TextChoices):
+        CONGE = "CONGE", "Congés"
+        MALADIE = "MALADIE", "Arrêt Maladie"
+        FORMATION = "FORMATION", "Formation / Séminaire"
+        GARDE = "GARDE", "Garde Exceptionnelle"
+        AUTRE = "AUTRE", "Autre absence"
+
     medecin = models.ForeignKey(
         Medecin,
         on_delete=models.CASCADE,
         related_name="indisponibilites",
         db_column="id_medecin"
     )
-    date_debut = models.DateField(
-        help_text="Date de début de l'indisponibilité"
+    titre = models.CharField(
+        max_length=150,
+        default="Absence",
+        help_text="Intitulé ou motif court de l'absence"
     )
-    date_fin = models.DateField(
-        help_text="Date de fin de l'indisponibilité"
+    type_indisponibilite = models.CharField(
+        max_length=30,
+        choices=TypeIndisponibilite.choices,
+        default=TypeIndisponibilite.CONGE
     )
-    toute_la_journee = models.BooleanField(
-        default=True,
-        help_text="Si vrai, toute la plage de dates est bloquée"
+    date_debut = models.DateTimeField(
+        help_text="Date et heure de début de l'absence"
     )
-    heure_debut = models.TimeField(
-        null=True,
-        blank=True,
-        help_text="Heure de début si indisponibilité partielle"
+    date_fin = models.DateTimeField(
+        help_text="Date et heure de fin de l'absence"
     )
-    heure_fin = models.TimeField(
-        null=True,
-        blank=True,
-        help_text="Heure de fin si indisponibilité partielle"
-    )
-    motif = models.CharField(
-        max_length=255,
+    commentaire = models.TextField(
         blank=True,
         null=True,
-        help_text="Motif de l'absence (ex: Congé annuel, Formation, Garde)"
+        help_text="Précisions utiles pour l'équipe ou le secrétariat"
     )
     actif = models.BooleanField(
         default=True,
-        help_text="Indique si cette indisponibilité est actuellement active"
+        help_text="Permet d'annuler ou désactiver une absence sans la supprimer"
     )
 
     class Meta:
+        ordering = ["-date_debut"]
         verbose_name = "Indisponibilité Médecin"
         verbose_name_plural = "Indisponibilités Médecins"
-        ordering = ["-date_debut", "-id"]
 
     def __str__(self):
-        return f"{self.medecin} - Indisponible du {self.date_debut} au {self.date_fin} ({self.motif or 'Absence'})"
-
+        debut_str = self.date_debut.strftime("%d/%m/%Y %H:%M")
+        fin_str = self.date_fin.strftime("%d/%m/%Y %H:%M")
+        return f"{self.medecin} | {self.get_type_indisponibilite_display()} du {debut_str} au {fin_str}"

@@ -2,6 +2,7 @@
 from django.db import models
 from patients.models import Patient
 from medecin.models import Medecin
+from simple_history.models import HistoricalRecords
 
 
 class RendezVous(models.Model):
@@ -37,6 +38,7 @@ class RendezVous(models.Model):
         default=StatutRendezVous.EN_ATTENTE
     )
 
+    history = HistoricalRecords()
 
     class Meta:
         verbose_name = "Rendez-vous"

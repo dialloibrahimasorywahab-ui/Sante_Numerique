@@ -100,10 +100,20 @@ export class AuthService {
   }
 
   private clearSession(): void {
-    if (typeof window !== 'undefined' && window.sessionStorage) {
-      try {
-        sessionStorage.removeItem(STORAGE_USER_KEY);
-      } catch {}
+    if (typeof window !== 'undefined') {
+      if (window.sessionStorage) {
+        try {
+          sessionStorage.removeItem(STORAGE_USER_KEY);
+        } catch {}
+      }
+      if (window.localStorage) {
+        try {
+          localStorage.removeItem('sante_numerique_access_token');
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          localStorage.removeItem('token');
+        } catch {}
+      }
     }
     this.currentUser.set(null);
   }

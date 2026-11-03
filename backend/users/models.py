@@ -2,6 +2,7 @@
 from django.db import models
 # pyrefly: ignore [missing-import]
 from django.contrib.auth.models import AbstractUser, BaseUserManager
+from simple_history.models import HistoricalRecords
 
 
 class CustomUserManager(BaseUserManager):
@@ -63,6 +64,8 @@ class User(AbstractUser):
 
     date_naissance = models.DateField(null=True, blank=True)
     actif = models.BooleanField(default=True)
+
+    history = HistoricalRecords(excluded_fields=["password"])
 
     objects = CustomUserManager()
 
