@@ -171,3 +171,52 @@ def deny_unless_owner_or_staff(request, obj=None, *args, **kwargs):
             return True
 
     raise PermissionDenied("Vous n'êtes pas autorisé à accéder ou modifier cette ressource.")
+
+
+# ---------------------------------------------------------------------------
+# Contrôle d'accès au parcours patient (séjour, localisation, mouvement, événement)
+# ---------------------------------------------------------------------------
+STAFF_ROLES = ("ADMINISTRATEUR", "MEDECIN", "INFIRMIER")
+
+
+def is_staff_role(user) -> bool:
+    """True si l'utilisateur connecté est du personnel soignant ou administrateur."""
+    return bool(
+        user
+        and user.is_authenticated
+        and getattr(user, "role", None) in STAFF_ROLES
+    )
+
+
+def scope_to_accessible_sejours(request, queryset, sejour_lookup: str = "sejour"):
+    """
+    Restreint un queryset aux séjours que l'utilisateur a le droit de voir :
+    - personnel / administrateur : tout ;
+    - patient : uniquement les objets rattachés à ses propres séjours ;
+    - tout autre rôle : rien.
+    """
+    user = request.user
+    if is_staff_role(user):
+        return queryset
+    if getattr(user, "role", None) == "PATIENT":
+        return queryset.filter(**{f"{sejour_lookup}__patient__id_utilisateur": user})
+    return queryset.none()
+
+
+def ensure_can_access_sejour(request, sejour) -> bool:
+    """
+    Contrôle d'accès à un séjour précis (vues de détail / synthèse).
+    Lève PermissionDenied (403) si l'utilisateur n'est ni du personnel
+    ni le patient concerné par ce séjour.
+    """
+    user = request.user
+    if is_staff_role(user):
+        return True
+    if (
+        getattr(user, "role", None) == "PATIENT"
+        and sejour is not None
+        and sejour.patient.id_utilisateur_id == user.pk
+    ):
+        return True
+    raise PermissionDenied("Vous n'êtes pas autorisé à accéder à ce séjour.")
+

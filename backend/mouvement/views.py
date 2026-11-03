@@ -8,7 +8,11 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from config.pagination import paginate_response
-from config.permissions import IsStaffOrAdmin
+from config.permissions import (
+    IsStaffOrAdmin,
+    ensure_can_access_sejour,
+    scope_to_accessible_sejours,
+)
 from config.schema_helpers import ErrorResponseSerializer, PAGINATION_PARAMS
 from .mouvementSerializers import MouvementReadSerializer, MouvementTransfertCreateSerializer
 from .mouvementServices import MouvementService
@@ -34,6 +38,7 @@ def mouvement_list_view(request):
         sejour_id=request.query_params.get("sejour_id"),
         type_mouvement=request.query_params.get("type_mouvement"),
     )
+    qs = scope_to_accessible_sejours(request, qs)
     return paginate_response(request, qs, MouvementReadSerializer)
 
 
@@ -76,4 +81,5 @@ def mouvement_detail_view(request, pk: int):
     mouvement = mouvement_service.repository.get_by_id(pk)
     if not mouvement:
         return Response({"detail": "Mouvement introuvable."}, status=status.HTTP_404_NOT_FOUND)
+    ensure_can_access_sejour(request, mouvement.sejour)
     return Response(MouvementReadSerializer(mouvement).data, status=status.HTTP_200_OK)

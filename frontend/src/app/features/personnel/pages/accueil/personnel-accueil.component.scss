@@ -179,6 +179,7 @@
 
       .action-button-label {
         color: #0284c7;
+
         svg {
           transform: translateX(4px);
         }
@@ -235,10 +236,25 @@
       }
     }
 
-    &.action-patients .card-icon-wrap { background: #eff6ff; border-color: #dbeafe; }
-    &.action-rdv .card-icon-wrap { background: #f0fdf4; border-color: #dcfce7; }
-    &.action-hosp .card-icon-wrap { background: #fef2f2; border-color: #fee2e2; }
-    &.action-dash .card-icon-wrap { background: #faf5ff; border-color: #f3e8ff; }
+    &.action-patients .card-icon-wrap {
+      background: #eff6ff;
+      border-color: #dbeafe;
+    }
+
+    &.action-rdv .card-icon-wrap {
+      background: #f0fdf4;
+      border-color: #dcfce7;
+    }
+
+    &.action-hosp .card-icon-wrap {
+      background: #fef2f2;
+      border-color: #fee2e2;
+    }
+
+    &.action-dash .card-icon-wrap {
+      background: #faf5ff;
+      border-color: #f3e8ff;
+    }
   }
 }
 
@@ -530,10 +546,25 @@
   background: #f1f5f9;
   color: #475569;
 
-  &.statut-confirme { background: #dcfce7; color: #15803d; }
-  &.statut-attente { background: #fef9c3; color: #854d0e; }
-  &.statut-termine { background: #e2e8f0; color: #334155; }
-  &.statut-annule { background: #fee2e2; color: #b91c1c; }
+  &.statut-confirme {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  &.statut-attente {
+    background: #fef9c3;
+    color: #854d0e;
+  }
+
+  &.statut-termine {
+    background: #e2e8f0;
+    color: #334155;
+  }
+
+  &.statut-annule {
+    background: #fee2e2;
+    color: #b91c1c;
+  }
 }
 
 /* BOUTON VOIR LE PARCOURS */
@@ -629,5 +660,7 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }

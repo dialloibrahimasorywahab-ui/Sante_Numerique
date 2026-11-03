@@ -282,6 +282,7 @@ export class PersonnelService {
 
         const sejoursList: any[] = Array.isArray(sejoursRes) ? sejoursRes : (sejoursRes?.results || []);
         const hospList: any[] = Array.isArray(hospitalisationsRes) ? hospitalisationsRes : (hospitalisationsRes?.results || []);
+        const locList: any[] = Array.isArray(localisationsRes) ? localisationsRes : (localisationsRes?.results || []);
 
         // Vérifier si une hospitalisation active existe
         const hospActive = hospList.find(h => (h.statut || '').toUpperCase() === 'EN_COURS');
@@ -362,11 +363,13 @@ export class PersonnelService {
               };
             }),
             catchError(() => {
+              // Si la synthèse échoue mais qu'on a le séjour basique
               return of(this.buildFallbackParcours(patient, isHospitalise, sejoursList, hospActive));
             })
           );
         }
 
+        // Si aucun séjour mais hospitalisation
         return of(this.buildFallbackParcours(patient, isHospitalise, sejoursList, hospActive));
       })
     );
