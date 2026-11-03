@@ -161,6 +161,97 @@ def create_user(request):
     )
 
 
+# -----------------------------------------------------------------------
+# Fonctions internes de mise à jour et suppression (non décorées @api_view)
+# CORRECTION PROBLÈME 6 : extraire la logique métier pour éviter la double
+# décoration qui causait des erreurs 500 lors des appels PUT/PATCH/DELETE
+# via get_user() → update_user() / delete_user().
+# -----------------------------------------------------------------------
+
+def _handle_update_user(request, user_id):
+    """
+    Logique interne de mise à jour d'un utilisateur (PUT / PATCH).
+    Appelée depuis get_user() et update_user() sans re-décoration @api_view.
+    """
+    user = user_service.getUser(user_id)
+
+    if user is None:
+        return Response(
+            {"message": "Utilisateur introuvable"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    # CORRECTION PROBLÈME 2 : contrôle d'accès strict
+    # Un utilisateur peut modifier son propre profil dans les limites des champs autorisés.
+    # Seul un admin peut modifier le rôle, actif, ou le profil d'un autre utilisateur.
+    deny_unless_owner_or_staff(request, user)
+
+    # Vérification supplémentaire : un non-admin ne peut modifier que son propre compte
+    requester_role = getattr(request.user, "role", None)
+    if requester_role != "ADMINISTRATEUR" and request.user.pk != user.pk:
+        return Response(
+            {"error": "Accès refusé. Vous ne pouvez modifier que votre propre profil."},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    partial = request.method == "PATCH" or request.data.get("partial", False)
+    serializer = UserSerializers(user, data=request.data, partial=partial, context={"request": request})
+
+    if serializer.is_valid():
+        try:
+            user = user_service.updateUser(user, **serializer.validated_data)
+            serializer = UserSerializers(user)
+
+            return Response(
+                serializer.data,
+                status=status.HTTP_200_OK
+            )
+        except IntegrityError as e:
+            return Response(
+                {"error": "Un utilisateur avec cet email, téléphone ou login existe déjà.", "detail": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    return Response(
+        serializer.errors,
+        status=status.HTTP_400_BAD_REQUEST
+    )
+
+
+def _handle_delete_user(request, user_id):
+    """
+    Logique interne de désactivation / suppression d'un utilisateur (DELETE).
+    Appelée depuis get_user() et delete_user() sans re-décoration @api_view.
+    """
+    # Seul un admin peut supprimer / désactiver un compte
+    if getattr(request.user, "role", None) != "ADMINISTRATEUR":
+        return Response(
+            {"error": "Accès refusé. Seul un administrateur peut supprimer ou désactiver un compte."},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    user = user_service.getUser(user_id)
+
+    if user is None:
+        return Response(
+            {"message": "Utilisateur introuvable"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    hard = str(request.query_params.get("hard", "")).lower() in ["true", "1"]
+    user_service.deleteUser(user, hard=hard)
+
+    if hard:
+        return Response(
+            {"message": "Utilisateur supprimé définitivement de la base de données avec succès."},
+            status=status.HTTP_200_OK
+        )
+    return Response(
+        {"message": "Compte utilisateur désactivé (archivé) avec succès.", "actif": False},
+        status=status.HTTP_200_OK
+    )
+
+
 # Récupérer, modifier ou supprimer un utilisateur grâce à son ID
 @extend_schema(
     tags=["Utilisateurs"],
@@ -173,11 +264,17 @@ def create_user(request):
 @api_view(["GET", "PUT", "PATCH", "DELETE"])
 @permission_classes([IsAuthenticated])
 def get_user(request, user_id):
+    """
+    Route unifiée GET/PUT/PATCH/DELETE sur un utilisateur.
+    CORRECTION PROBLÈME 6 : délègue vers des fonctions internes non décorées
+    pour éviter la double décoration @api_view (source d'erreurs 500).
+    """
     if request.method in ["PUT", "PATCH"]:
-        return update_user(request, user_id)
+        return _handle_update_user(request, user_id)
     elif request.method == "DELETE":
-        return delete_user(request, user_id)
+        return _handle_delete_user(request, user_id)
 
+    # GET
     user = user_service.getUser(user_id)
 
     if user is None:
@@ -431,38 +528,11 @@ class CookieTokenRefreshView(TokenRefreshView):
 @api_view(["PUT", "PATCH"])
 @permission_classes([IsAuthenticated])
 def update_user(request, user_id):
-    user = user_service.getUser(user_id)
-
-    if user is None:
-        return Response(
-            {"message": "Utilisateur introuvable"},
-            status=status.HTTP_404_NOT_FOUND
-        )
-
-    deny_unless_owner_or_staff(request, user)
-
-    partial = request.method == "PATCH" or request.data.get("partial", False)
-    serializer = UserSerializers(user, data=request.data, partial=partial, context={"request": request})
-
-    if serializer.is_valid():
-        try:
-            user = user_service.updateUser(user, **serializer.validated_data)
-            serializer = UserSerializers(user)
-
-            return Response(
-                serializer.data,
-                status=status.HTTP_200_OK
-            )
-        except IntegrityError as e:
-            return Response(
-                {"error": "Un utilisateur avec cet email, téléphone ou login existe déjà.", "detail": str(e)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-    return Response(
-        serializer.errors,
-        status=status.HTTP_400_BAD_REQUEST
-    )
+    """
+    Endpoint direct PUT/PATCH /users/<id>/.
+    Délègue vers la fonction interne _handle_update_user (non décorée).
+    """
+    return _handle_update_user(request, user_id)
 
 
 # désactiver (soft delete) ou supprimer définitivement un utilisateur
@@ -476,26 +546,11 @@ def update_user(request, user_id):
 @api_view(["DELETE"])
 @permission_classes([IsAdmin])
 def delete_user(request, user_id):
-    user = user_service.getUser(user_id)
-
-    if user is None:
-        return Response(
-            {"message": "Utilisateur introuvable"},
-            status=status.HTTP_404_NOT_FOUND
-        )
-
-    hard = str(request.query_params.get("hard", "")).lower() in ["true", "1"]
-    user_service.deleteUser(user, hard=hard)
-
-    if hard:
-        return Response(
-            {"message": "Utilisateur supprimé définitivement de la base de données avec succès."},
-            status=status.HTTP_200_OK
-        )
-    return Response(
-        {"message": "Compte utilisateur désactivé (archivé) avec succès.", "actif": False},
-        status=status.HTTP_200_OK
-    )
+    """
+    Endpoint direct DELETE /users/<id>/.
+    Délègue vers la fonction interne _handle_delete_user (non décorée).
+    """
+    return _handle_delete_user(request, user_id)
 
 
 # Récupérer le profil de l'utilisateur actuellement authentifié (GET /users/me/)
@@ -561,4 +616,3 @@ def change_password(request):
             )
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-

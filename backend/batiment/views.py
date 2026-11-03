@@ -77,6 +77,50 @@ def get_all_batiments(request):
     return paginate_response(batiments, request, BatimentSerializer)
 
 
+# -----------------------------------------------------------------------
+# Fonctions internes non décorées — utilisées par get_batiment pour éviter
+# la double décoration @api_view qui provoque des erreurs 500.
+# -----------------------------------------------------------------------
+
+def _handle_update_batiment(request, batiment_id):
+    """Logique interne de mise à jour d'un bâtiment (sans @api_view)."""
+    if getattr(request.user, "role", None) != "ADMINISTRATEUR":
+        return Response({"message": "Accès non autorisé."}, status=status.HTTP_403_FORBIDDEN)
+
+    batiment = batiment_service.get_batiment(batiment_id)
+    if batiment is None:
+        return Response({"message": "Bâtiment introuvable"}, status=status.HTTP_404_NOT_FOUND)
+
+    partial = request.method == "PATCH" or request.data.get("partial", False)
+    serializer = BatimentSerializer(batiment, data=request.data, partial=partial)
+
+    if serializer.is_valid():
+        try:
+            updated = batiment_service.update_batiment(batiment, **serializer.validated_data)
+            return Response(BatimentSerializer(updated).data, status=status.HTTP_200_OK)
+        except IntegrityError as e:
+            return Response({"error": "Erreur d'intégrité.", "detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+def _handle_delete_batiment(request, batiment_id):
+    """Logique interne de suppression/désactivation d'un bâtiment (sans @api_view)."""
+    if getattr(request.user, "role", None) != "ADMINISTRATEUR":
+        return Response({"message": "Accès non autorisé."}, status=status.HTTP_403_FORBIDDEN)
+
+    batiment = batiment_service.get_batiment(batiment_id)
+    if batiment is None:
+        return Response({"message": "Bâtiment introuvable"}, status=status.HTTP_404_NOT_FOUND)
+
+    hard = str(request.query_params.get("hard", "")).lower() in ["true", "1"]
+    batiment_service.delete_batiment(batiment, hard=hard)
+
+    if hard:
+        return Response({"message": "Bâtiment supprimé définitivement avec succès."}, status=status.HTTP_200_OK)
+    return Response({"message": "Bâtiment désactivé (archivé) avec succès."}, status=status.HTTP_200_OK)
+
+
 # Récupérer, modifier ou supprimer un bâtiment grâce à son ID
 @extend_schema(
     tags=["Bâtiments"],
@@ -90,9 +134,9 @@ def get_all_batiments(request):
 @permission_classes([IsAuthenticated])
 def get_batiment(request, batiment_id):
     if request.method in ["PUT", "PATCH"]:
-        return update_batiment(request, batiment_id)
+        return _handle_update_batiment(request, batiment_id)
     elif request.method == "DELETE":
-        return delete_batiment(request, batiment_id)
+        return _handle_delete_batiment(request, batiment_id)
 
     batiment = batiment_service.get_batiment(batiment_id)
     if batiment is None:
@@ -135,6 +179,7 @@ def get_batiment_chambres(request, batiment_id):
     )
 
 
+# Modifier un bâtiment (endpoint dédié, conservé pour compatibilité)
 @extend_schema(
     tags=["Bâtiments"],
     summary="Modifier un bâtiment",
@@ -157,23 +202,10 @@ def get_batiment_chambres(request, batiment_id):
 @api_view(["PUT", "PATCH"])
 @permission_classes([IsAdmin])
 def update_batiment(request, batiment_id):
-    batiment = batiment_service.get_batiment(batiment_id)
-    if batiment is None:
-        return Response({"message": "Bâtiment introuvable"}, status=status.HTTP_404_NOT_FOUND)
-
-    partial = request.method == "PATCH" or request.data.get("partial", False)
-    serializer = BatimentSerializer(batiment, data=request.data, partial=partial)
-
-    if serializer.is_valid():
-        try:
-            updated = batiment_service.update_batiment(batiment, **serializer.validated_data)
-            return Response(BatimentSerializer(updated).data, status=status.HTTP_200_OK)
-        except IntegrityError as e:
-            return Response({"error": "Erreur d'intégrité.", "detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    return _handle_update_batiment(request, batiment_id)
 
 
+# Supprimer/désactiver un bâtiment (endpoint dédié, conservé pour compatibilité)
 @extend_schema(
     tags=["Bâtiments"],
     summary="Supprimer / désactiver un bâtiment",
@@ -184,13 +216,4 @@ def update_batiment(request, batiment_id):
 @api_view(["DELETE"])
 @permission_classes([IsAdmin])
 def delete_batiment(request, batiment_id):
-    batiment = batiment_service.get_batiment(batiment_id)
-    if batiment is None:
-        return Response({"message": "Bâtiment introuvable"}, status=status.HTTP_404_NOT_FOUND)
-
-    hard = str(request.query_params.get("hard", "")).lower() in ["true", "1"]
-    batiment_service.delete_batiment(batiment, hard=hard)
-
-    if hard:
-        return Response({"message": "Bâtiment supprimé définitivement avec succès."}, status=status.HTTP_200_OK)
-    return Response({"message": "Bâtiment désactivé (archivé) avec succès."}, status=status.HTTP_200_OK)
+    return _handle_delete_batiment(request, batiment_id)

@@ -115,51 +115,13 @@ def get_personnel_by_type(request, type_personnel):
     return paginate_response(personnels, request, PersonnelSerializer)
 
 
-# Récupérer, modifier ou supprimer un membre du personnel grâce à son ID
-@extend_schema(
-    tags=["Personnel"],
-    summary="Récupérer, modifier ou supprimer un membre du personnel",
-    description="Retourne, modifie ou supprime un membre du personnel à partir de son identifiant.",
-    parameters=[HARD_DELETE_PARAM],
-    request=PersonnelSerializer,
-    responses={200: PersonnelSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
-)
-@api_view(["GET", "PUT", "PATCH", "DELETE"])
-@permission_classes([IsAuthenticated])
-def get_personnel(request, personnel_id):
-    if request.method in ["PUT", "PATCH"]:
-        return update_personnel(request, personnel_id)
-    elif request.method == "DELETE":
-        return delete_personnel(request, personnel_id)
+# -----------------------------------------------------------------------
+# Fonctions internes non décorées — utilisées par get_personnel pour éviter
+# la double décoration @api_view qui provoque des erreurs 500.
+# -----------------------------------------------------------------------
 
-    personnel = personnel_service.get_Personnel(personnel_id)
-
-    if personnel is None:
-        return Response(
-            {"message": "Membre du personnel introuvable"},
-            status=status.HTTP_404_NOT_FOUND
-        )
-
-    deny_unless_owner_or_staff(request, personnel)
-
-    serializer = PersonnelSerializer(personnel)
-    return Response(
-        serializer.data,
-        status=status.HTTP_200_OK
-    )
-
-
-# Modifier les informations d'un membre du personnel
-@extend_schema(
-    tags=["Personnel"],
-    summary="Modifier un membre du personnel",
-    description="Met à jour totalement (PUT) ou partiellement (PATCH) les informations d'un membre du personnel.",
-    request=PersonnelSerializer,
-    responses={200: PersonnelSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
-)
-@api_view(["PUT", "PATCH"])
-@permission_classes([IsAuthenticated])
-def update_personnel(request, personnel_id):
+def _handle_update_personnel(request, personnel_id):
+    """Logique interne de mise à jour d'un membre du personnel (sans @api_view)."""
     personnel = personnel_service.get_Personnel(personnel_id)
 
     if personnel is None:
@@ -194,17 +156,11 @@ def update_personnel(request, personnel_id):
     )
 
 
-# Désactiver (soft delete) ou supprimer un membre du personnel
-@extend_schema(
-    tags=["Personnel"],
-    summary="Supprimer / désactiver un membre du personnel",
-    description="Désactive (soft delete) la fiche du personnel, ou la supprime définitivement si ?hard=true.",
-    parameters=[HARD_DELETE_PARAM],
-    responses={200: MessageResponseSerializer, 404: MessageResponseSerializer},
-)
-@api_view(["DELETE"])
-@permission_classes([IsAdmin])
-def delete_personnel(request, personnel_id):
+def _handle_delete_personnel(request, personnel_id):
+    """Logique interne de suppression/désactivation d'un membre du personnel (sans @api_view)."""
+    if getattr(request.user, "role", None) != "ADMINISTRATEUR":
+        return Response({"message": "Accès non autorisé."}, status=status.HTTP_403_FORBIDDEN)
+
     personnel = personnel_service.get_Personnel(personnel_id)
 
     if personnel is None:
@@ -225,3 +181,65 @@ def delete_personnel(request, personnel_id):
         {"message": "Compte personnel désactivé (archivé) avec succès."},
         status=status.HTTP_200_OK
     )
+
+
+# Récupérer, modifier ou supprimer un membre du personnel grâce à son ID
+@extend_schema(
+    tags=["Personnel"],
+    summary="Récupérer, modifier ou supprimer un membre du personnel",
+    description="Retourne, modifie ou supprime un membre du personnel à partir de son identifiant.",
+    parameters=[HARD_DELETE_PARAM],
+    request=PersonnelSerializer,
+    responses={200: PersonnelSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
+)
+@api_view(["GET", "PUT", "PATCH", "DELETE"])
+@permission_classes([IsAuthenticated])
+def get_personnel(request, personnel_id):
+    if request.method in ["PUT", "PATCH"]:
+        return _handle_update_personnel(request, personnel_id)
+    elif request.method == "DELETE":
+        return _handle_delete_personnel(request, personnel_id)
+
+    personnel = personnel_service.get_Personnel(personnel_id)
+
+    if personnel is None:
+        return Response(
+            {"message": "Membre du personnel introuvable"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    deny_unless_owner_or_staff(request, personnel)
+
+    serializer = PersonnelSerializer(personnel)
+    return Response(
+        serializer.data,
+        status=status.HTTP_200_OK
+    )
+
+
+# Modifier les informations d'un membre du personnel (endpoint dédié, conservé pour compatibilité)
+@extend_schema(
+    tags=["Personnel"],
+    summary="Modifier un membre du personnel",
+    description="Met à jour totalement (PUT) ou partiellement (PATCH) les informations d'un membre du personnel.",
+    request=PersonnelSerializer,
+    responses={200: PersonnelSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
+)
+@api_view(["PUT", "PATCH"])
+@permission_classes([IsAuthenticated])
+def update_personnel(request, personnel_id):
+    return _handle_update_personnel(request, personnel_id)
+
+
+# Désactiver (soft delete) ou supprimer un membre du personnel (endpoint dédié, conservé pour compatibilité)
+@extend_schema(
+    tags=["Personnel"],
+    summary="Supprimer / désactiver un membre du personnel",
+    description="Désactive (soft delete) la fiche du personnel, ou la supprime définitivement si ?hard=true.",
+    parameters=[HARD_DELETE_PARAM],
+    responses={200: MessageResponseSerializer, 404: MessageResponseSerializer},
+)
+@api_view(["DELETE"])
+@permission_classes([IsAdmin])
+def delete_personnel(request, personnel_id):
+    return _handle_delete_personnel(request, personnel_id)

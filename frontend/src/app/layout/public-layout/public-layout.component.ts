@@ -49,7 +49,7 @@ export class PublicLayoutComponent {
     if (cleanUrl === '/login' || cleanUrl === '/register') return false;
 
     // Portails privés internes avec leur propre layout (Sidebar + Topbar)
-    const privatePortals = ['/patient', '/admin', '/parcours'];
+    const privatePortals = ['/patient', '/admin', '/parcours', '/personnel'];
     if (privatePortals.some(portal => cleanUrl === portal || cleanUrl.startsWith(portal + '/'))) {
       return false;
     }

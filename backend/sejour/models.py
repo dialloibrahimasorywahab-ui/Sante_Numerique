@@ -148,10 +148,34 @@ class Sejour(models.Model):
 
     @classmethod
     def generer_nouvelle_reference(cls) -> str:
-        """Génère une référence unique au format S-YYYY-XXXX."""
+        """
+        Génère une référence unique au format S-YYYY-XXXX de façon atomique et concurrente.
+
+        CORRECTION PROBLÈME 8 : La méthode précédente utilisait un compteur lu puis incrémenté
+        sans verrouillage, ce qui permettait à deux transactions concurrentes d'obtenir la même
+        référence (race condition). La nouvelle implémentation utilise select_for_update() pour
+        verrouiller la dernière ligne pendant la lecture, garantissant l'unicité même en cas de
+        requêtes simultanées. La boucle while conserve la robustesse en cas de gaps dans la
+        numérotation.
+
+        ATTENTION : Cette méthode doit être appelée à l'intérieur d'une transaction atomique
+        (transaction.atomic()) pour que le verrou soit effectif jusqu'au commit.
+        """
+        from django.db import transaction
+
         annee = timezone.now().year
         prefixe = f"S-{annee}-"
-        dernier_sejour = cls.objects.filter(reference__startswith=prefixe).order_by("-reference").first()
+
+        # select_for_update() verrouille la ligne lue jusqu'au commit de la transaction englobante.
+        # Cela empêche deux threads de lire le même "dernier numéro" simultanément.
+        dernier_sejour = (
+            cls.objects
+            .select_for_update()
+            .filter(reference__startswith=prefixe)
+            .order_by("-reference")
+            .first()
+        )
+
         if dernier_sejour and len(dernier_sejour.reference.split("-")) == 3:
             try:
                 dernier_num = int(dernier_sejour.reference.split("-")[2])
@@ -160,7 +184,9 @@ class Sejour(models.Model):
                 nouveau_num = 1
         else:
             nouveau_num = 1
+
         nouvelle_ref = f"{prefixe}{nouveau_num:04d}"
+        # Boucle de sécurité en cas de gap (rare, mais défensive)
         while cls.objects.filter(reference=nouvelle_ref).exists():
             nouveau_num += 1
             nouvelle_ref = f"{prefixe}{nouveau_num:04d}"

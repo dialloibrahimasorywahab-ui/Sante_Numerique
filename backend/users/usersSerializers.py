@@ -80,28 +80,63 @@ class UserSerializers(serializers.ModelSerializer):
                 data["date_naissance"] = data["dateNaissance"]
         return super().to_internal_value(data)
 
-    def validate(self, attrs):
+    def _is_admin_request(self):
+        """True si la requête provient d'un administrateur authentifié."""
         request = self.context.get("request")
-        is_admin = request and getattr(request, "user", None) and request.user.is_authenticated and getattr(request.user, "role", None) == "ADMINISTRATEUR"
-        if not is_admin:
-            attrs["role"] = User.Role.PATIENT
+        return (
+            request is not None
+            and getattr(request, "user", None) is not None
+            and request.user.is_authenticated
+            and getattr(request.user, "role", None) == "ADMINISTRATEUR"
+        )
 
-        errors = {}
+    def validate(self, attrs):
+        is_admin = self._is_admin_request()
+
         if not self.instance:
+            # ---- CRÉATION ----
+            # Les créations publiques (non-admin) reçoivent systématiquement le rôle PATIENT.
+            if not is_admin:
+                attrs["role"] = User.Role.PATIENT
+
+            # Champs obligatoires à la création
+            errors = {}
             for field in ["nom", "prenom", "email", "telephone", "login"]:
                 if not self.initial_data.get(field):
                     errors[field] = ["Ce champ est obligatoire."]
-            if not self.initial_data.get("mot_de_passe_hash") and not self.initial_data.get("motDePasseHash") and not self.initial_data.get("motDePasse") and not self.initial_data.get("mot_de_passe") and not self.initial_data.get("password"):
+            if not any(
+                self.initial_data.get(k)
+                for k in ["mot_de_passe_hash", "motDePasseHash", "motDePasse", "mot_de_passe", "password"]
+            ):
                 errors["motDePasse"] = ["Ce champ est obligatoire."]
+            if errors:
+                raise serializers.ValidationError(errors)
 
-        # Validation de mot de passe via validate_password de Django
+        else:
+            # ---- MISE À JOUR ----
+            # CORRECTION PROBLÈME 5 : le rôle ne doit JAMAIS être modifié par un non-admin.
+            # On retire "role" des données validées pour les non-admins afin d'éviter
+            # qu'une simple mise à jour de profil réinitialise le rôle.
+            if not is_admin:
+                attrs.pop("role", None)
+                # Un non-admin ne peut pas modifier actif ni id_user
+                attrs.pop("actif", None)
+                attrs.pop("id_user", None)
+                attrs.pop("idUser", None)
+
+        # Validation du mot de passe via validate_password de Django
+        errors = {}
         raw_pwd = attrs.get("mot_de_passe_hash")
         if raw_pwd and not raw_pwd.startswith(("pbkdf2_", "bcrypt", "argon2", "scrypt")):
+            login_val = attrs.get("login", getattr(self.instance, "login", "") if self.instance else "")
+            email_val = attrs.get("email", getattr(self.instance, "email", "") if self.instance else "")
+            nom_val = attrs.get("nom", getattr(self.instance, "nom", "") if self.instance else "")
+            prenom_val = attrs.get("prenom", getattr(self.instance, "prenom", "") if self.instance else "")
             user_obj = self.instance or User(
-                login=attrs.get("login", getattr(self.instance, "login", "")),
-                email=attrs.get("email", getattr(self.instance, "email", "")),
-                nom=attrs.get("nom", getattr(self.instance, "nom", "")),
-                prenom=attrs.get("prenom", getattr(self.instance, "prenom", "")),
+                login=login_val,
+                email=email_val,
+                nom=nom_val,
+                prenom=prenom_val,
             )
             try:
                 validate_password(raw_pwd, user=user_obj)
@@ -114,9 +149,16 @@ class UserSerializers(serializers.ModelSerializer):
         return attrs
 
     def update(self, instance, validated_data):
-        request = self.context.get("request")
-        if request and getattr(request.user, "role", None) != "ADMINISTRATEUR":
+        """
+        Protection finale en couche défense-en-profondeur :
+        même si validate() a laissé passer des champs sensibles,
+        on les retire ici avant de les persister.
+        """
+        is_admin = self._is_admin_request()
+        if not is_admin:
+            # Un non-admin ne peut jamais changer le rôle, actif ou l'id
             validated_data.pop("role", None)
+            validated_data.pop("actif", None)
             validated_data.pop("id_user", None)
             validated_data.pop("idUser", None)
         return super().update(instance, validated_data)

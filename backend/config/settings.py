@@ -33,10 +33,40 @@ environ.Env.read_env(BASE_DIR / '.env')
 SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: Mode debug contrôlé via .env
+# CORRECTION PROBLÈME 10 : DEBUG=False par défaut pour éviter toute exposition accidentelle.
+# En développement, définir DEBUG=True dans le fichier .env uniquement.
 DEBUG = env.bool('DEBUG', default=False)
 
+# CORRECTION PROBLÈME 10 : ALLOWED_HOSTS explicite — plus jamais de wildcard '*' en production.
+# Valeur par défaut restrictive. En production, définir ALLOWED_HOSTS dans .env.
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1', '0.0.0.0', '[::1]'])
 
+
+# ==========================================
+# Sécurité HTTPS / Cookies (production)
+# CORRECTION PROBLÈME 10 : Paramètres de sécurité conditionnels selon l'environnement.
+# Activer uniquement si HTTPS est configuré et fonctionnel sur le serveur.
+# ==========================================
+
+# SECURE_SSL_REDIRECT : redirige HTTP → HTTPS. Activé uniquement si la variable est True dans .env.
+# NE PAS activer en développement local (le serveur Django ne gère pas HTTPS directement).
+SECURE_SSL_REDIRECT = env.bool('SECURE_SSL_REDIRECT', default=False)
+
+# HSTS : force HTTPS pour une durée donnée.
+# Activer progressivement : commencer avec une valeur faible (ex: 3600), puis augmenter.
+SECURE_HSTS_SECONDS = env.int('SECURE_HSTS_SECONDS', default=0)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool('SECURE_HSTS_INCLUDE_SUBDOMAINS', default=False)
+SECURE_HSTS_PRELOAD = env.bool('SECURE_HSTS_PRELOAD', default=False)
+
+# Cookies de session et CSRF sécurisés en production
+SESSION_COOKIE_SECURE = env.bool('SESSION_COOKIE_SECURE', default=not DEBUG)
+CSRF_COOKIE_SECURE = env.bool('CSRF_COOKIE_SECURE', default=not DEBUG)
+
+# Entête X-Content-Type-Options
+SECURE_CONTENT_TYPE_NOSNIFF = True
+
+# Empêche le chargement du site dans un iframe tiers
+X_FRAME_OPTIONS = 'DENY'
 
 
 # Application definition
@@ -135,10 +165,17 @@ SIMPLE_JWT = {
 }
 
 JWT_COOKIE_SAMESITE = env('JWT_COOKIE_SAMESITE', default='Lax')
+# CORRECTION PROBLÈME 10 : JWT_COOKIE_SECURE déduit automatiquement de DEBUG.
+# En production (DEBUG=False), les cookies JWT sont sécurisés (HTTPS obligatoire).
 JWT_COOKIE_SECURE = env.bool('JWT_COOKIE_SECURE', default=not DEBUG)
 
 # CORS Configuration
-CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=['http://localhost:4200', 'http://127.0.0.1:4200'])
+# CORRECTION PROBLÈME 10 : Liste explicite des origines CORS autorisées.
+# En production, définir CORS_ALLOWED_ORIGINS dans .env avec les domaines réels.
+CORS_ALLOWED_ORIGINS = env.list(
+    'CORS_ALLOWED_ORIGINS',
+    default=['http://localhost:4200', 'http://127.0.0.1:4200']
+)
 CORS_ALLOW_CREDENTIALS = True
 
 SPECTACULAR_SETTINGS = {
@@ -196,6 +233,12 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
+#
+# CORRECTION PROBLÈME 10 : PostgreSQL est la seule base supportée en production.
+# Le fallback SQLite est volontairement désactivé.
+# Si DATABASE_URL et DB_NAME sont tous les deux absents, Django lèvera une erreur
+# au démarrage — ce comportement est intentionnel pour empêcher un démarrage accidentel
+# sans base de données configurée.
 
 if env('DATABASE_URL', default=None):
     DATABASES = {
@@ -212,13 +255,12 @@ if env('DB_NAME', default=None):
             'PORT': env('DB_PORT', default='5432'),
         }
     }
-# else:
-#     DATABASES = {
-#         'default': {
-#             'ENGINE': 'django.db.backends.sqlite3',
-#             'NAME': BASE_DIR / 'db.sqlite3',
-#         }
-#     }
+# SQLite désactivé intentionnellement :
+# - Incompatible avec les contraintes conditionnelles PostgreSQL (Problème 7).
+# - Non adapté à un contexte hospitalier multi-utilisateurs concurrent.
+# - Risque de basculement silencieux en prod si DATABASE_URL n'est pas définie.
+# Pour les tests unitaires locaux sans PostgreSQL, utiliser une DB de test dédiée
+# ou configurer un backend de test dans les settings de test.
 
 
 # Password validation

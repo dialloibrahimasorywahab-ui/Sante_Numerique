@@ -86,53 +86,16 @@ def get_all_services(request):
     return paginate_response(services, request, ServiceSerializer)
 
 
-# Récupérer, modifier ou supprimer un service grâce à son ID
-@extend_schema(
-    tags=["Services"],
-    summary="Récupérer, modifier ou supprimer un service",
-    description="Retourne, modifie ou supprime un service hospitalier à partir de son identifiant.",
-    parameters=[HARD_DELETE_PARAM],
-    request=ServiceSerializer,
-    responses={200: ServiceSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
-)
-@api_view(["GET", "PUT", "PATCH", "DELETE"])
-@permission_classes([AllowAny])
-def get_service(request, service_id):
-    if request.method in ["PUT", "PATCH"]:
-        if not request.user.is_authenticated or getattr(request.user, "role", None) != "ADMINISTRATEUR":
-            return Response({"message": "Accès non autorisé."}, status=status.HTTP_403_FORBIDDEN)
-        return update_service(request, service_id)
-    elif request.method == "DELETE":
-        if not request.user.is_authenticated or getattr(request.user, "role", None) != "ADMINISTRATEUR":
-            return Response({"message": "Accès non autorisé."}, status=status.HTTP_403_FORBIDDEN)
-        return delete_service(request, service_id)
+# -----------------------------------------------------------------------
+# Fonctions internes non décorées — utilisées par get_service pour éviter
+# la double décoration @api_view qui provoque des erreurs 500.
+# -----------------------------------------------------------------------
 
-    service = service_service.get_service(service_id)
+def _handle_update_service(request, service_id):
+    """Logique interne de mise à jour d'un service (sans @api_view)."""
+    if not request.user.is_authenticated or getattr(request.user, "role", None) != "ADMINISTRATEUR":
+        return Response({"message": "Accès non autorisé."}, status=status.HTTP_403_FORBIDDEN)
 
-    if service is None:
-        return Response(
-            {"message": "Service introuvable"},
-            status=status.HTTP_404_NOT_FOUND
-        )
-
-    serializer = ServiceSerializer(service)
-    return Response(
-        serializer.data,
-        status=status.HTTP_200_OK
-    )
-
-
-# Modifier un service
-@extend_schema(
-    tags=["Services"],
-    summary="Modifier un service",
-    description="Met à jour totalement (PUT) ou partiellement (PATCH) un service.",
-    request=ServiceSerializer,
-    responses={200: ServiceSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
-)
-@api_view(["PUT", "PATCH"])
-@permission_classes([IsAdmin])
-def update_service(request, service_id):
     service = service_service.get_service(service_id)
 
     if service is None:
@@ -165,17 +128,11 @@ def update_service(request, service_id):
     )
 
 
-# Désactiver (soft delete) ou supprimer un service
-@extend_schema(
-    tags=["Services"],
-    summary="Supprimer / désactiver un service",
-    description="Désactive (soft delete) le service, ou le supprime définitivement si ?hard=true.",
-    parameters=[HARD_DELETE_PARAM],
-    responses={200: MessageResponseSerializer, 404: MessageResponseSerializer},
-)
-@api_view(["DELETE"])
-@permission_classes([IsAdmin])
-def delete_service(request, service_id):
+def _handle_delete_service(request, service_id):
+    """Logique interne de suppression/désactivation d'un service (sans @api_view)."""
+    if not request.user.is_authenticated or getattr(request.user, "role", None) != "ADMINISTRATEUR":
+        return Response({"message": "Accès non autorisé."}, status=status.HTTP_403_FORBIDDEN)
+
     service = service_service.get_service(service_id)
 
     if service is None:
@@ -196,3 +153,63 @@ def delete_service(request, service_id):
         {"message": "Service désactivé (archivé) avec succès."},
         status=status.HTTP_200_OK
     )
+
+
+# Récupérer, modifier ou supprimer un service grâce à son ID
+@extend_schema(
+    tags=["Services"],
+    summary="Récupérer, modifier ou supprimer un service",
+    description="Retourne, modifie ou supprime un service hospitalier à partir de son identifiant.",
+    parameters=[HARD_DELETE_PARAM],
+    request=ServiceSerializer,
+    responses={200: ServiceSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
+)
+@api_view(["GET", "PUT", "PATCH", "DELETE"])
+@permission_classes([AllowAny])
+def get_service(request, service_id):
+    if request.method in ["PUT", "PATCH"]:
+        return _handle_update_service(request, service_id)
+    elif request.method == "DELETE":
+        return _handle_delete_service(request, service_id)
+
+    service = service_service.get_service(service_id)
+
+    if service is None:
+        return Response(
+            {"message": "Service introuvable"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    serializer = ServiceSerializer(service)
+    return Response(
+        serializer.data,
+        status=status.HTTP_200_OK
+    )
+
+
+# Modifier un service (endpoint dédié, conservé pour compatibilité)
+@extend_schema(
+    tags=["Services"],
+    summary="Modifier un service",
+    description="Met à jour totalement (PUT) ou partiellement (PATCH) un service.",
+    request=ServiceSerializer,
+    responses={200: ServiceSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
+)
+@api_view(["PUT", "PATCH"])
+@permission_classes([IsAdmin])
+def update_service(request, service_id):
+    return _handle_update_service(request, service_id)
+
+
+# Désactiver (soft delete) ou supprimer un service (endpoint dédié, conservé pour compatibilité)
+@extend_schema(
+    tags=["Services"],
+    summary="Supprimer / désactiver un service",
+    description="Désactive (soft delete) le service, ou le supprime définitivement si ?hard=true.",
+    parameters=[HARD_DELETE_PARAM],
+    responses={200: MessageResponseSerializer, 404: MessageResponseSerializer},
+)
+@api_view(["DELETE"])
+@permission_classes([IsAdmin])
+def delete_service(request, service_id):
+    return _handle_delete_service(request, service_id)

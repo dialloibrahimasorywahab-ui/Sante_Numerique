@@ -163,6 +163,55 @@ def get_chambres_by_statut(request, statut):
     return paginate_response(chambres, request, ChambreSerializer)
 
 
+# -----------------------------------------------------------------------
+# Fonctions internes non décorées — utilisées par get_chambre pour éviter
+# la double décoration @api_view qui provoque des erreurs 500.
+# -----------------------------------------------------------------------
+
+def _handle_update_chambre(request, chambre_id):
+    """Logique interne de mise à jour d'une chambre (sans @api_view)."""
+    if getattr(request.user, "role", None) != "ADMINISTRATEUR":
+        return Response({"message": "Accès non autorisé."}, status=status.HTTP_403_FORBIDDEN)
+
+    chambre = chambre_service.get_chambre(chambre_id)
+    if chambre is None:
+        return Response({"message": "Chambre introuvable"}, status=status.HTTP_404_NOT_FOUND)
+
+    partial = request.method == "PATCH" or request.data.get("partial", False)
+    serializer = ChambreSerializer(chambre, data=request.data, partial=partial)
+
+    if serializer.is_valid():
+        try:
+            updated = chambre_service.update_chambre(chambre, **serializer.validated_data)
+            if updated.batiment:
+                updated.batiment.sync_nombre_chambres()
+            return Response(ChambreSerializer(updated).data, status=status.HTTP_200_OK)
+        except IntegrityError as e:
+            return Response({"error": "Erreur d'intégrité.", "detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+def _handle_delete_chambre(request, chambre_id):
+    """Logique interne de suppression/désactivation d'une chambre (sans @api_view)."""
+    if getattr(request.user, "role", None) != "ADMINISTRATEUR":
+        return Response({"message": "Accès non autorisé."}, status=status.HTTP_403_FORBIDDEN)
+
+    chambre = chambre_service.get_chambre(chambre_id)
+    if chambre is None:
+        return Response({"message": "Chambre introuvable"}, status=status.HTTP_404_NOT_FOUND)
+
+    batiment = chambre.batiment
+    hard = str(request.query_params.get("hard", "")).lower() in ["true", "1"]
+    chambre_service.delete_chambre(chambre, hard=hard)
+    if batiment:
+        batiment.sync_nombre_chambres()
+
+    if hard:
+        return Response({"message": "Chambre supprimée définitivement avec succès."}, status=status.HTTP_200_OK)
+    return Response({"message": "Chambre marquée comme hors service (archivée) avec succès."}, status=status.HTTP_200_OK)
+
+
 # Récupérer, modifier ou supprimer une chambre grâce à son ID
 @extend_schema(
     tags=["Chambres"],
@@ -176,9 +225,9 @@ def get_chambres_by_statut(request, statut):
 @permission_classes([IsAuthenticated])
 def get_chambre(request, chambre_id):
     if request.method in ["PUT", "PATCH"]:
-        return update_chambre(request, chambre_id)
+        return _handle_update_chambre(request, chambre_id)
     elif request.method == "DELETE":
-        return delete_chambre(request, chambre_id)
+        return _handle_delete_chambre(request, chambre_id)
 
     chambre = chambre_service.get_chambre(chambre_id)
     if chambre is None:
@@ -186,6 +235,7 @@ def get_chambre(request, chambre_id):
     return Response(ChambreSerializer(chambre).data, status=status.HTTP_200_OK)
 
 
+# Modifier une chambre (endpoint dédié, conservé pour compatibilité)
 @extend_schema(
     tags=["Chambres"],
     summary="Modifier une chambre",
@@ -208,25 +258,10 @@ def get_chambre(request, chambre_id):
 @api_view(["PUT", "PATCH"])
 @permission_classes([IsAdmin])
 def update_chambre(request, chambre_id):
-    chambre = chambre_service.get_chambre(chambre_id)
-    if chambre is None:
-        return Response({"message": "Chambre introuvable"}, status=status.HTTP_404_NOT_FOUND)
-
-    partial = request.method == "PATCH" or request.data.get("partial", False)
-    serializer = ChambreSerializer(chambre, data=request.data, partial=partial)
-
-    if serializer.is_valid():
-        try:
-            updated = chambre_service.update_chambre(chambre, **serializer.validated_data)
-            if updated.batiment:
-                updated.batiment.sync_nombre_chambres()
-            return Response(ChambreSerializer(updated).data, status=status.HTTP_200_OK)
-        except IntegrityError as e:
-            return Response({"error": "Erreur d'intégrité.", "detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    return _handle_update_chambre(request, chambre_id)
 
 
+# Supprimer/désactiver une chambre (endpoint dédié, conservé pour compatibilité)
 @extend_schema(
     tags=["Chambres"],
     summary="Supprimer / désactiver une chambre",
@@ -237,16 +272,4 @@ def update_chambre(request, chambre_id):
 @api_view(["DELETE"])
 @permission_classes([IsAdmin])
 def delete_chambre(request, chambre_id):
-    chambre = chambre_service.get_chambre(chambre_id)
-    if chambre is None:
-        return Response({"message": "Chambre introuvable"}, status=status.HTTP_404_NOT_FOUND)
-
-    batiment = chambre.batiment
-    hard = str(request.query_params.get("hard", "")).lower() in ["true", "1"]
-    chambre_service.delete_chambre(chambre, hard=hard)
-    if batiment:
-        batiment.sync_nombre_chambres()
-
-    if hard:
-        return Response({"message": "Chambre supprimée définitivement avec succès."}, status=status.HTTP_200_OK)
-    return Response({"message": "Chambre marquée comme hors service (archivée) avec succès."}, status=status.HTTP_200_OK)
+    return _handle_delete_chambre(request, chambre_id)

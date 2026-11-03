@@ -40,3 +40,40 @@ Thumbs.db
 .env.local
 .env.*.local
 !.env.example
+
+# ============================================================
+# CORRECTION PROBLÈME 11 : Fichiers inutiles à exclure du dépôt
+# ============================================================
+
+# Dossier .agents/ : dossier de configuration des agents IA Antigravity.
+# Utile localement pour le développement assisté par IA, mais ne doit pas
+# être versionné dans le dépôt du projet hospitalier (données de configuration
+# propres à l'environnement de l'IDE, non pertinentes pour les CI/CD).
+.agents/
+
+# backup.json : fichier de sauvegarde de données — ne doit jamais être
+# versionné (risque d'exposition de données sensibles et confusion avec les
+# données de production).
+backup.json
+
+# seed_consultations.py à la racine : script de seeder dupliqué ou orphelin.
+# Le seeder officiel est dans backend/seeder/. Ce fichier racine est redondant.
+# Vérifier avant suppression définitive qu'il n'est pas référencé ailleurs.
+seed_consultations.py
+
+# Fichiers de sauvegarde SQLite locaux (backup de phases de dev)
+db_backup_*.sqlite3
+
+# Patch de correctif (intégré dans la branche, non nécessaire en repo)
+correctif_controle_acces_parcours.patch
+
+# Fichiers de compilation Python du venv à la racine
+*.cpython-*.pyc
+
+# Configuration Antigravity locale (non pertinente pour le projet)
+ecc-install-state.json
+settings.json
+agents/
+rules/
+skills/
+workflows/

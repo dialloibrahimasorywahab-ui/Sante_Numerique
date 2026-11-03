@@ -1,8 +1,6 @@
 import logging
 from django.db import IntegrityError, models
 from drf_spectacular.types import OpenApiTypes
-
-logger = logging.getLogger(__name__)
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -16,6 +14,7 @@ from .litSerializers import LitSerializer
 from .litServices import LitService
 from .models import Lit
 
+logger = logging.getLogger(__name__)
 lit_service = LitService()
 
 
@@ -26,7 +25,7 @@ lit_service = LitService()
     description="Retourne la liste des lits (GET avec filtres ?chambre_id=, ?etat=, ?search=, ?all=) ou enregistre un nouveau lit (POST).",
     parameters=[
         OpenApiParameter(name="all", type=OpenApiTypes.BOOL, location=OpenApiParameter.QUERY, required=False,
-                          description="Inclure aussi les lits hors service / inactives si true."),
+                          description="Inclure aussi les lits hors service / inactifs si true."),
         OpenApiParameter(name="chambre_id", type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=False,
                           description="Filtre par identifiant de chambre (alias: chambre, id_chambre)."),
         OpenApiParameter(name="batiment_id", type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=False,
@@ -163,39 +162,16 @@ def get_lits_by_etat(request, etat):
     return paginate_response(lits, request, LitSerializer)
 
 
-# Récupérer, modifier ou supprimer un lit grâce à son ID
-@extend_schema(
-    tags=["Lits"],
-    summary="Récupérer, modifier ou supprimer un lit",
-    description="Retourne, modifie ou supprime un lit à partir de son identifiant.",
-    parameters=[HARD_DELETE_PARAM],
-    request=LitSerializer,
-    responses={200: LitSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
-)
-@api_view(["GET", "PUT", "PATCH", "DELETE"])
-@permission_classes([IsAuthenticated])
-def get_lit(request, lit_id):
-    if request.method in ["PUT", "PATCH"]:
-        return update_lit(request, lit_id)
-    elif request.method == "DELETE":
-        return delete_lit(request, lit_id)
+# -----------------------------------------------------------------------
+# Fonctions internes non décorées — utilisées par get_lit pour éviter
+# la double décoration @api_view qui provoque des erreurs 500.
+# -----------------------------------------------------------------------
 
-    lit = lit_service.get_lit(lit_id)
-    if lit is None:
-        return Response({"message": "Lit introuvable"}, status=status.HTTP_404_NOT_FOUND)
-    return Response(LitSerializer(lit).data, status=status.HTTP_200_OK)
+def _handle_update_lit(request, lit_id):
+    """Logique interne de mise à jour d'un lit (sans @api_view)."""
+    if getattr(request.user, "role", None) != "ADMINISTRATEUR":
+        return Response({"message": "Accès non autorisé."}, status=status.HTTP_403_FORBIDDEN)
 
-
-@extend_schema(
-    tags=["Lits"],
-    summary="Modifier un lit",
-    description="Met à jour totalement (PUT) ou partiellement (PATCH) un lit.",
-    request=LitSerializer,
-    responses={200: LitSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
-)
-@api_view(["PUT", "PATCH"])
-@permission_classes([IsAdmin])
-def update_lit(request, lit_id):
     lit = lit_service.get_lit(lit_id)
     if lit is None:
         return Response({"message": "Lit introuvable"}, status=status.HTTP_404_NOT_FOUND)
@@ -216,16 +192,11 @@ def update_lit(request, lit_id):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@extend_schema(
-    tags=["Lits"],
-    summary="Supprimer / désactiver un lit",
-    description="Marque le lit comme hors service (soft delete), ou le supprime définitivement si ?hard=true.",
-    parameters=[HARD_DELETE_PARAM],
-    responses={200: MessageResponseSerializer, 404: MessageResponseSerializer},
-)
-@api_view(["DELETE"])
-@permission_classes([IsAdmin])
-def delete_lit(request, lit_id):
+def _handle_delete_lit(request, lit_id):
+    """Logique interne de suppression/désactivation d'un lit (sans @api_view)."""
+    if getattr(request.user, "role", None) != "ADMINISTRATEUR":
+        return Response({"message": "Accès non autorisé."}, status=status.HTTP_403_FORBIDDEN)
+
     lit = lit_service.get_lit(lit_id)
     if lit is None:
         return Response({"message": "Lit introuvable"}, status=status.HTTP_404_NOT_FOUND)
@@ -236,3 +207,54 @@ def delete_lit(request, lit_id):
     if hard:
         return Response({"message": "Lit supprimé définitivement avec succès."}, status=status.HTTP_200_OK)
     return Response({"message": "Lit marqué comme hors service (archivé) avec succès."}, status=status.HTTP_200_OK)
+
+
+# Récupérer, modifier ou supprimer un lit grâce à son ID
+@extend_schema(
+    tags=["Lits"],
+    summary="Récupérer, modifier ou supprimer un lit",
+    description="Retourne, modifie ou supprime un lit à partir de son identifiant.",
+    parameters=[HARD_DELETE_PARAM],
+    request=LitSerializer,
+    responses={200: LitSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
+)
+@api_view(["GET", "PUT", "PATCH", "DELETE"])
+@permission_classes([IsAuthenticated])
+def get_lit(request, lit_id):
+    if request.method in ["PUT", "PATCH"]:
+        return _handle_update_lit(request, lit_id)
+    elif request.method == "DELETE":
+        return _handle_delete_lit(request, lit_id)
+
+    lit = lit_service.get_lit(lit_id)
+    if lit is None:
+        return Response({"message": "Lit introuvable"}, status=status.HTTP_404_NOT_FOUND)
+    return Response(LitSerializer(lit).data, status=status.HTTP_200_OK)
+
+
+# Modifier un lit (endpoint dédié, conservé pour compatibilité)
+@extend_schema(
+    tags=["Lits"],
+    summary="Modifier un lit",
+    description="Met à jour totalement (PUT) ou partiellement (PATCH) un lit.",
+    request=LitSerializer,
+    responses={200: LitSerializer, 400: ErrorResponseSerializer, 404: MessageResponseSerializer},
+)
+@api_view(["PUT", "PATCH"])
+@permission_classes([IsAdmin])
+def update_lit(request, lit_id):
+    return _handle_update_lit(request, lit_id)
+
+
+# Supprimer/désactiver un lit (endpoint dédié, conservé pour compatibilité)
+@extend_schema(
+    tags=["Lits"],
+    summary="Supprimer / désactiver un lit",
+    description="Marque le lit comme hors service (soft delete), ou le supprime définitivement si ?hard=true.",
+    parameters=[HARD_DELETE_PARAM],
+    responses={200: MessageResponseSerializer, 404: MessageResponseSerializer},
+)
+@api_view(["DELETE"])
+@permission_classes([IsAdmin])
+def delete_lit(request, lit_id):
+    return _handle_delete_lit(request, lit_id)

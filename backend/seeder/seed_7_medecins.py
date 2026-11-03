@@ -1,5 +1,6 @@
 import os
 import random
+import secrets
 import django
 
 # Initialisation du contexte Django
@@ -59,17 +60,49 @@ MEDECINS_DATA = [
 ]
 
 
+def _generer_mot_de_passe_securise() -> str:
+    """
+    CORRECTION PROBLÈME 4 : Génère un mot de passe aléatoire unique par compte.
+    Suppression du mot de passe fixe partagé 'MedecinPass2026!' qui constituait
+    un risque de sécurité critique (credential stuffing / compromission de masse).
+
+    Le mot de passe est généré avec secrets.token_urlsafe (cryptographiquement sûr)
+    et n'est jamais affiché dans les logs ni stocké en clair.
+
+    AVERTISSEMENT OPÉRATIONNEL :
+    Si 'MedecinPass2026!' a été utilisé dans un environnement de production réel,
+    les comptes concernés doivent être réinitialisés manuellement via la procédure
+    d'administration sécurisée. Ne pas réutiliser ce seeder sur une base de production
+    sans avoir d'abord révoqué et réinitialisé tous les accès compromis.
+    """
+    # Mot de passe depuis la variable d'environnement si elle est définie (ex: pipeline CI)
+    env_pwd = os.environ.get("MEDECIN_SEED_PASSWORD")
+    if env_pwd:
+        return env_pwd
+
+    # Sinon, génère un mot de passe aléatoire fort unique par compte
+    return secrets.token_urlsafe(16)
+
+
 def add_7_medecins():
     user_service = UserService()
     medecin_service = MedecinService()
 
     print("=== Création de 7 nouveaux médecins ===")
+    print(
+        "[SÉCURITÉ] Les mots de passe sont générés de façon aléatoire et unique par compte.\n"
+        "           Utilisez la procédure de réinitialisation de mot de passe pour communiquer\n"
+        "           les accès aux praticiens de manière sécurisée (hors de ce script)."
+    )
 
     for i, data in enumerate(MEDECINS_DATA, start=1):
         login = f"dr_{data['prenom'].lower()}_{data['nom'].lower()}_{i+100}"
         email = f"{login}@hopital-sante.com"
         telephone = f"+22462{random.randint(1000000, 9999999)}"
         numero_ordre = f"CNOM-{random.randint(80000, 89999)}"
+
+        # CORRECTION PROBLÈME 4 : Mot de passe aléatoire unique — jamais affiché dans les logs
+        mot_de_passe = _generer_mot_de_passe_securise()
 
         # 1. Création de l'utilisateur avec rôle MEDECIN et mot de passe haché
         user = user_service.createUser(
@@ -78,10 +111,13 @@ def add_7_medecins():
             email=email,
             telephone=telephone,
             login=login,
-            motDePasseHash="MedecinPass2026!",
+            motDePasseHash=mot_de_passe,
             role=User.Role.MEDECIN,
             actif=True,
         )
+
+        # Le mot de passe est immédiatement supprimé de la mémoire locale
+        del mot_de_passe
 
         # 2. Création du profil Médecin rattaché à l'utilisateur
         medecin = medecin_service.createMedecin(
@@ -94,6 +130,7 @@ def add_7_medecins():
             dateEmbauche="2025-01-10",
         )
 
+        # NOTE : le login et le numéro d'ordre sont affichés, mais PAS le mot de passe
         print(
             f"[{i}/7] Succès : Dr. {user.prenom} {user.nom} "
             f"| Spécialité: {medecin.get_specialite_display()} "
@@ -101,6 +138,10 @@ def add_7_medecins():
         )
 
     print("\n[OK] Les 7 médecins ont été enregistrés avec succès !")
+    print(
+        "[ACTION REQUISE] Communiquez les accès initiaux aux médecins via un canal sécurisé "
+        "(email chiffré, SMS de réinitialisation, etc.), pas via ce script."
+    )
 
 
 run_seed_7_medecins = add_7_medecins

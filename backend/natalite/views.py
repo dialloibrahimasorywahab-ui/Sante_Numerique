@@ -118,15 +118,48 @@ def get_natalities_by_sexe(request, sexe):
 @extend_schema(
     tags=["Natalité"],
     summary="Lister les naissances d'une patiente",
-    description="Retourne les naissances rattachées à la patiente (mère) donnée.",
+    description=(
+        "Retourne les naissances rattachées à la patiente (mère) donnée. "
+        "CORRECTION PROBLÈME 3 : Un patient ne peut consulter que ses propres données. "
+        "Le personnel médical et les administrateurs ont un accès étendu."
+    ),
     parameters=[*PAGINATION_PARAMS],
     responses={200: NataliteSerializer(many=True)},
 )
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_natalities_by_patient(request, patient_id):
-    natalities = natalite_service.get_nouveaux_nes_by_patient(patient_id)
-    return paginate_response(natalities, request, NataliteSerializer)
+    """
+    CORRECTION PROBLÈME 3 : Contrôle d'appartenance fiable sur les données de natalité.
+    - Un patient ne peut consulter que ses propres données (vérification stricte côté serveur).
+    - Le personnel soignant (MEDECIN, INFIRMIER, ADMINISTRATEUR) a un accès étendu.
+    - On retourne 403 sans révéler l'existence du dossier si l'accès est refusé.
+    - L'identifiant transmis dans l'URL ne suffit jamais à contourner les permissions.
+    """
+    role = getattr(request.user, "role", None)
+
+    # Le personnel soignant et les admins ont accès à tous les dossiers
+    if role in ("ADMINISTRATEUR", "MEDECIN", "INFIRMIER"):
+        natalities = natalite_service.get_nouveaux_nes_by_patient(patient_id)
+        return paginate_response(natalities, request, NataliteSerializer)
+
+    # Un patient ne peut consulter que ses propres données de naissance
+    if role == "PATIENT":
+        from patients.models import Patient
+        try:
+            patient_obj = Patient.objects.get(pk=patient_id)
+        except Patient.DoesNotExist:
+            # Ne pas révéler l'existence du dossier à un patient non autorisé
+            return Response({"detail": "Accès refusé."}, status=status.HTTP_403_FORBIDDEN)
+
+        if patient_obj.id_utilisateur_id != request.user.pk:
+            return Response({"detail": "Accès refusé."}, status=status.HTTP_403_FORBIDDEN)
+
+        natalities = natalite_service.get_nouveaux_nes_by_patient(patient_id)
+        return paginate_response(natalities, request, NataliteSerializer)
+
+    # Tout autre rôle non reconnu : accès refusé
+    return Response({"detail": "Accès refusé."}, status=status.HTTP_403_FORBIDDEN)
 
 
 # Afficher les nouveaux-nés d'un médecin superviseur
