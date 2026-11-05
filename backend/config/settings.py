@@ -39,7 +39,7 @@ DEBUG = env.bool('DEBUG', default=False)
 
 # CORRECTION PROBLÈME 10 : ALLOWED_HOSTS explicite — plus jamais de wildcard '*' en production.
 # Valeur par défaut restrictive. En production, définir ALLOWED_HOSTS dans .env.
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1', '0.0.0.0', '[::1]'])
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1', '0.0.0.0', '[::1]', '.devtunnels.ms'])
 
 
 # ==========================================
@@ -177,6 +177,9 @@ CORS_ALLOWED_ORIGINS = env.list(
     default=['http://localhost:4200', 'http://127.0.0.1:4200']
 )
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://.*\.devtunnels\.ms$",
+]
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'API Santé Numérique',

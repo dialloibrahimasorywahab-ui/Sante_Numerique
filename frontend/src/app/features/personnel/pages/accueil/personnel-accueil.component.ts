@@ -30,7 +30,7 @@ export class PersonnelAccueilComponent implements OnInit {
   loadHospitalises(): void {
     this.isLoadingHospitalises.set(true);
     this.personnelService.getHospitalisationsEnCours(6).subscribe({
-      next: (data: HospitalisePatientItem[]) => {
+      next: (data) => {
         this.hospitalises.set(data);
         this.isLoadingHospitalises.set(false);
       },
@@ -44,7 +44,7 @@ export class PersonnelAccueilComponent implements OnInit {
   loadProchainsRdv(): void {
     this.isLoadingRdv.set(true);
     this.personnelService.getProchainsRendezVous(6).subscribe({
-      next: (data: UpcomingAppointmentItem[]) => {
+      next: (data) => {
         this.prochainsRdv.set(data);
         this.isLoadingRdv.set(false);
       },
