@@ -449,7 +449,7 @@ def update_rendezvous(request, rdv_id):
 
     deny_unless_owner_or_staff(request, rdv)
 
-    partial = request.method == "PATCH" or request.data.get("partial", False)
+    partial = True
     serializer = RendezVousSerializer(rdv, data=request.data, partial=partial)
 
     if serializer.is_valid():

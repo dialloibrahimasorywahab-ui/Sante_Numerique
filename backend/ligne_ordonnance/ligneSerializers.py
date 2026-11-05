@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import LigneOrdonnance
+from ordonnance.models import Ordonnance
 
 
 class LigneOrdonnanceSerializer(serializers.ModelSerializer):
@@ -7,7 +8,11 @@ class LigneOrdonnanceSerializer(serializers.ModelSerializer):
     Sérialiseur pour les lignes d'ordonnance avec support complet snake_case et camelCase.
     """
     idLigne = serializers.IntegerField(source='id', read_only=True)
-    idOrdonnance = serializers.IntegerField(source='ordonnance_id', read_only=True)
+    idOrdonnance = serializers.PrimaryKeyRelatedField(
+        queryset=Ordonnance.objects.all(),
+        source='ordonnance',
+        required=False
+    )
     dureeTraitement = serializers.CharField(source='duree_traitement', required=False, allow_blank=True, allow_null=True)
 
     class Meta:
@@ -28,6 +33,7 @@ class LigneOrdonnanceSerializer(serializers.ModelSerializer):
             'actif',
         ]
         extra_kwargs = {
+            'ordonnance': {'required': False},
             'dosage': {'required': False, 'allow_blank': True, 'allow_null': True},
             'forme': {'required': False, 'allow_blank': True, 'allow_null': True},
             'duree_traitement': {'required': False, 'allow_blank': True, 'allow_null': True},
@@ -38,8 +44,21 @@ class LigneOrdonnanceSerializer(serializers.ModelSerializer):
     def to_internal_value(self, data):
         if isinstance(data, dict):
             data = data.copy()
-            if 'idOrdonnance' in data and 'ordonnance' not in data:
-                data['ordonnance'] = data['idOrdonnance']
-            if 'dureeTraitement' in data and 'duree_traitement' not in data:
-                data['duree_traitement'] = data['dureeTraitement']
+            # Prise en charge des variantes camelCase et snake_case pour l'ordonnance
+            ord_val = (
+                data.get('idOrdonnance')
+                or data.get('id_ordonnance')
+                or data.get('ordonnance')
+                or data.get('ordonnance_id')
+            )
+            if ord_val is not None:
+                data['ordonnance'] = ord_val
+                data['idOrdonnance'] = ord_val
+
+            # Prise en charge des variantes pour la durée de traitement
+            duree_val = data.get('dureeTraitement') or data.get('duree_traitement')
+            if duree_val is not None:
+                data['duree_traitement'] = duree_val
+                data['dureeTraitement'] = duree_val
+
         return super().to_internal_value(data)

@@ -53,12 +53,44 @@ class PersonnelSerializer(serializers.ModelSerializer):
             "dateEmbauche": {"required": False},
         }
 
+    def to_internal_value(self, data):
+        if isinstance(data, dict):
+            data = data.copy()
+            if 'mot_de_passe' in data and 'motDePasse' not in data:
+                data['motDePasse'] = data['mot_de_passe']
+            elif 'motDePasse' in data and 'mot_de_passe' not in data:
+                data['mot_de_passe'] = data['motDePasse']
+            if 'type_personnel' in data and 'typePersonnel' not in data:
+                data['typePersonnel'] = data['type_personnel']
+            if 'service_hopital' in data and 'serviceHopital' not in data:
+                data['serviceHopital'] = data['service_hopital']
+            if 'date_embauche' in data and 'dateEmbauche' not in data:
+                data['dateEmbauche'] = data['date_embauche']
+            if 'telephone_pro' in data and 'telephonePro' not in data:
+                data['telephonePro'] = data['telephone_pro']
+            if 'email_pro' in data and 'emailPro' not in data:
+                data['emailPro'] = data['email_pro']
+            if 'date_naissance' in data and 'dateNaissance' not in data:
+                data['dateNaissance'] = data['date_naissance']
+        return super().to_internal_value(data)
+
     def validate(self, attrs):
-        if not self.instance and not attrs.get("idUtilisateur"):
+        if not self.instance and not attrs.get("idUtilisateur") and not attrs.get("id_utilisateur"):
             errors = {}
-            for field in ["nom", "prenom", "email", "telephone", "login", "motDePasse"]:
+            for field in ["nom", "prenom", "email", "telephone", "login"]:
                 if not self.initial_data.get(field):
                     errors[field] = ["Ce champ est obligatoire."]
+            mot_de_passe = (
+                self.initial_data.get("motDePasse")
+                or self.initial_data.get("mot_de_passe")
+                or self.initial_data.get("password")
+                or self.initial_data.get("motDePasseHash")
+                or self.initial_data.get("mot_de_passe_hash")
+                or attrs.get("motDePasse")
+                or attrs.get("mot_de_passe")
+            )
+            if not mot_de_passe:
+                errors["motDePasse"] = ["Ce champ est obligatoire."]
             if errors:
                 raise serializers.ValidationError(errors)
         return attrs
