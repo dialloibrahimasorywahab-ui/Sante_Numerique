@@ -95,13 +95,8 @@ class UserSerializers(serializers.ModelSerializer):
 
         if not self.instance:
             # ---- CRÉATION ----
-            # Si un non-admin tente de s'attribuer un rôle autre que PATIENT, rejet explicite
-            role_demande = self.initial_data.get("role")
+            # Si un non-admin tente de s'attribuer un rôle, on le force systématiquement à PATIENT
             if not is_admin:
-                if role_demande and role_demande != User.Role.PATIENT:
-                    raise serializers.ValidationError({
-                        "role": "Seul un administrateur peut attribuer un rôle autre que PATIENT lors de la création d'un compte."
-                    })
                 attrs["role"] = User.Role.PATIENT
 
             # Champs obligatoires à la création

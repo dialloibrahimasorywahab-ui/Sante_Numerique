@@ -19,6 +19,12 @@ class PersonnelSerializer(serializers.ModelSerializer):
 
     nomService = serializers.CharField(source="id_service.get_nom_service_display", read_only=True, required=False)
 
+    typePersonnel = serializers.CharField(source="type_personnel", required=False)
+    serviceHopital = serializers.CharField(source="service_hopital", required=False)
+    telephonePro = serializers.CharField(source="telephone_pro", required=False, allow_null=True, allow_blank=True)
+    emailPro = serializers.EmailField(source="email_pro", required=False, allow_null=True, allow_blank=True)
+    dateEmbauche = serializers.DateField(source="date_embauche", required=False, allow_null=True)
+
     class Meta:
         model = Personnel
         fields = [

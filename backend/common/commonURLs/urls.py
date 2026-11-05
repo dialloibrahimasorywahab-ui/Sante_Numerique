@@ -11,7 +11,9 @@ urlpatterns = [
     path('lits/', include('lit.litUrls')),
     path('rendezvous/', include('rendezvous.rendezvousUrls')),
     path('natalite/', include('natalite.nataliteUrls')),
+    path('natalites/', include('natalite.nataliteUrls')),
     path('mortalite/', include('mortalite.mortaliteUrls')),
+    path('mortalites/', include('mortalite.mortaliteUrls')),
     path('hospitalisations/', include('hospitalisation.hospitalisationUrls')),
     path('consultations/', include('consultation.consultationUrls')),
     path('frais_consultations/', include('frais_consultation.fraisUrls')),
@@ -22,5 +24,3 @@ urlpatterns = [
     path('mouvements/', include('mouvement.mouvementUrls')),
     path('evenements/', include('evenement.evenementUrls')),
 ]
-
-

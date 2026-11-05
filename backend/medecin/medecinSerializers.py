@@ -4,6 +4,7 @@ from .models import Medecin, DisponibiliteMedecin, IndisponibiliteMedecin
 
 
 class MedecinSerializer(serializers.ModelSerializer):
+    idMedecin = serializers.IntegerField(source="id_medecin", read_only=True)
     idUtilisateur = serializers.IntegerField(source="id_utilisateur.id_user", required=False, allow_null=True)
     nom = serializers.CharField(source="id_utilisateur.nom", required=False)
     prenom = serializers.CharField(source="id_utilisateur.prenom", required=False)
@@ -15,16 +16,29 @@ class MedecinSerializer(serializers.ModelSerializer):
     )
     specialiteDisplay = serializers.CharField(source="get_specialite_display", read_only=True)
     telephonePro = serializers.CharField(
+        source="telephone_pro",
         validators=[validate_phone_number],
         required=False,
         allow_null=True,
         allow_blank=True
     )
+    emailPro = serializers.EmailField(
+        source="email_pro",
+        required=False,
+        allow_null=True,
+        allow_blank=True
+    )
     numeroOrdre = serializers.CharField(
+        source="numero_ordre",
         validators=[validate_numero_ordre],
         required=False,
         allow_null=True,
         allow_blank=True
+    )
+    dateEmbauche = serializers.DateField(
+        source="date_embauche",
+        required=False,
+        allow_null=True
     )
 
     login = serializers.CharField(write_only=True, required=False)
@@ -105,44 +119,53 @@ class DisponibiliteMedecinSerializer(serializers.ModelSerializer):
             "actif",
         ]
         extra_kwargs = {
-            "medecin": {"required": False},
+            "jour_semaine": {"required": False},
+            "heure_debut": {"required": False},
+            "heure_fin": {"required": False},
+            "duree_creneau": {"required": False},
         }
 
-    def to_internal_value(self, data):
-        if isinstance(data, dict):
-            data = data.copy()
-            if "jourSemaine" in data and "jour_semaine" not in data:
-                data["jour_semaine"] = data["jourSemaine"]
-            if "heureDebut" in data and "heure_debut" not in data:
-                data["heure_debut"] = data["heureDebut"]
-            if "heureFin" in data and "heure_fin" not in data:
-                data["heure_fin"] = data["heureFin"]
-            if "pauseDebut" in data and "pause_debut" not in data:
-                data["pause_debut"] = data["pauseDebut"]
-            if "pauseFin" in data and "pause_fin" not in data:
-                data["pause_fin"] = data["pauseFin"]
-            if "dureeCreneau" in data and "duree_creneau" not in data:
-                data["duree_creneau"] = data["dureeCreneau"]
-        return super().to_internal_value(data)
-
     def validate(self, attrs):
-        h_debut = attrs.get("heure_debut") or getattr(self.instance, "heure_debut", None)
-        h_fin = attrs.get("heure_fin") or getattr(self.instance, "heure_fin", None)
-        if h_debut and h_fin and h_debut >= h_fin:
-            raise serializers.ValidationError({"heure_fin": "L'heure de fin doit être postérieure à l'heure de début."})
-        p_deb = attrs.get("pause_debut", getattr(self.instance, "pause_debut", None))
-        p_fin = attrs.get("pause_fin", getattr(self.instance, "pause_fin", None))
-        if p_deb and p_fin and p_deb >= p_fin:
-            raise serializers.ValidationError({"pause_fin": "La fin de pause doit être postérieure au début de pause."})
+        for camel, snake in [
+            ("jourSemaine", "jour_semaine"),
+            ("heureDebut", "heure_debut"),
+            ("heureFin", "heure_fin"),
+            ("pauseDebut", "pause_debut"),
+            ("pauseFin", "pause_fin"),
+            ("dureeCreneau", "duree_creneau"),
+        ]:
+            if snake not in attrs and camel in self.initial_data:
+                attrs[snake] = self.initial_data[camel]
+
+        jour = attrs.get("jour_semaine") or (self.instance.jour_semaine if self.instance else None)
+        debut = attrs.get("heure_debut") or (self.instance.heure_debut if self.instance else None)
+        fin = attrs.get("heure_fin") or (self.instance.heure_fin if self.instance else None)
+
+        if not self.instance:
+            errors = {}
+            if jour is None:
+                errors["jourSemaine"] = ["Ce champ est obligatoire."]
+            if debut is None:
+                errors["heureDebut"] = ["Ce champ est obligatoire."]
+            if fin is None:
+                errors["heureFin"] = ["Ce champ est obligatoire."]
+            if errors:
+                raise serializers.ValidationError(errors)
+
+        if debut and fin and fin <= debut:
+            raise serializers.ValidationError({"heureFin": "L'heure de fin doit être postérieure à l'heure de début."})
+
+        pause_d = attrs.get("pause_debut", self.instance.pause_debut if self.instance else None)
+        pause_f = attrs.get("pause_fin", self.instance.pause_fin if self.instance else None)
+        if pause_d and pause_f and pause_f <= pause_d:
+            raise serializers.ValidationError({"pauseFin": "L'heure de fin de pause doit être postérieure à l'heure de début de pause."})
+
         return attrs
 
 
 class IndisponibiliteMedecinSerializer(serializers.ModelSerializer):
-    dateDebut = serializers.DateField(source="date_debut", required=False)
-    dateFin = serializers.DateField(source="date_fin", required=False)
-    touteLaJournee = serializers.BooleanField(source="toute_la_journee", required=False)
-    heureDebut = serializers.TimeField(source="heure_debut", required=False, allow_null=True)
-    heureFin = serializers.TimeField(source="heure_fin", required=False, allow_null=True)
+    dateDebut = serializers.DateTimeField(source="date_debut", required=False)
+    dateFin = serializers.DateTimeField(source="date_fin", required=False)
 
     class Meta:
         model = IndisponibiliteMedecin
@@ -153,38 +176,31 @@ class IndisponibiliteMedecinSerializer(serializers.ModelSerializer):
             "dateDebut",
             "date_fin",
             "dateFin",
-            "toute_la_journee",
-            "touteLaJournee",
-            "heure_debut",
-            "heureDebut",
-            "heure_fin",
-            "heureFin",
             "motif",
-            "actif",
         ]
         extra_kwargs = {
-            "medecin": {"required": False},
+            "date_debut": {"required": False},
+            "date_fin": {"required": False},
         }
 
-    def to_internal_value(self, data):
-        if isinstance(data, dict):
-            data = data.copy()
-            if "dateDebut" in data and "date_debut" not in data:
-                data["date_debut"] = data["dateDebut"]
-            if "dateFin" in data and "date_fin" not in data:
-                data["date_fin"] = data["dateFin"]
-            if "touteLaJournee" in data and "toute_la_journee" not in data:
-                data["toute_la_journee"] = data["touteLaJournee"]
-            if "heureDebut" in data and "heure_debut" not in data:
-                data["heure_debut"] = data["heureDebut"]
-            if "heureFin" in data and "heure_fin" not in data:
-                data["heure_fin"] = data["heureFin"]
-        return super().to_internal_value(data)
-
     def validate(self, attrs):
-        d_deb = attrs.get("date_debut") or getattr(self.instance, "date_debut", None)
-        d_fin = attrs.get("date_fin") or getattr(self.instance, "date_fin", None)
-        if d_deb and d_fin and d_deb > d_fin:
-            raise serializers.ValidationError({"date_fin": "La date de fin ne peut pas précéder la date de début."})
-        return attrs
+        if "date_debut" not in attrs and "dateDebut" in self.initial_data:
+            attrs["date_debut"] = self.initial_data["dateDebut"]
+        if "date_fin" not in attrs and "dateFin" in self.initial_data:
+            attrs["date_fin"] = self.initial_data["dateFin"]
 
+        debut = attrs.get("date_debut") or (self.instance.date_debut if self.instance else None)
+        fin = attrs.get("date_fin") or (self.instance.date_fin if self.instance else None)
+
+        if not self.instance:
+            errors = {}
+            if debut is None:
+                errors["dateDebut"] = ["Ce champ est obligatoire."]
+            if fin is None:
+                errors["dateFin"] = ["Ce champ est obligatoire."]
+            if errors:
+                raise serializers.ValidationError(errors)
+
+        if debut and fin and fin <= debut:
+            raise serializers.ValidationError({"dateFin": "La date de fin d'indisponibilité doit être postérieure à la date de début."})
+        return attrs

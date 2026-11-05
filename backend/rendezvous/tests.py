@@ -2,6 +2,7 @@
 from django.apps import apps
 from django.test import SimpleTestCase, TestCase
 from django.urls import resolve
+from django.utils import timezone
 from rest_framework.test import APIClient
 
 from .models import RendezVous
@@ -32,13 +33,12 @@ class RendezVousModelAndRepositoryTests(TestCase):
         user_med = User.objects.create(nom="TRAORE", prenom="Ibrahim", email="med_repo@test.com", telephone="0202020202", login="med_user_repo", motDePasseHash="hash", role=User.Role.MEDECIN)
         self.medecin = Medecin.objects.create(idUtilisateur=user_med, specialite="CARDIOLOGIE", matricule="MED100", numeroOrdre="ORD100", dateEmbauche="2020-01-01")
 
-
-
     def test_create_and_get_rendezvous(self):
+        date_futur = (timezone.now() + timezone.timedelta(days=10)).date().isoformat()
         rdv = self.repository.create_rendezvous(
             patient=self.patient,
             medecin=self.medecin,
-            date_rdv="2026-09-01",
+            date_rdv=date_futur,
             heure="10:30:00",
             motif="Consultation annuelle",
             statut=RendezVous.StatutRendezVous.PROGRAMME
@@ -51,10 +51,11 @@ class RendezVousModelAndRepositoryTests(TestCase):
         self.assertEqual(fetched, rdv)
 
     def test_get_by_patient_medecin_and_statut(self):
+        date_futur = (timezone.now() + timezone.timedelta(days=10)).date().isoformat()
         rdv = self.repository.create_rendezvous(
             patient=self.patient,
             medecin=self.medecin,
-            date_rdv="2026-09-01",
+            date_rdv=date_futur,
             heure="14:00:00",
             motif="Suivi ECG",
             statut=RendezVous.StatutRendezVous.CONFIRME
@@ -80,15 +81,16 @@ class RendezVousAPITests(TestCase):
         user_med = User.objects.create(nom="TRAORE", prenom="Ibrahim", email="med_api@test.com", telephone="0404040404", login="med_user_api", motDePasseHash="hash", role=User.Role.MEDECIN)
         self.medecin = Medecin.objects.create(idUtilisateur=user_med, specialite="CARDIOLOGIE", matricule="MED101", numeroOrdre="ORD101", dateEmbauche="2020-01-01")
 
-
-
         self.admin = User.objects.create(nom="Admin", prenom="Super", email="adm_rdv@test.com", telephone="0101010101", login="adm_rdv", motDePasseHash="hash", role=User.Role.ADMINISTRATEUR)
         self.client.force_authenticate(user=self.admin)
+
+        self.future_date = (timezone.now() + timezone.timedelta(days=10)).date().isoformat()
+        self.other_future_date = (timezone.now() + timezone.timedelta(days=15)).date().isoformat()
 
         self.rdv = RendezVous.objects.create(
             patient=self.patient,
             medecin=self.medecin,
-            date_rdv="2026-10-10",
+            date_rdv=self.future_date,
             heure="09:00:00",
             motif="Bilan général",
             statut="PROGRAMME"
@@ -98,7 +100,7 @@ class RendezVousAPITests(TestCase):
         payload = {
             "id_patient": self.patient.id_patient,
             "id_medecin": self.medecin.idMedecin,
-            "date_rdv": "2026-10-15",
+            "date_rdv": self.other_future_date,
             "heure": "11:00:00",
             "motif": "Contrôle tension",
             "statut": "PROGRAMME"
@@ -122,9 +124,13 @@ class RendezVousAPITests(TestCase):
         self.assertEqual(len(response.data["results"]), 1)
 
     def test_update_rendezvous_api(self):
-        payload = {"statut": "CONFIRME"}
-        response = self.client.patch(f"/rendezvous/{self.rdv.id}/update/", payload, format="json")
+        payload = {
+            "motif": "Motif Modifié",
+            "statut": "CONFIRME"
+        }
+        response = self.client.put(f"/rendezvous/{self.rdv.id}/update/", payload, format="json")
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["motif"], "Motif Modifié")
         self.assertEqual(response.data["statut"], "CONFIRME")
 
     def test_delete_rendezvous_api(self):
@@ -138,14 +144,14 @@ class RendezVousAPITests(TestCase):
         self.assertFalse(RendezVous.objects.filter(id=self.rdv.id).exists())
 
     def test_double_booking_medecin_rejected(self):
-        # Création d'un RDV avec le même médecin au même moment que self.rdv ("2026-10-10", "09:00:00")
+        # Création d'un RDV avec le même médecin au même moment que self.rdv
         user_pat2 = User.objects.create(nom="Konan", prenom="Paul", email="paul@test.com", telephone="0505050505", login="paul_k", motDePasseHash="hash", role=User.Role.PATIENT)
         pat2 = Patient.objects.create(id_utilisateur=user_pat2, sexe="M", date_inscription="2026-01-01")
 
         payload = {
             "id_patient": pat2.id_patient,
             "id_medecin": self.medecin.idMedecin,
-            "date_rdv": "2026-10-10",
+            "date_rdv": self.future_date,
             "heure": "09:00:00",
             "motif": "Double réservation médecin",
         }
@@ -161,11 +167,10 @@ class RendezVousAPITests(TestCase):
         payload = {
             "id_patient": self.patient.id_patient,
             "id_medecin": med2.idMedecin,
-            "date_rdv": "2026-10-10",
+            "date_rdv": self.future_date,
             "heure": "09:00:00",
             "motif": "Double réservation patient",
         }
         response = self.client.post("/rendezvous/", payload, format="json")
         self.assertEqual(response.status_code, 400)
         self.assertIn("heure", response.data)
-
