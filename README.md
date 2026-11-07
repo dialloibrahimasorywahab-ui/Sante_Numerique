@@ -1,148 +1,185 @@
-# 🏥 Santé Numérique - Plateforme de Gestion Hospitalière
+# 🏥 Santé Numérique — Système d'Information Hospitalier (SIH)
 
-**Santé Numérique** est une application web RESTful complète dédiée à la digitalisation et la gestion intégrée des établissements hospitaliers. Elle permet la centralisation des données médicales, le suivi des patients, la gestion du personnel soignant, la réservation d'infrastructures (bâtiments, chambres, lits), la planification des rendez-vous ainsi que la traçabilité des actes d'état civil hospitalier (natalité et mortalité).
-
----
-
-## 🚀 Fonctionnalités Principales
-
-### 👤 1. Gestion des Utilisateurs & Accès (`users`)
-- **Modèle Utilisateur Personnalisé** basé sur `AbstractUser` de Django.
-- **Gestion des Rôles** : `ADMINISTRATEUR`, `MEDECIN`, `INFIRMIER`, `PATIENT`.
-- Authentification par `login` ou `email` avec hachage sécurisé des mots de passe.
-
-### 🩺 2. Dossiers Patients (`patients`)
-- Enregistrement des dossiers médicaux patients.
-- Informations personnelles, groupe sanguin, contacts d'urgence, adresse et historique.
-- Désactivation/Archivage du dossier avec conservation de l'historique médical.
-
-### 👨‍⚕️ 3. Corps Médical & Personnel (`medecin` & `personnel`)
-- Gestion des médecins (spécialité, statut d'activité, rattachement aux services).
-- Gestion du personnel soignant et administratif (infirmiers, agents de réception).
-
-### 🏢 4. Infrastructure Hospitalière (`services`, `batiment`, `chambre`, `lit`)
-- **Services** : Création et gestion des services hospitaliers (Urgences, Maternité, Cardiologie...).
-- **Bâtiments** : Suivi des bâtiments et capacité globale.
-- **Chambres** : Gestion des chambres individuelles et communes avec tarification journalière.
-- **Lits** : Suivi en temps réel de la disponibilité des lits et génération automatique de lits par chambre.
-
-### 📅 5. Planification des Rendez-Vous (`rendezvous`)
-- Prise de rendez-vous entre patients et médecins.
-- Suivi du cycle de vie du RDV (`PLANIFIE`, `CONFIRME`, `TERMINE`, `ANNULE`).
-
-### 👶 6. Module Natalité (`natalite`)
-- Enregistrement des naissances hospitalières.
-- Association avec la mère (dossier patient) et le médecin accoucheur.
-- Suivi des données physiologiques du nouveau-né (poids en kg, taille en cm, heure de naissance, sexe, observation).
-
-### ⚰️ 7. Module Mortalité (`mortalite`)
-- Déclaration et registre des décès hospitaliers.
-- Association avec le patient décédé et le médecin ayant constaté le décès.
-- Saisie de la date, l'heure et la cause du décès.
+**Santé Numérique** est une plateforme hospitalière full-stack moderne, sécurisée et modulaire. Elle assure la gestion intégrée du parcours patient, de l'admission à la sortie, la planification des soins, l'infrastructure médicale, la traçabilité médico-légale et la conformité aux exigences de sécurité des données de santé.
 
 ---
 
-## 🛡️ Gestion de la Suppression (Soft Delete / Archivage)
+## 🏗️ Architecture & Technologies
 
-Pour garantir l'intégrité des données médicales et légales, la suppression d'enregistrements s'effectue par **désactivation logique (Soft Delete)** par défaut :
-- **Utilisateurs / Patients / Médical / Personnel** : Marqué comme inactif (`actif = False`).
-- **Services & Bâtiments** : Passage à inactif (`actif = False`).
-- **Chambres & Lits** : Statut/État basculé sur `HORS_SERVICE`.
-- **Rendez-vous** : Statut basculé sur `ANNULE`.
-
-> 💡 *Note* : La suppression définitive de la base de données peut être forcée en ajoutant le paramètre de requête `?hard=true` à l'URL de suppression (ex: `DELETE /patients/1/delete/?hard=true`).
+- **Backend** : Python 3.12+ / Django 5.x / Django REST Framework (DRF)
+- **Base de Données** : PostgreSQL avec contraintes d'intégrité strictes et migrations
+- **Frontend** : Angular (TypeScript, Vite, Architecture par composants modulaires)
+- **Sécurité & Authentification** :
+  - Authentification JWT via **Cookies HttpOnly**, `SameSite=Lax`, `Secure`
+  - Protection contre les failles XSS, CSRF et l'escalade de privilèges
+  - Contrôle d'accès basé sur les rôles (RBAC) : `ADMINISTRATEUR`, `MEDECIN`, `INFIRMIER`, `PATIENT`
+- **Traçabilité Médico-Légale** : Audit trail complet avec `django-simple-history` (`HistoricalRecords`)
+- **Documentation API** : OpenAPI 3.0 & Swagger UI (`drf-spectacular`)
 
 ---
 
-## 🛠️ Spécifications Techniques
+## 🚀 Modules Fonctionnels
 
-- **Langage & Framework** : Python 3.12+ / Django 6.1
-- **API REST** : Django REST Framework (DRF)
-- **Documentation API** : `drf-spectacular` (OpenAPI 3.0 & Swagger UI)
-- **Base de Données** : SQLite3 (Environnement de Développement)
+### 1. 👤 Comptes & Sécurité (`users`)
+- Modèle utilisateur personnalisé dérivé d'`AbstractUser` avec identifiants uniques (login, email, téléphone).
+- Validation robuste des mots de passe (complexité Django, hachage PBKDF2).
+- Protection contre l'auto-élévation de rôle : l'inscription publique est strictement restreinte au rôle `PATIENT`. Seul un `ADMINISTRATEUR` peut créer ou modifier les rôles praticiens.
+
+### 2. 🩺 Parcours Patient & Hospitalisation
+- **Patients (`patients`)** : Dossier administratif et médical, contacts d'urgence, groupe sanguin, archivage logique (Soft Delete).
+- **Séjours (`sejour`)** : Gestion du séjour hospitalier avec génération concurrente sécurisée du numéro de référence (`select_for_update`).
+- **Localisations (`localisation`)** : Suivi temporel du patient (bâtiment, chambre, lit) avec contraintes d'exclusion mutuelle évitant les doubles affectations simultanées.
+- **Mouvements (`mouvement`)** : Traçabilité des admissions, transferts de service et sorties médicales.
+- **Événements (`evenement`)** : Journalisation chronologique des actes et observations cliniques du séjour.
+
+### 3. 👨‍⚕️ Praticiens & Personnel Hospitalier (`medecin`, `personnel`)
+- **Médecins** : Spécialités, matricule, numéro d'ordre CNOM, planning de disponibilités hebdomadaires et gestion des indisponibilités / congés.
+- **Personnel soignant** : Infirmiers, techniciens et agents administratifs rattachés aux services.
+
+### 4. 🏢 Infrastructure Médicale (`services`, `batiment`, `chambre`, `lit`)
+- Cartographie des services (Cardiologie, Urgences, Pédiatrie, etc.).
+- Bâtiments, étages et typologie des chambres avec tarification journalière.
+- Gestion en temps réel de l'état des lits (`DISPONIBLE`, `OCCUPE`, `RESERVE`, `HORS_SERVICE`).
+
+### 5. 📅 Consultations, Prescriptions & Facturation
+- **Rendez-vous (`rendezvous`)** : Planification avec prévention des doubles réservations (détection de collision médecin/patient par date et heure).
+- **Consultations (`consultation`)** : Observations médicales, motifs et diagnostics.
+- **Ordonnances (`ordonnance`, `ligne_ordonnance`)** : Prescriptions médicales détaillées (médicament, forme, posologie, durée de traitement).
+- **Frais de consultation (`frais_consultation`)** : Tarification et suivi financier des actes.
+
+### 6. 👶 État Civil Hospitalier (`natalite`, `mortalite`)
+- **Natalité** : Registre sécurisé des naissances (poids, taille, heure, score APGAR), accessible uniquement à la mère, au médecin accoucheur ou à l'administration.
+- **Mortalité** : Déclarations de décès médicalement constatés avec cause et horodatage légal.
+
+---
+
+## 🛡️ Sécurité & Conformité de l'Audit
+
+Le projet applique les règles de sécurité suivantes issues de l'audit de sécurisation :
+1. **Contrôle d'accès au parcours patient** : Périmètre strict selon le rôle ; un patient n'accède qu'à ses propres données, un médecin à sa patientèle autorisée.
+2. **Cloisonnement des profils** : Impossibilité pour un praticien ou un patient de modifier ou supprimer le compte d'un autre utilisateur.
+3. **Protection des secrets** : Aucun mot de passe ni clé en clair dans le code, les seeders ou les dépôts.
+4. **Soft Delete par défaut** : Préservation des historiques légaux via `actif = False` ou état `HORS_SERVICE` (suppression physique possible via `?hard=true` par un administrateur).
+5. **Audit historique** : Historisation automatique de chaque modification (`HistoricalRecords`) sur les tables critiques (sans jamais stocker le hash des mots de passe dans l'historique).
 
 ---
 
 ## ⚙️ Installation & Démarrage
 
 ### 1. Prérequis
-- Python 3.10+ installé sur votre machine.
+- **Python 3.10+** et **PostgreSQL 14+**
+- **Node.js 18+** et **npm**
 
-### 2. Cloner le Projet & Créer l'environnement virtuel
+### 2. Configuration du Backend
+
 ```bash
-# Cloner le dépôt
-git clone <URL_DU_DEPOT>
-cd Sante_Numerique
+# Se placer dans le dossier backend
+cd Sante_Numerique/backend
 
-# Créer un environnement virtuel
-python -m venv venv
+# Créer et activer l'environnement virtuel
+python -m venv ../venv
+# Windows (PowerShell) :
+..\venv\Scripts\Activate.ps1
+# Linux / macOS :
+source ../venv/bin/activate
 
-# Activer l'environnement virtuel (Windows)
-.\venv\Scripts\activate
-
-# Activer l'environnement virtuel (Linux/MacOS)
-source venv/bin/activate
-```
-
-### 3. Installer les Dépendances
-```bash
+# Installer les dépendances
 pip install -r requirements.txt
-```
 
-### 4. Appliquer les Migrations
-```bash
-python manage.py makemigrations
+# Configurer les variables d'environnement (.env)
+cp .env.example .env
+# Renseigner DATABASE_URL=postgres://user:password@localhost:5432/sante_numerique
+
+# Appliquer les migrations
 python manage.py migrate
+
+# Démarrer le serveur backend Django
+python manage.py runserver 0.0.0.0:8000
 ```
 
-### 5. Lancer le Serveur de Développement
+### 3. Configuration du Frontend Angular
+
 ```bash
-python manage.py runserver
+# Se placer dans le dossier frontend
+cd Sante_Numerique/frontend
+
+# Installer les dépendances Node
+npm install
+
+# Démarrer le serveur de développement Angular
+npm start
 ```
-L'application sera accessible sur `http://127.0.0.1:8000/`.
+L'application est disponible sur `http://localhost:4200/`.
+
+> 💡 **Sous Windows PowerShell** : Si l'exécution des scripts est restreinte, exécutez au préalable :  
+> `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass` ou utilisez `npm.cmd start`.
+
+> 🌐 **Accès distant via VS Code DevTunnels** : Le projet prend en charge automatiquement les domaines `*.devtunnels.ms` (CORS et détection d'API dynamique).
 
 ---
 
-## 📖 Documentation Interactive de l'API (Swagger / OpenAPI)
+## 🧪 Tests Automatisés
 
-Lorsque le serveur de développement est en cours d'exécution, la documentation Swagger et ReDoc est immédiatement accessible :
+Le projet intègre une suite de **224 tests automatisés** couvrant les modèles, les services, les validateurs, les contrôles d'accès RBAC et les scénarios de l'audit de sécurité.
 
-- 📌 **Swagger UI** : [http://127.0.0.1:8000/swagger/](http://127.0.0.1:8000/swagger/) (ou `/docs/`)
-- 📌 **ReDoc** : [http://127.0.0.1:8000/redoc/](http://127.0.0.1:8000/redoc/)
-- 📌 **Schéma OpenAPI 3.0** : [http://127.0.0.1:8000/api/schema/](http://127.0.0.1:8000/api/schema/)
+Pour exécuter l'ensemble des tests :
 
----
-
-## 🧪 Exécution des Tests Automatisés
-
-Le projet intègre une suite de **84 tests unitaires et d'intégration** couvrant l'ensemble des modèles, dépôts, services et endpoints REST API.
-
-Pour lancer tous les tests :
 ```bash
+cd Sante_Numerique/backend
 python manage.py test
 ```
 
+Pour exécuter uniquement les tests de sécurité de l'audit :
+```bash
+python manage.py test tests_audit_securite
+```
+
 ---
 
-## 📌 Structure du Projet
+## 📖 Documentation Interactive de l'API
+
+Lorsque le backend est en cours d'exécution, la documentation est accessible sur :
+- **Swagger UI** : [http://127.0.0.1:8000/swagger/](http://127.0.0.1:8000/swagger/)
+- **ReDoc** : [http://127.0.0.1:8000/redoc/](http://127.0.0.1:8000/redoc/)
+- **Schéma OpenAPI 3.0** : [http://127.0.0.1:8000/api/schema/](http://127.0.0.1:8000/api/schema/)
+
+---
+
+## 📂 Structure du Répertoire
 
 ```text
 Sante_Numerique/
-│
-├── config/             # Configuration globale Django (settings, urls, wsgi)
-├── users/              # Authentification & Modèle Utilisateur AbstractUser
-├── patients/           # Gestion des patients et dossiers médicaux
-├── medecin/            # Gestion des médecins et praticiens
-├── personnel/          # Gestion du personnel infirmier & administratif
-├── services/           # Services hospitaliers
-├── batiment/           # Infrastructure bâtiment
-├── chambre/            # Chambres d'hospitalisation
-├── lit/                # Lits et disponibilités
-├── rendezvous/         # Prise et suivi des rendez-vous
-├── natalite/           # Registre des naissances & nouveaux-nés
-├── mortalite/          # Registre des décès hospitaliers
-│
-├── db.sqlite3          # Base de données de développement
-├── manage.py           # Script de gestion Django
-└── requirements.txt    # Dépendances du projet
+├── backend/
+│   ├── config/              # Paramètres globaux, URLs, permissions RBAC, JWT
+│   ├── users/               # Comptes, rôles, profils et authentification
+│   ├── patients/            # Dossiers patients et antécédents
+│   ├── medecin/             # Médecins, disponibilités et congés
+│   ├── personnel/           # Personnel soignant et administratif
+│   ├── services/            # Pôles et services hospitaliers
+│   ├── batiment/            # Bâtiments hospitaliers
+│   ├── chambre/             # Chambres d'hospitalisation
+│   ├── lit/                 # Lits et disponibilités
+│   ├── rendezvous/          # Prise de RDV et prévention de collision
+│   ├── consultation/        # Actes de consultation et diagnostics
+│   ├── ordonnance/          # Ordonnances médicales
+│   ├── ligne_ordonnance/    # Lignes de prescription et posologies
+│   ├── frais_consultation/  # Facturation des consultations
+│   ├── sejour/              # Séjours d'hospitalisation
+│   ├── localisation/        # Affectation temporelle (chambre / lit)
+│   ├── mouvement/           # Admissions, mutations et sorties
+│   ├── evenement/           # Journal des événements cliniques
+│   ├── natalite/            # Registre des naissances
+│   ├── mortalite/           # Registre des décès
+│   ├── seeder/              # Jeux de données d'initialisation sécurisés
+│   ├── tests_audit_securite.py # Suite de validation de sécurité
+│   └── manage.py
+├── frontend/
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── core/        # Services d'authentification, intercepteurs JWT
+│   │   │   ├── features/    # Modules métiers (admin, patient, médecin, soignant)
+│   │   │   └── shared/      # Composants réutilisables, pipes, modèles
+│   │   └── environments/    # Détection dynamique des endpoints API & tunnels
+│   └── package.json
+└── README.md
 ```
