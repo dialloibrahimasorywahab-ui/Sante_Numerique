@@ -1,0 +1,112 @@
+services:
+  # Base de données relationnelle PostgreSQL
+  db:
+    image: postgres:18-alpine
+    container_name: sante_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-sante_numerique}
+      POSTGRES_USER: ${POSTGRES_USER:-sante_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_db_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-sante_user} -d $${POSTGRES_DB:-sante_numerique}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - internal_network
+    # Aucun port publié vers l'hôte pour garantir l'isolation réseau stricte
+
+    # Backend Django / DRF exécuté avec Gunicorn
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sante_backend
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      COLLECT_STATIC: "1"
+    volumes:
+      - django_static:/app/staticfiles
+      - django_media:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8000/health/ || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 25s
+    networks:
+      - internal_network
+    # Port 8000 accessible uniquement depuis le réseau interne Docker
+
+    # Frontend Angular servi par Nginx interne
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: sante_frontend
+    restart: unless-stopped
+    networks:
+      - internal_network
+    # Port 80 accessible uniquement depuis le réseau interne Docker
+
+    # Reverse Proxy Nginx principal (Point d'entrée unique HTTP/HTTPS)
+  nginx:
+    image: nginx:alpine
+    container_name: sante_nginx
+    restart: unless-stopped
+    ports:
+      - "${PORT_HTTP:-80}:80"
+      - "${PORT_HTTPS:-443}:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - django_static:/app/staticfiles:ro
+      - django_media:/app/media:ro
+      - certbot_www:/var/www/certbot:ro
+      - certbot_conf:/etc/letsencrypt:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - internal_network
+
+  # Certbot pour la gestion et le renouvellement automatique des certificats SSL Let's Encrypt
+  certbot:
+    image: certbot/certbot:latest
+    container_name: sante_certbot
+    restart: unless-stopped
+    volumes:
+      - certbot_www:/var/www/certbot
+      - certbot_conf:/etc/letsencrypt
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12d & wait $${!}; done;'"
+    networks:
+      - internal_network
+
+volumes:
+  postgres_data:
+    name: sante_postgres_data
+  django_static:
+    name: sante_django_static
+  django_media:
+    name: sante_django_media
+  certbot_www:
+    name: sante_certbot_www
+  certbot_conf:
+    name: sante_certbot_conf
+
+networks:
+  internal_network:
+    name: sante_internal_network
+    driver: bridge

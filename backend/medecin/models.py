@@ -177,6 +177,15 @@ class DisponibiliteMedecin(models.Model):
         help_text="Indique si le médecin consulte ce jour-là"
     )
 
+
+    @property
+    def duree_creneau(self):
+        return self.duree_consultation
+
+    @duree_creneau.setter
+    def duree_creneau(self, value):
+        self.duree_consultation = value
+
     class Meta:
         unique_together = ("medecin", "jour_semaine")
         ordering = ["jour_semaine", "heure_debut"]
@@ -232,6 +241,15 @@ class IndisponibiliteMedecin(models.Model):
         default=True,
         help_text="Permet d'annuler ou désactiver une absence sans la supprimer"
     )
+
+    @property
+    def motif(self):
+        return self.titre
+
+    @motif.setter
+    def motif(self, value):
+        self.titre = value
+
 
     class Meta:
         ordering = ["-date_debut"]

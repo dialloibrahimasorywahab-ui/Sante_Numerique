@@ -121,7 +121,9 @@ class DisponibiliteMedecinSerializer(serializers.ModelSerializer):
     heureFin = serializers.TimeField(source="heure_fin", required=False)
     pauseDebut = serializers.TimeField(source="pause_debut", required=False, allow_null=True)
     pauseFin = serializers.TimeField(source="pause_fin", required=False, allow_null=True)
-    dureeCreneau = serializers.IntegerField(source="duree_creneau", required=False)
+    duree_creneau = serializers.IntegerField(source="duree_consultation", required=False)
+    dureeCreneau = serializers.IntegerField(source="duree_consultation", required=False)
+    dureeConsultation = serializers.IntegerField(source="duree_consultation", required=False)
 
     class Meta:
         model = DisponibiliteMedecin
@@ -142,6 +144,8 @@ class DisponibiliteMedecinSerializer(serializers.ModelSerializer):
             "pauseDebut",
             "pause_fin",
             "pauseFin",
+            "duree_consultation",
+            "dureeConsultation",
             "duree_creneau",
             "dureeCreneau",
             "actif",
@@ -150,7 +154,7 @@ class DisponibiliteMedecinSerializer(serializers.ModelSerializer):
             "jour_semaine": {"required": False},
             "heure_debut": {"required": False},
             "heure_fin": {"required": False},
-            "duree_creneau": {"required": False},
+            "duree_consultation": {"required": False},
         }
 
     def validate(self, attrs):
@@ -194,12 +198,16 @@ class DisponibiliteMedecinSerializer(serializers.ModelSerializer):
 class IndisponibiliteMedecinSerializer(serializers.ModelSerializer):
     dateDebut = serializers.DateTimeField(source="date_debut", required=False)
     dateFin = serializers.DateTimeField(source="date_fin", required=False)
+    motif = serializers.CharField(source="titre", required=False, allow_blank=True)
+    typeIndisponibilite = serializers.CharField(source="type_indisponibilite", required=False)
 
     class Meta:
         model = IndisponibiliteMedecin
         fields = [
             "id",
             "medecin",
+            "type_indisponibilite",
+            "typeIndisponibilite",
             "date_debut",
             "dateDebut",
             "date_fin",

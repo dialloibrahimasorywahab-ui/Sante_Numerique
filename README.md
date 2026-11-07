@@ -66,11 +66,32 @@ Le projet applique les règles de sécurité suivantes issues de l'audit de séc
 
 ## ⚙️ Installation & Démarrage
 
-### 1. Prérequis
-- **Python 3.10+** et **PostgreSQL 14+**
-- **Node.js 18+** et **npm**
+### Option 1 : Déploiement Conteneurisé avec Docker (Recommandé en Production)
 
-### 2. Configuration du Backend
+La plateforme est entièrement dockerisée avec orchestration Docker Compose, Gunicorn, Nginx et PostgreSQL :
+
+```bash
+# 1. Configurer vos variables d'environnement
+cp .env.example .env
+nano .env
+
+# 2. Démarrer la pile complète en arrière-plan
+docker compose up -d --build
+
+# 3. Suivre les logs applicatifs
+docker compose logs -f
+```
+
+Consultez les guides opérationnels dédiés :
+* 🐳 [**Guide Docker (`DOCKER.md`)**](file:///c:/Users/Ibrahima%20Sory/Desktop/Sante/Sante_Numerique/DOCKER.md) : Commandes usuelles, gestion des conteneurs et des volumes persistants.
+* 🚀 [**Guide de Déploiement (`DEPLOYMENT.md`)**](file:///c:/Users/Ibrahima%20Sory/Desktop/Sante/Sante_Numerique/DEPLOYMENT.md) : Procédure de mise en production, DNS, pare-feu et HTTPS avec Let's Encrypt.
+* 💾 [**Sauvegarde & Restauration (`BACKUP_RESTORE.md`)**](file:///c:/Users/Ibrahima%20Sory/Desktop/Sante/Sante_Numerique/BACKUP_RESTORE.md) : Procédures de sauvegarde quotidienne `pg_dump -Fc` et reprise après incident.
+
+---
+
+### Option 2 : Démarrage Local pour le Développement (Sans Docker)
+
+#### 1. Configuration du Backend Django
 
 ```bash
 # Se placer dans le dossier backend
