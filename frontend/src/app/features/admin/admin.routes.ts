@@ -141,6 +141,15 @@ export const adminRoutes: Routes = [
             m => m.AdminFinancesComponent
           ),
         title: 'Finance & Facturation — Espace Administrateur'
+      },
+      // --- PUBLICATIONS & ACTUALITÉS ---
+      {
+        path: 'actualites',
+        loadComponent: () =>
+          import('./pages/actualites/admin-actualites.component').then(
+            m => m.AdminActualitesComponent
+          ),
+        title: 'Gestion des Actualités — Espace Administrateur'
       }
     ]
   }

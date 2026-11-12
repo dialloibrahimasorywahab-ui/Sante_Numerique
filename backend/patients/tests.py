@@ -91,7 +91,7 @@ class PatientAPIPermissionsAndCreationTests(TestCase):
             "email": "sekou.kaba@example.com",
             "telephone": "+224622334455",
             "login": "sekou_patient",
-            "motDePasse": "PatientPass123!",
+            "motDePasse": "TestSecurise2026!",
             "dateNaissance": "1995-05-12",
             "sexe": "M",
             "adresse": "Kaloum, Conakry",
@@ -152,7 +152,7 @@ class PatientAPIPermissionsAndCreationTests(TestCase):
         patient = Patient.objects.get(pk=data["idPatient"])
         self.assertEqual(patient.id_utilisateur.login, "sekou_patient")
         self.assertEqual(patient.id_utilisateur.role, User.Role.PATIENT)
-        self.assertTrue(patient.id_utilisateur.check_password("PatientPass123!"))
+        self.assertTrue(patient.id_utilisateur.check_password("TestSecurise2026!"))
 
     def test_medecin_can_create_patient_with_auto_credentials(self):
         """Un médecin peut créer un patient sans spécifier manuellement login ni mot de passe."""
@@ -175,7 +175,21 @@ class PatientAPIPermissionsAndCreationTests(TestCase):
         patient = Patient.objects.get(pk=data["idPatient"])
         self.assertEqual(patient.id_utilisateur.login, "fatou.traore")
         self.assertEqual(patient.id_utilisateur.role, User.Role.PATIENT)
-        self.assertTrue(patient.id_utilisateur.check_password("PatientPass123!"))
+        self.assertTrue(patient.id_utilisateur.has_usable_password())
+        self.assertFalse(patient.id_utilisateur.check_password("PatientPass123!"))
+
+    def test_create_patient_weak_password_returns_400(self):
+        """Validation : erreur 400 si un mot de passe trop simple/court est fourni."""
+        self.client.force_authenticate(user=self.medecin)
+        payload = self.valid_patient_payload.copy()
+        payload["login"] = "new_weak_test"
+        payload["email"] = "weak@example.com"
+        payload["telephone"] = "+224622001199"
+        payload["motDePasse"] = "123"
+        response = self.client.post("/patients/", payload, format="json")
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("mot_de_passe", response.data)
+
 
     def test_admin_can_create_patient_success(self):
         """Un administrateur peut créer un dossier patient avec succès (201)."""
@@ -357,3 +371,75 @@ class PatientAPIPermissionsAndCreationTests(TestCase):
         items_all = res_all.json().get("results", res_all.json())
         ids_all = [p["idPatient"] for p in items_all]
         self.assertIn(self.patient_record.id_patient, ids_all)
+
+    def test_staff_and_admin_can_read_numero_securite_sociale(self):
+        """Médecin, Infirmier et Administrateur peuvent consulter le numéro de sécurité sociale complet."""
+        for user in [self.medecin, self.infirmier, self.admin]:
+            self.client.force_authenticate(user=user)
+            res = self.client.get(f"/patients/{self.patient_record.id_patient}/")
+            self.assertEqual(res.status_code, 200)
+            data = res.json()
+            secu = data.get("numeroSecuriteSociale") or data.get("numero_securite_sociale")
+            self.assertEqual(secu, "1920615000111")
+
+    def test_patient_can_read_own_numero_securite_sociale(self):
+        """Un patient connecté peut lire son propre numéro de sécurité sociale."""
+        self.client.force_authenticate(user=self.user_patient)
+        res = self.client.get(f"/patients/{self.patient_record.id_patient}/")
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        secu = data.get("numeroSecuriteSociale") or data.get("numero_securite_sociale")
+        self.assertEqual(secu, "1920615000111")
+
+    def test_unauthorized_user_serializer_masks_numero_securite_sociale(self):
+        """Si un patient tente de sérialiser un autre patient, son numéro de sécurité sociale est masqué (None)."""
+        from rest_framework.test import APIRequestFactory
+        from patients.patientSerializers import PatientSerializer
+
+        factory = APIRequestFactory()
+        request = factory.get("/")
+        request.user = self.user_patient  # user_patient sérialise un autre patient
+
+        other_user = User.objects.create(
+            nom="Autre", prenom="Patient", email="autre2@example.com",
+            telephone="+224622998877", login="autre_pat2", motDePasseHash="hash",
+            role=User.Role.PATIENT
+        )
+        other_patient = Patient.objects.create(
+            id_utilisateur=other_user,
+            date_naissance="1980-01-01",
+            sexe=Patient.Sexe.FEMININ,
+            adresse="Dixinn",
+            groupe_sanguin=Patient.GroupeSanguin.B_POSITIF,
+            numero_securite_sociale="2800101999000",
+            personne_a_contacter="Proche",
+            date_inscription="2024-01-01"
+        )
+
+        serializer = PatientSerializer(other_patient, context={"request": request})
+        self.assertIsNone(serializer.data.get("numero_securite_sociale"))
+        self.assertIsNone(serializer.data.get("numeroSecuriteSociale"))
+
+    def test_patient_cannot_modify_numero_securite_sociale(self):
+        """Un patient ne peut pas modifier son propre numéro de sécurité sociale (400 Bad Request)."""
+        self.client.force_authenticate(user=self.user_patient)
+        payload = {
+            "numeroSecuriteSociale": "9999999999999"
+        }
+        res = self.client.patch(f"/patients/{self.patient_record.id_patient}/", payload, format="json")
+        self.assertEqual(res.status_code, 400)
+        data = res.json()
+        self.assertTrue("numeroSecuriteSociale" in data or "numero_securite_sociale" in data)
+        self.patient_record.refresh_from_db()
+        self.assertEqual(self.patient_record.numero_securite_sociale, "1920615000111")
+
+    def test_medecin_or_admin_can_modify_numero_securite_sociale(self):
+        """Un médecin ou administrateur peut modifier le numéro de sécurité sociale d'un patient."""
+        self.client.force_authenticate(user=self.medecin)
+        payload = {
+            "numeroSecuriteSociale": "1920615000222"
+        }
+        res = self.client.patch(f"/patients/{self.patient_record.id_patient}/", payload, format="json")
+        self.assertEqual(res.status_code, 200)
+        self.patient_record.refresh_from_db()
+        self.assertEqual(self.patient_record.numero_securite_sociale, "1920615000222")

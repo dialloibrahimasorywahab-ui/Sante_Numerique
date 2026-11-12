@@ -227,3 +227,6 @@ def run():
 
 if __name__ == "__main__":
     run()
+
+
+run_seed_sejours_reels = run

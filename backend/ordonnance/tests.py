@@ -185,3 +185,31 @@ class OrdonnanceTests(TestCase):
         self.assertEqual(self.client.get(f"/ordonnances/{ord_p2.id}/").status_code, status.HTTP_200_OK)
 
 
+    def test_telecharger_ordonnance_pdf(self):
+        ord_obj = self.service.prescrire_ordonnance(
+            consultation=self.consultation,
+            observation="Paracétamol 1g 3x/j pendant 5 jours\nVitamine C 1000mg"
+        )
+
+        # Le médecin prescripteur peut télécharger le PDF
+        self.client.force_authenticate(user=self.user_m)
+        res_m = self.client.get(f"/ordonnances/{ord_obj.id}/pdf/")
+        self.assertEqual(res_m.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_m["Content-Type"], "application/pdf")
+        self.assertTrue(res_m.content.startswith(b"%PDF-"))
+
+        # Le patient concerné peut télécharger son ordonnance
+        self.client.force_authenticate(user=self.user_p)
+        res_p = self.client.get(f"/ordonnances/{ord_obj.id}/pdf/")
+        self.assertEqual(res_p.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_p["Content-Type"], "application/pdf")
+        self.assertTrue(res_p.content.startswith(b"%PDF-"))
+
+        # Un autre patient ne peut pas la télécharger (403 Forbidden)
+        user_p_autre = User.objects.create(
+            nom="Fall", prenom="Moussa", email="moussa.fall@example.com",
+            telephone="+221773334455", login="moussa_f", motDePasseHash="pass123", role=User.Role.PATIENT
+        )
+        self.client.force_authenticate(user=user_p_autre)
+        res_autre = self.client.get(f"/ordonnances/{ord_obj.id}/pdf/")
+        self.assertEqual(res_autre.status_code, status.HTTP_403_FORBIDDEN)

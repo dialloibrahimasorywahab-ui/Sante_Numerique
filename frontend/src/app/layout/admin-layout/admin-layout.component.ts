@@ -2,6 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { NotificationBellComponent } from '../../shared/components/notification-bell/notification-bell.component';
 import { formatDate as formatSharedDate } from '../../shared/utils';
 
 interface NavSection {
@@ -19,7 +20,7 @@ interface NavItem {
 @Component({
   selector: 'app-admin-layout',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, NotificationBellComponent],
   templateUrl: './admin-layout.component.html',
   styleUrls: ['./admin-layout.component.scss']
 })
@@ -74,6 +75,12 @@ export class AdminLayoutComponent {
       title: 'Finance & Facturation',
       items: [
         { label: 'Frais de consultation', route: '/admin/finances', icon: 'credit-card' }
+      ]
+    },
+    {
+      title: 'Publications & Communication',
+      items: [
+        { label: 'Actualités & Conseils', route: '/admin/actualites', icon: 'newspaper' }
       ]
     }
   ];

@@ -1,4 +1,4 @@
-from django.contrib.auth.hashers import make_password, check_password
+from django.contrib.auth.hashers import make_password, check_password, identify_hasher
 from django.contrib.auth.password_validation import validate_password
 from django.utils import timezone
 from .models import User
@@ -21,7 +21,14 @@ class UserService:
             or data.pop("mot_de_passe_hash", None)
         )
         if raw_password:
-            if not raw_password.startswith(("pbkdf2_", "bcrypt", "argon2", "scrypt")):
+            is_already_hashed = False
+            try:
+                identify_hasher(raw_password)
+                is_already_hashed = True
+            except (ValueError, Exception):
+                is_already_hashed = False
+
+            if not is_already_hashed:
                 temp_user = User(
                     login=data.get("login", ""),
                     email=data.get("email", ""),
@@ -29,7 +36,9 @@ class UserService:
                     prenom=data.get("prenom", ""),
                 )
                 validate_password(raw_password, user=temp_user)
-            data["mot_de_passe_hash"] = make_password(raw_password)
+                data["mot_de_passe_hash"] = make_password(raw_password)
+            else:
+                data["mot_de_passe_hash"] = raw_password
         return self.repository.createUser(**data)
 
     # recuperation d'un utilisateur dans service grace a son id
@@ -63,12 +72,26 @@ class UserService:
     def updateUser(self, user, **data):
         raw_password = data.pop("motDePasse", None)
         if raw_password:
-            if not raw_password.startswith(("pbkdf2_", "bcrypt", "argon2", "scrypt")):
+            is_already_hashed = False
+            try:
+                identify_hasher(raw_password)
+                is_already_hashed = True
+            except (ValueError, Exception):
+                is_already_hashed = False
+
+            if not is_already_hashed:
                 validate_password(raw_password, user=user)
             data["motDePasseHash"] = raw_password
 
         if "motDePasseHash" in data and data["motDePasseHash"]:
-            if not data["motDePasseHash"].startswith(("pbkdf2_", "bcrypt", "argon2", "scrypt")):
+            is_already_hashed = False
+            try:
+                identify_hasher(data["motDePasseHash"])
+                is_already_hashed = True
+            except (ValueError, Exception):
+                is_already_hashed = False
+
+            if not is_already_hashed:
                 validate_password(data["motDePasseHash"], user=user)
                 data["motDePasseHash"] = make_password(data["motDePasseHash"])
 

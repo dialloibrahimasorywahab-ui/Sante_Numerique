@@ -24,6 +24,39 @@ class IsMedecinOuAdmin(BasePermission):
         )
 
 
+
+class IsPatientOuAdmin(BasePermission):
+    """Accès réservé aux patients et aux administrateurs."""
+
+    def has_permission(self, request, view):
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and getattr(request.user, "role", None) in ["PATIENT", "ADMINISTRATEUR"]
+        )
+
+
+class IsInfirmierOuMedecin(BasePermission):
+    """Accès réservé aux infirmiers, médecins et administrateurs."""
+
+    def has_permission(self, request, view):
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and getattr(request.user, "role", None) in ["MEDECIN", "INFIRMIER", "ADMINISTRATEUR"]
+        )
+
+
+class IsPersonnelMedical(BasePermission):
+    """Accès réservé au personnel soignant (médecins, infirmiers) et administrateurs."""
+
+    def has_permission(self, request, view):
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and getattr(request.user, "role", None) in ["MEDECIN", "INFIRMIER", "ADMINISTRATEUR"]
+        )
+
 class IsStaffOrAdmin(BasePermission):
     """Accès réservé au personnel médical (Médecins, Infirmiers) et administrateurs."""
 

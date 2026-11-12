@@ -68,6 +68,7 @@
             <th>Patient</th>
             <th>Consultation Liée</th>
             <th>Prescription & Posologie</th>
+            <th class="text-right">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -77,7 +78,7 @@
                 <span class="ref-badge">{{ p.reference || ('ORD-#' + (p.id || p.idOrdonnance)) }}</span>
               </td>
               <td>
-                <span class="date-text">{{ formatDate(p.date_ordonnance) }}</span>
+                <span class="date-text">{{ formatDate(p.dateOrdonnance || p.date_ordonnance) }}</span>
               </td>
               <td>
                 <a
@@ -85,8 +86,7 @@
                   class="patient-name-link"
                   title="Voir le dossier de ce patient"
                 >
-                  {{ p.consultation_details?.patient_details?.prenom || p.consultation_details?.patient_detail?.prenom || 'Patient' }}
-                  {{ p.consultation_details?.patient_details?.nom || p.consultation_details?.patient_detail?.nom || '' }}
+                  {{ getPatientName(p) }}
                 </a>
               </td>
               <td>
@@ -96,6 +96,25 @@
               </td>
               <td>
                 <span class="obs-text">{{ p.observation || 'Prescription médicale standard' }}</span>
+              </td>
+              <td class="text-right">
+                <button
+                  type="button"
+                  class="btn-pdf-action"
+                  [disabled]="downloadingId() === (p.id || p.idOrdonnance)"
+                  (click)="downloadPdf(p)"
+                  title="Télécharger l'ordonnance officielle au format PDF (avec QR code & signature électronique)"
+                >
+                  @if (downloadingId() === (p.id || p.idOrdonnance)) {
+                    <span class="btn-spinner"></span>
+                    <span>Génération...</span>
+                  } @else {
+                    <svg class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span>Télécharger PDF</span>
+                  }
+                </button>
               </td>
             </tr>
           }
@@ -108,7 +127,7 @@
           <div class="mobile-card">
             <div class="card-top">
               <span class="ref-badge">{{ p.reference || ('ORD-#' + (p.id || p.idOrdonnance)) }}</span>
-              <span class="date-text">{{ formatDate(p.date_ordonnance) }}</span>
+              <span class="date-text">{{ formatDate(p.dateOrdonnance || p.date_ordonnance) }}</span>
             </div>
             <div class="patient-name">
               Patient :
@@ -117,8 +136,7 @@
                 class="font-bold text-emerald-700 hover:underline ml-1"
                 title="Voir le dossier médical"
               >
-                {{ p.consultation_details?.patient_details?.prenom || p.consultation_details?.patient_detail?.prenom }}
-                {{ p.consultation_details?.patient_details?.nom || p.consultation_details?.patient_detail?.nom }}
+                {{ getPatientName(p) }}
               </a>
             </div>
             <div class="obs-box">
@@ -137,6 +155,22 @@
               >
                 Consultation #{{ p.consultation }}
               </a>
+              <button
+                type="button"
+                class="btn-pdf-action flex-1 justify-center"
+                [disabled]="downloadingId() === (p.id || p.idOrdonnance)"
+                (click)="downloadPdf(p)"
+                title="Télécharger l'ordonnance PDF"
+              >
+                @if (downloadingId() === (p.id || p.idOrdonnance)) {
+                  <span class="btn-spinner"></span>
+                } @else {
+                  <svg class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span>PDF</span>
+                }
+              </button>
             </div>
           </div>
         }

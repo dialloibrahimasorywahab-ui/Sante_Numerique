@@ -104,31 +104,34 @@ def add_7_medecins():
         # CORRECTION PROBLÈME 4 : Mot de passe aléatoire unique — jamais affiché dans les logs
         mot_de_passe = _generer_mot_de_passe_securise()
 
-        # 1. Création de l'utilisateur avec rôle MEDECIN et mot de passe haché
-        user = user_service.createUser(
-            nom=data["nom"],
-            prenom=data["prenom"],
-            email=email,
-            telephone=telephone,
-            login=login,
-            motDePasseHash=mot_de_passe,
-            role=User.Role.MEDECIN,
-            actif=True,
-        )
+        # 1. Vérification / Création de l'utilisateur avec rôle MEDECIN
+        user = User.objects.filter(login=login).first()
+        if not user:
+            user = user_service.createUser(
+                nom=data["nom"],
+                prenom=data["prenom"],
+                email=email,
+                telephone=telephone,
+                login=login,
+                motDePasseHash=mot_de_passe,
+                role=User.Role.MEDECIN,
+                actif=True,
+            )
 
-        # Le mot de passe est immédiatement supprimé de la mémoire locale
         del mot_de_passe
 
-        # 2. Création du profil Médecin rattaché à l'utilisateur
-        medecin = medecin_service.createMedecin(
-            idUtilisateur=user,
-            specialite=data["specialite"],
-            numeroOrdre=numero_ordre,
-            telephonePro=telephone,
-            emailPro=email,
-            bureau=data["bureau"],
-            dateEmbauche="2025-01-10",
-        )
+        # 2. Vérification / Création du profil Médecin rattaché à l'utilisateur
+        medecin = Medecin.objects.filter(id_utilisateur=user).first()
+        if not medecin:
+            medecin = medecin_service.createMedecin(
+                idUtilisateur=user,
+                specialite=data["specialite"],
+                numeroOrdre=numero_ordre,
+                telephonePro=telephone,
+                emailPro=email,
+                bureau=data["bureau"],
+                dateEmbauche="2025-01-10",
+            )
 
         # NOTE : le login et le numéro d'ordre sont affichés, mais PAS le mot de passe
         print(

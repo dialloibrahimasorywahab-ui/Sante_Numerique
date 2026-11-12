@@ -40,13 +40,26 @@ export interface ConsultationDto {
   idConsultation?: number;
   patient: number;
   patient_details?: PatientRecord;
+  patientDetails?: PatientRecord;
   medecin: number;
   medecin_details?: MedecinDto;
+  medecinDetails?: MedecinDto;
   rdv?: number | null;
   rdv_details?: RendezVousDto | null;
+  rdvDetails?: RendezVousDto | null;
   frais?: number | null;
   frais_details?: FraisConsultationDto | null;
-  date_cons: string;
+  fraisDetails?: FraisConsultationDto | null;
+  patient_nom?: string;
+  patientNom?: string;
+  patient_prenom?: string;
+  patientPrenom?: string;
+  medecin_nom?: string;
+  medecinNom?: string;
+  medecin_prenom?: string;
+  medecinPrenom?: string;
+  date_cons?: string;
+  dateCons?: string;
   symptomes?: string;
   diagnostic?: string;
   observations?: string;
@@ -58,10 +71,17 @@ export interface OrdonnanceDto {
   idOrdonnance?: number;
   consultation: number;
   consultation_details?: ConsultationDto;
+  consultationDetails?: ConsultationDto;
+  medecin_nom?: string;
+  medecinNom?: string;
+  patient_nom?: string;
+  patientNom?: string;
   reference: string;
-  date_ordonnance: string;
+  date_ordonnance?: string;
+  dateOrdonnance?: string;
   observation?: string | null;
   actif: boolean;
+  lignes?: any[];
 }
 
 export interface ChambreShortDto {
@@ -84,6 +104,7 @@ export interface LitDetailsDto {
 export interface HospitalisationDto {
   id: number;
   idHospitalisation?: number;
+  id_admission?: number;
   patient: number;
   patient_details?: PatientRecord;
   medecin: number;
@@ -92,6 +113,31 @@ export interface HospitalisationDto {
   lit_details?: LitDetailsDto;
   date_entree: string;
   date_sortie?: string | null;
+  patientDetails?: PatientRecord;
+  patient_nom?: string;
+  patientNom?: string;
+  patient_prenom?: string;
+  patientPrenom?: string;
+  medecinDetails?: MedecinDto;
+  medecin_nom?: string;
+  medecinNom?: string;
+  medecin_prenom?: string;
+  medecinPrenom?: string;
+  litDetails?: LitDetailsDto;
+  chambre_numero?: string;
+  chambreNumero?: string;
+  lit_numero?: string;
+  litNumero?: string;
+  batiment_nom?: string;
+  batimentNom?: string;
+  service_nom?: string;
+  serviceNom?: string;
+  priorite?: string;
+  statut_display?: string;
+  symptomes?: string;
+  diagnostic_provisoire?: string;
+  dateEntree?: string;
+  dateSortie?: string | null;
   motif: string;
   statut: 'PROGRAMMEE' | 'EN_COURS' | 'TERMINEE' | 'ANNULEE' | string;
   observation?: string | null;

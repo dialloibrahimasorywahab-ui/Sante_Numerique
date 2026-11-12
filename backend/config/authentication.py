@@ -1,6 +1,7 @@
 from django.conf import settings
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import InvalidToken, AuthenticationFailed
+from drf_spectacular.extensions import OpenApiAuthenticationExtension
 
 
 class CookieJWTAuthentication(JWTAuthentication):
@@ -33,3 +34,16 @@ class CookieJWTAuthentication(JWTAuthentication):
 
         validated_token = self.get_validated_token(raw_token)
         return self.get_user(validated_token), validated_token
+
+
+class CookieJWTScheme(OpenApiAuthenticationExtension):
+    target_class = 'config.authentication.CookieJWTAuthentication'
+    name = 'cookieAuth'
+
+    def get_security_definition(self, auto_schema):
+        return {
+            'type': 'apiKey',
+            'in': 'cookie',
+            'name': 'access_token',
+            'description': "Authentification par cookie HttpOnly 'access_token' ou header 'Authorization: Bearer <token>'."
+        }

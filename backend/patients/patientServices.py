@@ -2,7 +2,9 @@ import secrets
 from django.db import transaction
 from django.utils import timezone
 from common.services import BaseService
+from common.validators import generate_secure_password
 from users.models import User
+
 from users.usersServices import UserService
 from .models import Patient
 from .patientRepositories import PatientRepository
@@ -26,7 +28,7 @@ class PatientService(BaseService[Patient]):
         elif isinstance(id_user_data, dict):
             user_info = id_user_data
             login = data.pop("login", user_info.get("login", ""))
-            password = data.pop("motDePasse", data.pop("mot_de_passe", None)) or secrets.token_urlsafe(16)
+            password = data.pop("motDePasse", data.pop("mot_de_passe", None)) or generate_secure_password()
 
             user_payload = {
                 "nom": user_info.get("nom", ""),
@@ -41,7 +43,8 @@ class PatientService(BaseService[Patient]):
             with transaction.atomic():
                 user = self.user_service.createUser(**user_payload)
         elif id_user_data is None and ("nom" in data or "login" in data):
-            password = data.pop("motDePasse", data.pop("mot_de_passe", None)) or secrets.token_urlsafe(16)
+            password = data.pop("motDePasse", data.pop("mot_de_passe", None)) or generate_secure_password()
+
             user_payload = {
                 "nom": data.pop("nom", ""),
                 "prenom": data.pop("prenom", ""),
@@ -120,8 +123,6 @@ class PatientService(BaseService[Patient]):
 
         if "date_naissance" not in data and "dateNaissance" in data:
             data["date_naissance"] = data.pop("dateNaissance")
-        if "groupe_sanguin" not in data and "groupeSanguin" in data:
-            data["groupe_sanguin"] = data.pop("groupeSanguin")
         if "numero_securite_sociale" not in data and "numeroSecuriteSociale" in data:
             data["numero_securite_sociale"] = data.pop("numeroSecuriteSociale")
         if "personne_a_contacter" not in data and "personneAContacter" in data:
@@ -137,3 +138,17 @@ class PatientService(BaseService[Patient]):
     # desactiver ou archiver un patient
     def delete_patient(self, patient, hard=False):
         return self.repository.delete_patient(patient, hard=hard)
+
+
+    # Alias de compatibilité camelCase
+    getAllPatients = get_all_patient
+    getPatient = get_Patient
+    updatePatient = update_patient
+    deletePatient = delete_patient
+
+
+    # Alias de compatibilité camelCase
+    getAllPatients = get_all_patient
+    getPatient = get_Patient
+    updatePatient = update_patient
+    deletePatient = delete_patient

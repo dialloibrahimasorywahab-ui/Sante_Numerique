@@ -128,12 +128,8 @@
                     {{ ((rdv.patient_details?.nom || rdv.patient_detail?.nom || 'P')[0]) }}
                   </div>
                   <div>
-                    <div class="cell-title">
-                      {{ rdv.patient_details?.prenom || rdv.patient_detail?.prenom }} {{ rdv.patient_details?.nom || rdv.patient_detail?.nom }}
-                    </div>
-                    <div class="cell-sub">
-                      {{ rdv.patient_details?.telephone || rdv.patient_detail?.telephone || 'Pas de téléphone' }}
-                    </div>
+                    <div class="cell-title">{{ getPatientFullName(rdv) }}</div>
+                    <div class="cell-sub">{{ getPatientPhone(rdv) }}</div>
                   </div>
                 </div>
               </td>
@@ -233,12 +229,8 @@
                   {{ ((rdv.patient_details?.nom || rdv.patient_detail?.nom || 'P')[0]) }}
                 </div>
                 <div>
-                  <div class="cell-title">
-                    {{ rdv.patient_details?.prenom || rdv.patient_detail?.prenom }} {{ rdv.patient_details?.nom || rdv.patient_detail?.nom }}
-                  </div>
-                  <div class="cell-sub">
-                    {{ rdv.patient_details?.telephone || rdv.patient_detail?.telephone || 'Sans tél' }}
-                  </div>
+                  <div class="cell-title">{{ getPatientFullName(rdv) }}</div>
+                  <div class="cell-sub">{{ getPatientPhone(rdv) }}</div>
                 </div>
               </div>
               <span class="badge" [ngClass]="getStatusClass(rdv)">

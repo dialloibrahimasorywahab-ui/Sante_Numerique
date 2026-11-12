@@ -99,10 +99,10 @@
       <div class="hosp-banner-content">
         <div class="hosp-title-row">
           <span class="badge-urgent">HOSPITALISATION EN COURS</span>
-          <strong class="hosp-lit">Chambre {{ hosp.lit_details?.chambre_detail?.numero_chambre || '—' }} — Lit {{ hosp.lit_details?.numero_lit || '—' }}</strong>
+          <strong class="hosp-lit">{{ getHospRoomBed(hosp) }}</strong>
         </div>
         <p class="hosp-desc">
-          Admis le <strong>{{ formatDate(hosp.date_entree) }}</strong>. Médecin référent : <strong>Dr. {{ hosp.medecin_details?.prenom }} {{ hosp.medecin_details?.nom }}</strong>.
+          Admis le <strong>{{ formatDate(hosp.date_entree) }}</strong>. Médecin référent : <strong>{{ getHospDoctor(hosp) }}</strong>.
         </p>
       </div>
       <a routerLink="/patient/hospitalisations" class="btn-view-hosp">Détails du séjour</a>
@@ -288,7 +288,7 @@
 
             <div class="cons-item-body">
               <h4 class="cons-doctor">
-                Dr. {{ cons.medecin_details?.prenom }} {{ cons.medecin_details?.nom }}
+                {{ getConsultationDoctor(cons) }}
               </h4>
               <span class="cons-spec">{{ cons.medecin_details?.specialiteDisplay || cons.medecin_details?.specialite || 'Médecine' }}</span>
 

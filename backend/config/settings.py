@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/6.1/topics/settings/
 
 from datetime import timedelta
 from pathlib import Path
+import os
 import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -34,8 +35,13 @@ DEBUG = env.bool('DEBUG', default=env.bool('DJANGO_DEBUG', default=False))
 # ALLOWED_HOSTS explicite pour la production
 ALLOWED_HOSTS = env.list(
     'ALLOWED_HOSTS',
-    default=env.list('DJANGO_ALLOWED_HOSTS', default=['localhost', '127.0.0.1', '0.0.0.0', '[::1]', '.devtunnels.ms'])
+    default=env.list('DJANGO_ALLOWED_HOSTS', default=['localhost', '127.0.0.1', '0.0.0.0', '[::1]', '.devtunnels.ms', 'testserver', '.vercel.app', '.now.sh'])
 )
+
+# Support systématique des domaines Vercel (.vercel.app, .now.sh) et environnements de test
+for v_host in ['.vercel.app', '.now.sh', 'testserver']:
+    if v_host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(v_host)
 
 
 # ==========================================
@@ -69,6 +75,9 @@ CSRF_TRUSTED_ORIGINS = env.list(
         default=['http://localhost', 'http://127.0.0.1', 'http://localhost:4200']
     )
 )
+if os.environ.get('VERCEL') or env.bool('VERCEL_ENV', default=False):
+    if 'https://*.vercel.app' not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append('https://*.vercel.app')
 
 # Entête X-Content-Type-Options
 SECURE_CONTENT_TYPE_NOSNIFF = True
@@ -109,10 +118,13 @@ INSTALLED_APPS = [
     'consultation',
     'ordonnance',
     'ligne_ordonnance',
+    'documents_medicaux',
+    'notifications',
     'sejour',
     'localisation',
     'mouvement',
     'evenement',
+    'actualites',
     'simple_history',
 ]
 
@@ -195,6 +207,7 @@ CORS_ALLOWED_ORIGINS = env.list(
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://.*\.devtunnels\.ms$",
+    r"^https://.*\.vercel\.app$",
 ]
 
 
@@ -202,7 +215,24 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
 # OpenAPI / Swagger (drf-spectacular)
 # ==========================================
 
+if DEBUG:
+    SPECTACULAR_SERVE_PERMISSIONS = env.list(
+        'SPECTACULAR_SERVE_PERMISSIONS',
+        default=['rest_framework.permissions.AllowAny']
+    )
+else:
+    SPECTACULAR_SERVE_PERMISSIONS = env.list(
+        'SPECTACULAR_SERVE_PERMISSIONS',
+        default=['rest_framework.permissions.IsAdminUser']
+    )
+
 SPECTACULAR_SETTINGS = {
+    'SERVE_PERMISSIONS': SPECTACULAR_SERVE_PERMISSIONS,
+    'SERVE_AUTHENTICATION': [
+        'config.authentication.CookieJWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+    ],
     'TITLE': 'API Santé Numérique',
     'DESCRIPTION': 'Documentation interactive Swagger & OpenAPI des services de gestion hospitalière Santé Numérique.',
     'VERSION': '1.0.0',
@@ -211,6 +241,7 @@ SPECTACULAR_SETTINGS = {
     'COMPONENT_SPLIT_REQUEST': True,
     'POSTPROCESSING_HOOKS': [
         'drf_spectacular.contrib.djangorestframework_camel_case.camelize_serializer_fields',
+        'config.spectacular.deduplicate_required_fields',
     ],
     'SWAGGER_UI_SETTINGS': {
         'deepLinking': True,
@@ -228,6 +259,7 @@ SPECTACULAR_SETTINGS = {
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -268,8 +300,24 @@ db_url = env('DATABASE_URL', default=None)
 db_name = env('DATABASE_NAME', default=env('DB_NAME', default=None))
 
 if db_url:
+    db_config = env.db('DATABASE_URL')
+    if 'OPTIONS' not in db_config:
+        db_config['OPTIONS'] = {}
+
+    is_serverless = bool(os.environ.get('VERCEL') or env.bool('VERCEL_ENV', default=False))
+    if is_serverless:
+        # En environnement serverless (Vercel), fermer les connexions à chaque requête
+        # pour éviter d'épuiser le Connection Pooler Supabase (Supavisor)
+        db_config['CONN_MAX_AGE'] = 0
+        # SSL obligatoire pour Supabase
+        db_config['OPTIONS'].setdefault('sslmode', 'require')
+    else:
+        db_config['CONN_MAX_AGE'] = env.int('DATABASE_CONN_MAX_AGE', default=60)
+        if env.bool('DATABASE_SSL_REQUIRED', default=False):
+            db_config['OPTIONS'].setdefault('sslmode', 'require')
+
     DATABASES = {
-        'default': env.db('DATABASE_URL')
+        'default': db_config
     }
 elif db_name:
     DATABASES = {
@@ -332,6 +380,17 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# WhiteNoise pour servir les fichiers statiques de façon optimale sur Vercel
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+WHITENOISE_MANIFEST_STRICT = False
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'

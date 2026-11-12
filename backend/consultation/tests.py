@@ -179,3 +179,35 @@ class ConsultationTests(TestCase):
         self.assertEqual(res_adm.status_code, status.HTTP_200_OK)
         self.assertEqual(res_adm.data["count"], 2)
 
+
+    def test_telecharger_consultation_pdf(self):
+        cons = self.service.creer_consultation(
+            patient=self.patient,
+            medecin=self.medecin,
+            symptomes="Céphalées et fatigue intense",
+            diagnostic="Migraine ophtalmique",
+            observations="Repos en chambre sombre prescrit"
+        )
+
+        # Le médecin peut télécharger le compte-rendu / certificat
+        self.client.force_authenticate(user=self.user_m)
+        res_m = self.client.get(f"/consultations/{cons.id}/pdf/")
+        self.assertEqual(res_m.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_m["Content-Type"], "application/pdf")
+        self.assertTrue(res_m.content.startswith(b"%PDF-"))
+
+        # Le patient concerné peut télécharger son compte-rendu
+        self.client.force_authenticate(user=self.user_p)
+        res_p = self.client.get(f"/consultations/{cons.id}/pdf/")
+        self.assertEqual(res_p.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_p["Content-Type"], "application/pdf")
+        self.assertTrue(res_p.content.startswith(b"%PDF-"))
+
+        # Un autre patient n'a pas accès
+        user_p_autre = User.objects.create(
+            nom="Kane", prenom="Abdou", email="abdou.kane@example.com",
+            telephone="+221778889900", login="abdou_k", motDePasseHash="pass123", role=User.Role.PATIENT
+        )
+        self.client.force_authenticate(user=user_p_autre)
+        res_autre = self.client.get(f"/consultations/{cons.id}/pdf/")
+        self.assertEqual(res_autre.status_code, status.HTTP_403_FORBIDDEN)

@@ -1,0 +1,740 @@
+<div class="admission-create-container">
+
+  <!-- ============================================================ -->
+  <!-- ÉCRAN DE CONFIRMATION (AFFICHÉ APRÈS SUCCÈS D'ENREGISTREMENT) -->
+  <!-- ============================================================ -->
+  @if (confirmationData(); as conf) {
+    <div class="confirmation-screen">
+      <!-- Success Banner Card -->
+      <div class="confirmation-card">
+        <div class="success-badge-wrapper">
+          <div class="success-icon-circle">
+            <svg class="w-10 h-10 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <span class="status-pill-success">Admission validée & active</span>
+        </div>
+
+        <h1 class="confirmation-title">Admission enregistrée avec succès</h1>
+        <p class="confirmation-subtitle">
+          Le patient a été admis dans le service et sa prise en charge médicale est maintenant en cours.
+        </p>
+
+        <!-- Identifiants clairs -->
+        <div class="id-badges-grid">
+          <div class="id-badge-card">
+            <span class="id-label">Identifiant Admission</span>
+            <span class="id-value">#ADM-{{ conf.id_admission || conf.id }}</span>
+          </div>
+
+          <div class="id-badge-card">
+            <span class="id-label">Dossier Patient</span>
+            <span class="id-value">#PAT-{{ conf.patient_id }}</span>
+          </div>
+
+          <div class="id-badge-card">
+            <span class="id-label">Statut Initial</span>
+            <span class="id-value badge-encours">EN COURS</span>
+          </div>
+        </div>
+
+        <!-- Récapitulatif -->
+        <div class="summary-box">
+          <h3 class="summary-box-title">Détails de l'admission</h3>
+          <div class="summary-grid">
+            <div class="summary-item">
+              <span class="summary-k">Patient :</span>
+              <span class="summary-v">{{ conf.patient_nom || 'Patient #' + conf.patient_id }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-k">Téléphone :</span>
+              <span class="summary-v">{{ conf.patient_telephone || 'Non renseigné' }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-k">Date & Heure :</span>
+              <span class="summary-v">{{ conf.date_entree | date:'dd/MM/yyyy à HH:mm' }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-k">Lit & Chambre :</span>
+              <span class="summary-v">{{ conf.lit_label || 'Non assigné immédiatement' }}</span>
+            </div>
+            @if (conf.service_nom) {
+              <div class="summary-item">
+                <span class="summary-k">Service :</span>
+                <span class="summary-v">{{ conf.service_nom }}</span>
+              </div>
+            }
+            @if (conf.priorite) {
+              <div class="summary-item">
+                <span class="summary-k">Priorité :</span>
+                <span class="summary-v font-bold">{{ conf.priorite }}</span>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Alerte Nouveau Compte si généré -->
+        @if (conf.nouveau_patient_cree && conf.patient_identifiants) {
+          <div class="account-created-card">
+            <div class="account-card-header">
+              <svg class="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              <span>Espace Patient créé automatiquement</span>
+            </div>
+            <p class="account-card-text">
+              Un dossier médical et un compte d’accès sécurisé ont été créés pour ce nouveau patient dans la base de données.
+            </p>
+            <div class="credentials-pills">
+              <div class="cred-pill">
+                <span class="cred-k">Identifiant de connexion :</span>
+                <strong class="cred-v">{{ conf.patient_identifiants.login }}</strong>
+              </div>
+              <div class="cred-pill">
+                <span class="cred-k">Email :</span>
+                <strong class="cred-v">{{ conf.patient_identifiants.email }}</strong>
+              </div>
+              <div class="cred-pill">
+                <span class="cred-k">Mot de passe temporaire :</span>
+                <strong class="cred-v font-mono">{{ conf.patient_identifiants.mot_de_passe_initial }}</strong>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- Actions de sortie de confirmation -->
+        <div class="confirmation-actions">
+          <button (click)="navigateToAdmissionDetail(conf.id_admission || conf.id)" class="btn-primary">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+            <span>Consulter le détail de l'admission</span>
+          </button>
+
+          <button (click)="navigateToPatientFolder(conf.patient_id)" class="btn-secondary">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            <span>Voir le dossier patient</span>
+          </button>
+
+          <button (click)="resetForm()" class="btn-outline">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            <span>Enregistrer une autre admission</span>
+          </button>
+
+          <a routerLink="/medecin/hospitalisations" class="btn-ghost">
+            <span>Retour aux admissions</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ============================================================ -->
+  <!-- FORMULAIRE PRINCIPAL D'ADMISSION                             -->
+  <!-- ============================================================ -->
+  @if (!confirmationData()) {
+    <!-- Breadcrumb & Page Header -->
+    <div class="page-header">
+      <nav class="breadcrumb">
+        <a routerLink="/medecin/dashboard" class="breadcrumb-item">Espace Médecin</a>
+        <span class="breadcrumb-sep">/</span>
+        <a routerLink="/medecin/hospitalisations" class="breadcrumb-item">Admissions & Lits</a>
+        <span class="breadcrumb-sep">/</span>
+        <span class="breadcrumb-current">Nouvelle admission</span>
+      </nav>
+
+      <div class="header-content">
+        <div>
+          <h1 class="page-title">Nouvelle admission d'un patient</h1>
+          <p class="page-subtitle">
+            Enregistrez la prise en charge hospitalière directe d’un patient nécessitant une hospitalisation ou des soins continus.
+          </p>
+        </div>
+        <div class="header-doctor-badge">
+          <div class="doc-avatar">Dr</div>
+          <div class="doc-info">
+            <span class="doc-name">Dr. {{ currentUser?.nom }} {{ currentUser?.prenom }}</span>
+            <span class="doc-role">Praticien responsable assigné</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bannière d'erreur éventuelle -->
+    @if (errorMessage()) {
+      <div class="alert-error-banner" role="alert">
+        <div class="alert-icon">
+          <svg class="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div class="alert-body">
+          <strong class="alert-title">Attention</strong>
+          <span class="alert-text">{{ errorMessage() }}</span>
+        </div>
+      </div>
+    }
+
+    <!-- FORMULAIRE REACTIF -->
+    <form [formGroup]="admissionForm" (ngSubmit)="onSubmit()" class="admission-form">
+
+      <!-- ============================================================ -->
+      <!-- SECTION A : IDENTIFICATION DU PATIENT                        -->
+      <!-- ============================================================ -->
+      <section class="form-section card-surface">
+        <div class="section-header">
+          <div class="section-number">A</div>
+          <div>
+            <h2 class="section-title">Identification du patient</h2>
+            <p class="section-subtitle">
+              Sélectionnez un patient déjà suivi dans l'établissement ou enregistrez un nouveau dossier patient.
+            </p>
+          </div>
+        </div>
+
+        <!-- Mode switcher pills -->
+        <div class="mode-switch-wrapper">
+          <button
+            type="button"
+            class="mode-switch-btn"
+            [class.active]="patientMode() === 'existant'"
+            (click)="setPatientMode('existant')"
+          >
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <span>Patient existant (Recherche rapide)</span>
+          </button>
+
+          <button
+            type="button"
+            class="mode-switch-btn"
+            [class.active]="patientMode() === 'nouveau'"
+            (click)="setPatientMode('nouveau')"
+          >
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+            </svg>
+            <span>Nouveau patient (Création atomique)</span>
+          </button>
+        </div>
+
+        <!-- CAS 1 : RECHERCHE D'UN PATIENT EXISTANT -->
+        @if (patientMode() === 'existant') {
+          <div class="patient-existing-area">
+            @if (!selectedPatient()) {
+              <div class="search-input-box">
+                <label for="patientSearch" class="form-label">
+                  Rechercher un patient <span class="required">*</span>
+                </label>
+                <div class="search-field-container">
+                  <span class="search-icon">
+                    <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </span>
+                  <input
+                    id="patientSearch"
+                    type="text"
+                    class="form-control search-control"
+                    placeholder="Saisissez un numéro de téléphone, un nom, un prénom ou un ID patient..."
+                    [value]="patientQuery()"
+                    (input)="onSearchInput($event)"
+                    autocomplete="off"
+                  />
+                  @if (isSearching()) {
+                    <span class="search-spinner" title="Recherche en cours..."></span>
+                  }
+                </div>
+                <span class="field-hint">
+                  Exemple : Saisissez « 620 » pour rechercher par téléphone, ou le nom du patient.
+                </span>
+
+                <!-- Liste des suggestions -->
+                @if (patientSearchResults().length > 0) {
+                  <div class="search-results-dropdown">
+                    <div class="results-header">
+                      <span>{{ patientSearchResults().length }} patient(s) trouvé(s)</span>
+                    </div>
+                    <ul class="results-list">
+                      @for (p of patientSearchResults(); track p.id_patient || p.idPatient) {
+                        <li class="result-item" (click)="selectPatient(p)">
+                          <div class="result-avatar">
+                            {{ (p.nom || 'P')[0] }}{{ (p.prenom || '')[0] }}
+                          </div>
+                          <div class="result-info">
+                            <div class="result-name">
+                              <strong>{{ p.nom }} {{ p.prenom }}</strong>
+                              <span class="result-id">#PAT-{{ p.id_patient || p.idPatient }}</span>
+                            </div>
+                            <div class="result-meta">
+                              <span>📞 {{ p.telephone || 'Sans tél' }}</span>
+                              @if (p.date_naissance || p.dateNaissance) {
+                                <span>🎂 Né(e) le {{ (p.date_naissance || p.dateNaissance) | date:'dd/MM/yyyy' }}</span>
+                              }
+                              @if (p.groupe_sanguin || p.groupeSanguin) {
+                                <span class="badge-sang">{{ p.groupe_sanguin || p.groupeSanguin }}</span>
+                              }
+                            </div>
+                          </div>
+                          <button type="button" class="btn-select-patient">Sélectionner</button>
+                        </li>
+                      }
+                    </ul>
+                  </div>
+                } @else if (patientQuery().trim().length >= 2 && !isSearching()) {
+                  <div class="no-results-box">
+                    <p>Aucun patient trouvé correspondant à « {{ patientQuery() }} ».</p>
+                    <button type="button" (click)="setPatientMode('nouveau')" class="btn-link">
+                      Enregistrer ce patient en tant que nouveau patient ?
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- Carte du patient sélectionné -->
+            @if (selectedPatient(); as p) {
+              <div class="selected-patient-card">
+                <div class="patient-card-left">
+                  <div class="patient-avatar-large">
+                    {{ (p.nom || 'P')[0] }}{{ (p.prenom || '')[0] }}
+                  </div>
+                  <div class="patient-details">
+                    <div class="patient-card-header">
+                      <h3 class="patient-card-name">{{ p.nom }} {{ p.prenom }}</h3>
+                      <span class="badge-pat-id">#PAT-{{ p.id_patient || p.idPatient }}</span>
+                      <span class="badge-verified">Dossier vérifié</span>
+                    </div>
+                    <div class="patient-card-grid">
+                      <div class="p-item">
+                        <span class="p-label">Téléphone :</span>
+                        <span class="p-val font-semibold">{{ p.telephone || 'Non renseigné' }}</span>
+                      </div>
+                      <div class="p-item">
+                        <span class="p-label">Date de naissance :</span>
+                        <span class="p-val">{{ (p.date_naissance || p.dateNaissance) ? ((p.date_naissance || p.dateNaissance) | date:'dd/MM/yyyy') : 'Non renseignée' }}</span>
+                      </div>
+                      <div class="p-item">
+                        <span class="p-label">Sexe :</span>
+                        <span class="p-val">{{ p.sexe === 'F' ? 'Féminin' : 'Masculin' }}</span>
+                      </div>
+                      <div class="p-item">
+                        <span class="p-label">Groupe sanguin :</span>
+                        <span class="p-val badge-sang">{{ p.groupe_sanguin || p.groupeSanguin || 'Inconnu' }}</span>
+                      </div>
+                      @if (p.adresse) {
+                        <div class="p-item col-span-2">
+                          <span class="p-label">Adresse :</span>
+                          <span class="p-val">{{ p.adresse }}</span>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                </div>
+                <div class="patient-card-right">
+                  <button type="button" (click)="clearSelectedPatient()" class="btn-change-patient">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    <span>Changer de patient</span>
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- CAS 2 : SAISIE D'UN NOUVEAU PATIENT -->
+        @if (patientMode() === 'nouveau') {
+          <div class="patient-new-area">
+            <div class="info-callout">
+              <div class="callout-icon">
+                <svg class="w-5 h-5 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div class="callout-content">
+                <strong>Création automatique et atomique du dossier patient</strong>
+                <p>
+                  Le dossier patient sera instantanément créé dans la base de données avec son identifiant unique et rattaché à cette admission.
+                  Si le numéro de téléphone correspond déjà à un patient existant, il sera automatiquement rattaché sans créer de doublon.
+                </p>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <!-- Nom -->
+              <div class="form-group">
+                <label for="nom" class="form-label">Nom de famille <span class="required">*</span></label>
+                <input
+                  id="nom"
+                  type="text"
+                  formControlName="nom"
+                  class="form-control"
+                  placeholder="Ex: Diallo"
+                  [class.is-invalid]="admissionForm.get('nom')?.touched && admissionForm.get('nom')?.invalid"
+                />
+              </div>
+
+              <!-- Prénom -->
+              <div class="form-group">
+                <label for="prenom" class="form-label">Prénom(s) <span class="required">*</span></label>
+                <input
+                  id="prenom"
+                  type="text"
+                  formControlName="prenom"
+                  class="form-control"
+                  placeholder="Ex: Mamadou"
+                  [class.is-invalid]="admissionForm.get('prenom')?.touched && admissionForm.get('prenom')?.invalid"
+                />
+              </div>
+
+              <!-- Téléphone -->
+              <div class="form-group">
+                <label for="telephone" class="form-label">Numéro de téléphone <span class="required">*</span></label>
+                <input
+                  id="telephone"
+                  type="tel"
+                  formControlName="telephone"
+                  class="form-control"
+                  placeholder="Ex: +224 620 00 00 00"
+                  [class.is-invalid]="admissionForm.get('telephone')?.touched && admissionForm.get('telephone')?.invalid"
+                />
+              </div>
+
+              <!-- Email -->
+              <div class="form-group">
+                <label for="email" class="form-label">Adresse email <span class="optional">(optionnel)</span></label>
+                <input
+                  id="email"
+                  type="email"
+                  formControlName="email"
+                  class="form-control"
+                  placeholder="Ex: patient@email.com"
+                />
+              </div>
+
+              <!-- Sexe -->
+              <div class="form-group">
+                <label for="sexe" class="form-label">Sexe biologique <span class="required">*</span></label>
+                <select id="sexe" formControlName="sexe" class="form-select">
+                  <option value="M">Masculin</option>
+                  <option value="F">Féminin</option>
+                </select>
+              </div>
+
+              <!-- Date de naissance -->
+              <div class="form-group">
+                <label for="date_naissance" class="form-label">Date de naissance</label>
+                <input
+                  id="date_naissance"
+                  type="date"
+                  formControlName="date_naissance"
+                  class="form-control"
+                />
+              </div>
+
+              <!-- Groupe Sanguin -->
+              <div class="form-group">
+                <label for="groupe_sanguin" class="form-label">Groupe sanguin</label>
+                <select id="groupe_sanguin" formControlName="groupe_sanguin" class="form-select">
+                  @for (grp of sangOptions; track grp) {
+                    <option [value]="grp">{{ grp }}</option>
+                  }
+                </select>
+              </div>
+
+              <!-- Numéro Sécurité Sociale -->
+              <div class="form-group">
+                <label for="nss" class="form-label">N° Sécurité sociale / Assurance</label>
+                <input
+                  id="nss"
+                  type="text"
+                  formControlName="numero_securite_sociale"
+                  class="form-control"
+                  placeholder="Numéro national ou identifiant sécurité sociale"
+                />
+              </div>
+
+              <!-- Adresse -->
+              <div class="form-group col-span-2">
+                <label for="adresse" class="form-label">Adresse de résidence</label>
+                <input
+                  id="adresse"
+                  type="text"
+                  formControlName="adresse"
+                  class="form-control"
+                  placeholder="Quartier, commune, ville..."
+                />
+              </div>
+
+              <!-- Personne à contacter -->
+              <div class="form-group col-span-2">
+                <label for="personne_a_contacter" class="form-label">Contact d’urgence / Personne à prévenir</label>
+                <input
+                  id="personne_a_contacter"
+                  type="text"
+                  formControlName="personne_a_contacter"
+                  class="form-control"
+                  placeholder="Nom complet, lien de parenté et numéro de téléphone d'urgence"
+                />
+              </div>
+            </div>
+          </div>
+        }
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- SECTION B : INFORMATIONS RELATIVES À L'ADMISSION             -->
+      <!-- ============================================================ -->
+      <section class="form-section card-surface">
+        <div class="section-header">
+          <div class="section-number">B</div>
+          <div>
+            <h2 class="section-title">Informations relatives à l'admission</h2>
+            <p class="section-subtitle">
+              Paramètres d’entrée, degré d'urgence, service d'affectation et diagnostic initial.
+            </p>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <!-- Date et Heure d'entrée -->
+          <div class="form-group">
+            <label for="date_entree" class="form-label">Date et heure d'entrée <span class="required">*</span></label>
+            <input
+              id="date_entree"
+              type="datetime-local"
+              formControlName="date_entree"
+              class="form-control"
+              [class.is-invalid]="admissionForm.get('date_entree')?.touched && admissionForm.get('date_entree')?.invalid"
+            />
+            <span class="field-hint">Initialisée automatiquement à la date et heure courantes.</span>
+          </div>
+
+          <!-- Service concerné -->
+          <div class="form-group">
+            <label for="service_nom" class="form-label">Service hospitalier concerné</label>
+            <select id="service_nom" formControlName="service_nom" class="form-select">
+              <option value="">Sélectionnez un service hospitalier...</option>
+              <option value="Urgences">Service des Urgences</option>
+              <option value="Medecine_generale">Médecine Générale</option>
+              <option value="Cardiologie">Cardiologie</option>
+              <option value="Chirurgie">Chirurgie Générale</option>
+              <option value="Pediatrie">Pédiatrie</option>
+              <option value="Gynecologie_Obstetrique">Gynécologie & Obstétrique</option>
+              <option value="Neurologie">Neurologie</option>
+              <option value="Reanimation">Soins Intensifs / Réanimation</option>
+              @for (srv of servicesList(); track srv.id_service || srv.id) {
+                <option [value]="srv.nom">{{ srv.nom }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Degré d'urgence / Priorité -->
+          <div class="form-group col-span-2">
+            <label class="form-label">Niveau de priorité ou degré d'urgence <span class="required">*</span></label>
+            <div class="priorite-cards-grid">
+              @for (opt of prioriteOptions; track opt.value) {
+                <div
+                  class="priorite-card"
+                  [class.selected]="admissionForm.get('priorite')?.value === opt.value"
+                  [class]="opt.badgeClass"
+                  (click)="selectPriorite(opt.value)"
+                >
+                  <div class="priorite-card-top">
+                    <span class="priorite-radio"></span>
+                    <span class="priorite-label">{{ opt.label }}</span>
+                  </div>
+                  <span class="priorite-desc">{{ opt.desc }}</span>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Médecin responsable -->
+          <div class="form-group">
+            <label class="form-label">Médecin responsable</label>
+            <div class="readonly-input-box">
+              <svg class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Dr. {{ currentUser?.nom }} {{ currentUser?.prenom }} (Connecté)</span>
+            </div>
+            <span class="field-hint">Le praticien connecté est obligatoirement désigné responsable de la prise en charge.</span>
+          </div>
+
+          <!-- Lit / Chambre -->
+          <div class="form-group">
+            <label for="lit" class="form-label">Affectation de lit & chambre</label>
+            <select id="lit" formControlName="lit" class="form-select">
+              <option [ngValue]="null">Aucun lit immédiat (Affectation différée au service)</option>
+              @for (bed of availableBeds(); track bed.id_lit) {
+                <option [ngValue]="bed.id_lit">
+                  Lit #{{ bed.numero_lit }} — {{ bed.chambre?.batiment?.nom ? (bed.chambre?.batiment?.nom + ' - ') : '' }}Chambre #{{ bed.chambre?.numero_chambre || 'N/A' }}
+                </option>
+              }
+            </select>
+            <span class="field-hint">
+              {{ availableBeds().length }} lit(s) actuellement libre(s) dans l'établissement.
+            </span>
+          </div>
+
+          <!-- Motif de l'admission -->
+          <div class="form-group col-span-2">
+            <label for="motif" class="form-label">Motif de l'admission hospitalière <span class="required">*</span></label>
+            <input
+              id="motif"
+              type="text"
+              formControlName="motif"
+              class="form-control"
+              placeholder="Ex: Céphalées aiguës fébriles avec altération de l'état général..."
+              [class.is-invalid]="admissionForm.get('motif')?.touched && admissionForm.get('motif')?.invalid"
+            />
+          </div>
+
+          <!-- Symptômes présentés -->
+          <div class="form-group col-span-2">
+            <label for="symptomes" class="form-label">Symptômes et signes cliniques présentés</label>
+            <textarea
+              id="symptomes"
+              rows="3"
+              formControlName="symptomes"
+              class="form-control"
+              placeholder="Description des symptômes constatés à l'admission (douleur, tension artérielle, température, état de conscience...)"
+            ></textarea>
+          </div>
+
+          <!-- Diagnostic provisoire -->
+          <div class="form-group col-span-2">
+            <label for="diagnostic_provisoire" class="form-label">Diagnostic provisoire / Hypothèse diagnostique</label>
+            <textarea
+              id="diagnostic_provisoire"
+              rows="2"
+              formControlName="diagnostic_provisoire"
+              class="form-control"
+              placeholder="Ex: Suspicion de syndrome méningé aigu fébrile, examens complémentaires en urgence..."
+            ></textarea>
+          </div>
+
+          <!-- Observations médicales initiales -->
+          <div class="form-group col-span-2">
+            <label for="observations_initiales" class="form-label">Observations médicales initiales</label>
+            <textarea
+              id="observations_initiales"
+              rows="2"
+              formControlName="observations_initiales"
+              class="form-control"
+              placeholder="Remarques cliniques, protocole d'observation immédiate, surveillance prescrite..."
+            ></textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- SECTION C : INFORMATIONS COMPLÉMENTAIRES                     -->
+      <!-- ============================================================ -->
+      <section class="form-section card-surface">
+        <div class="section-header">
+          <div class="section-number">C</div>
+          <div>
+            <h2 class="section-title">Informations médicales complémentaires</h2>
+            <p class="section-subtitle">
+              Historique médical, vigilance médicamenteuse et traitements en cours.
+            </p>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <!-- Antécédents médicaux -->
+          <div class="form-group col-span-2">
+            <label for="antecedents" class="form-label">Antécédents médicaux et chirurgicaux</label>
+            <textarea
+              id="antecedents"
+              rows="2"
+              formControlName="antecedents"
+              class="form-control"
+              placeholder="HTA, Diabète de type 2, antécédents chirurgicaux, affections chroniques..."
+            ></textarea>
+          </div>
+
+          <!-- Allergies connues -->
+          <div class="form-group col-span-2">
+            <label for="allergies" class="form-label allergy-label">
+              <svg class="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span>Allergies connues et intolérances (Vigilance)</span>
+            </label>
+            <textarea
+              id="allergies"
+              rows="2"
+              formControlName="allergies"
+              class="form-control allergy-input"
+              placeholder="Ex: Pénicilline, Sulfamides, AINS, Iode..."
+            ></textarea>
+          </div>
+
+          <!-- Traitements en cours -->
+          <div class="form-group col-span-2">
+            <label for="traitements_en_cours" class="form-label">Traitements en cours et posologies</label>
+            <textarea
+              id="traitements_en_cours"
+              rows="2"
+              formControlName="traitements_en_cours"
+              class="form-control"
+              placeholder="Médicaments actuels, dosages réguliers pris par le patient..."
+            ></textarea>
+          </div>
+
+          <!-- Notes complémentaires -->
+          <div class="form-group col-span-2">
+            <label for="notes_soins" class="form-label">Consignes complémentaires pour l'équipe soignante</label>
+            <textarea
+              id="notes_soins"
+              rows="2"
+              formControlName="notes_soins"
+              class="form-control"
+              placeholder="Consignes infirmières, régime alimentaire spécial, isolement requis..."
+            ></textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- BARRE D'ACTIONS INFERIEURE                                   -->
+      <!-- ============================================================ -->
+      <div class="form-actions-bar">
+        <a routerLink="/medecin/hospitalisations" class="btn-cancel">
+          Annuler
+        </a>
+
+        <button
+          type="submit"
+          class="btn-submit"
+          [disabled]="isSubmitting()"
+        >
+          @if (isSubmitting()) {
+            <span class="btn-spinner"></span>
+            <span>Enregistrement de l'admission en cours...</span>
+          } @else {
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>Enregistrer l'admission du patient</span>
+          }
+        </button>
+      </div>
+
+    </form>
+  }
+
+</div>
+

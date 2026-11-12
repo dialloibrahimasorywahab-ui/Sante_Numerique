@@ -160,17 +160,56 @@ export class PatientDashboardComponent implements OnInit {
     }
   }
 
-  getDoctorFullName(rdv: RendezVousDto): string {
-    if (rdv.medecin_nom || rdv.medecin_prenom) {
-      return `Dr. ${rdv.medecin_prenom || ''} ${rdv.medecin_nom || ''}`.trim();
+  getDoctorFullName(rdv: any): string {
+    const m = rdv.medecinDetails || rdv.medecin_details || rdv.medecinDetail || rdv.medecin_detail;
+    if (m && (m.prenom || m.nom)) {
+      return `Dr. ${m.prenom || ''} ${m.nom || ''}`.trim();
     }
-    if (rdv.medecin_detail) {
-      return `Dr. ${rdv.medecin_detail.prenom || ''} ${rdv.medecin_detail.nom || ''}`.trim();
+    const prenom = rdv.medecin_prenom || rdv.medecinPrenom || '';
+    const nom = rdv.medecin_nom || rdv.medecinNom || '';
+    if (prenom || nom) {
+      return `Dr. ${prenom} ${nom}`.trim();
     }
-    return `Médecin #${rdv.id_medecin || ''}`.trim();
+    return 'Dr. Praticien Hospitalier';
   }
 
   getDoctorSpecialty(rdv: RendezVousDto): string {
     return rdv.medecin_specialite || rdv.medecin_detail?.specialite || 'Praticien Hospitalier';
   }
+
+  getHospRoomBed(hosp: any): string {
+    if (!hosp) return '—';
+    const ch = hosp.chambreNumero || hosp.chambre_numero || hosp.lit_details?.chambre_detail?.numero_chambre || hosp.litDetails?.chambre_detail?.numero_chambre || '—';
+    const lit = hosp.litNumero || hosp.lit_numero || hosp.lit_details?.numero_lit || hosp.litDetails?.numero_lit || '—';
+    return `Chambre ${ch} — Lit ${lit}`;
+  }
+
+  getHospDoctor(hosp: any): string {
+    if (!hosp) return 'Dr. Médecin Référent';
+    const m = hosp.medecinDetails || hosp.medecin_details || hosp.medecinDetail || hosp.medecin_detail;
+    if (m && (m.prenom || m.nom)) {
+      return `Dr. ${m.prenom || ''} ${m.nom || ''}`.trim();
+    }
+    const prenom = hosp.medecin_prenom || hosp.medecinPrenom || '';
+    const nom = hosp.medecin_nom || hosp.medecinNom || '';
+    if (prenom || nom) {
+      return `Dr. ${prenom} ${nom}`.trim();
+    }
+    return 'Dr. Médecin Référent';
+  }
+
+  getConsultationDoctor(cons: any): string {
+    if (!cons) return 'Dr. Praticien';
+    const m = cons.medecinDetails || cons.medecin_details || cons.medecinDetail || cons.medecin_detail;
+    if (m && (m.prenom || m.nom)) {
+      return `Dr. ${m.prenom || ''} ${m.nom || ''}`.trim();
+    }
+    const prenom = cons.medecin_prenom || cons.medecinPrenom || '';
+    const nom = cons.medecin_nom || cons.medecinNom || '';
+    if (prenom || nom) {
+      return `Dr. ${prenom} ${nom}`.trim();
+    }
+    return 'Dr. Praticien Hospitalier';
+  }
+
 }

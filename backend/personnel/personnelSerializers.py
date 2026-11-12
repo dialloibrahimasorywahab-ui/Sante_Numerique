@@ -19,7 +19,7 @@ class PersonnelSerializer(serializers.ModelSerializer):
 
     nomService = serializers.CharField(source="id_service.get_nom_service_display", read_only=True, required=False)
 
-    typePersonnel = serializers.CharField(source="type_personnel", required=False)
+    typePersonnel = serializers.ChoiceField(choices=Personnel.TypePersonnel.choices, source="type_personnel", required=False)
     serviceHopital = serializers.CharField(source="service_hopital", required=False)
     telephonePro = serializers.CharField(source="telephone_pro", required=False, allow_null=True, allow_blank=True)
     emailPro = serializers.EmailField(source="email_pro", required=False, allow_null=True, allow_blank=True)
@@ -56,6 +56,10 @@ class PersonnelSerializer(serializers.ModelSerializer):
     def to_internal_value(self, data):
         if isinstance(data, dict):
             data = data.copy()
+            type_p = data.get("typePersonnel") or data.get("type_personnel")
+            if type_p in ("AIDE_SOIGNANT", "Aide-Soignant(e)", "aide_soignant"):
+                data["typePersonnel"] = "AUTRE"
+                data["type_personnel"] = "AUTRE" 
             if 'mot_de_passe' in data and 'motDePasse' not in data:
                 data['motDePasse'] = data['mot_de_passe']
             elif 'motDePasse' in data and 'mot_de_passe' not in data:

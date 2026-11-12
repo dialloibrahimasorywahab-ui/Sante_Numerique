@@ -19,6 +19,16 @@ export const routes: Routes = [
     title: 'Créer un compte — Santé Numérique'
   },
   {
+    path: 'actualites',
+    loadComponent: () => import('./features/actualites/actualites-list.component').then(m => m.ActualitesListComponent),
+    title: 'Actualités & Conseils Santé — Santé Numérique'
+  },
+  {
+    path: 'actualites/:slug',
+    loadComponent: () => import('./features/actualites/actualite-detail/actualite-detail.component').then(m => m.ActualiteDetailComponent),
+    title: 'Actualité — Santé Numérique'
+  },
+  {
     path: 'services',
     loadComponent: () => import('./features/services-hospitaliers/services-list.component').then(m => m.ServicesListComponent),
     title: 'Nos Pôles de Soins & Spécialités — Santé Numérique'

@@ -1,5 +1,17 @@
-import { Patient } from '../../patients/models/models';
+import { User } from '../../../core/models/user.model';
 import { Medecin, MedecinDto } from '../../medecins/models/models';
+
+export interface Patient {
+  id_patient: number;
+  id_utilisateur: User;
+  date_naissance?: string;
+  sexe: 'M' | 'F';
+  adresse: string;
+  groupe_sanguin: 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-' | 'O+' | 'O-';
+  numero_securite_sociale?: string;
+  personne_a_contacter: string;
+  date_inscription: string;
+}
 
 export type StatutRendezVous =
   | 'PROGRAMME'

@@ -1,0 +1,251 @@
+<div class="notification-wrapper">
+  <!-- Trigger Button -->
+  <button
+    type="button"
+    class="bell-btn"
+    (click)="toggleDropdown()"
+    [class.active]="isOpen()"
+    [attr.aria-label]="isPatient() ? 'Mes rappels et alertes santé' : 'Alertes et notifications hospitalières'"
+    [title]="isPatient() ? 'Mes rappels de RDV et traitements' : 'Notifications en direct'"
+  >
+    <svg class="bell-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+    </svg>
+
+    <!-- SSE Online indicator for Staff or Connected Patient -->
+    @if (notificationService.isConnected()) {
+      <span class="live-dot" [title]="isPatient() ? 'Notifications synchronisées en direct' : 'Connecté au flux d\'urgence en direct (SSE)'"></span>
+    }
+
+    <!-- Unread Badge Counter -->
+    @if (notificationService.unreadCount() > 0) {
+      <span class="unread-badge">
+        {{ notificationService.unreadCount() > 99 ? '99+' : notificationService.unreadCount() }}
+      </span>
+    }
+  </button>
+
+  <!-- Dropdown Menu -->
+  @if (isOpen()) {
+    <div class="dropdown-menu animate-fade-in">
+      <!-- Header -->
+      <div class="dropdown-header">
+        @if (isPatient()) {
+          <div class="header-title-wrap">
+            <h3>Mes Rappels & Alertes</h3>
+            <span class="badge-patient-pill">
+              <span class="dot-patient"></span> Santé
+            </span>
+          </div>
+        } @else {
+          <div class="header-title-wrap">
+            <h3>Alertes Hospitalières</h3>
+            @if (notificationService.isConnected()) {
+              <span class="badge-live">
+                <span class="pulse-indicator"></span> Direct SSE
+              </span>
+            }
+          </div>
+        }
+
+        @if (notificationService.unreadCount() > 0) {
+          <button (click)="onMarkAllAsRead($event)" class="btn-mark-all">
+            Tout marquer lu
+          </button>
+        }
+      </div>
+
+      <!-- Filters -->
+      <div class="dropdown-filters">
+        @if (isPatient()) {
+          <button
+            type="button"
+            class="filter-pill"
+            [class.active]="activeFilter() === 'TOUS'"
+            (click)="setFilter('TOUS')"
+          >
+            Toutes ({{ notificationService.notifications().length }})
+          </button>
+          <button
+            type="button"
+            class="filter-pill pill-rdv"
+            [class.active]="activeFilter() === 'RDV'"
+            (click)="setFilter('RDV')"
+          >
+            📅 Rendez-vous ({{ rdvCount() }})
+          </button>
+          <button
+            type="button"
+            class="filter-pill pill-medicament"
+            [class.active]="activeFilter() === 'TRAITEMENT'"
+            (click)="setFilter('TRAITEMENT')"
+          >
+            💊 Traitements ({{ medicamentCount() }})
+          </button>
+        } @else {
+          <button
+            type="button"
+            class="filter-pill"
+            [class.active]="activeFilter() === 'TOUS'"
+            (click)="setFilter('TOUS')"
+          >
+            Toutes ({{ notificationService.notifications().length }})
+          </button>
+          <button
+            type="button"
+            class="filter-pill pill-urgence"
+            [class.active]="activeFilter() === 'LIT_URGENCE'"
+            (click)="setFilter('LIT_URGENCE')"
+          >
+            Lits d'urgence
+          </button>
+          <button
+            type="button"
+            class="filter-pill pill-arrive"
+            [class.active]="activeFilter() === 'PATIENT_ARRIVE'"
+            (click)="setFilter('PATIENT_ARRIVE')"
+          >
+            Salle d'attente
+          </button>
+        }
+      </div>
+
+      <!-- Notification Items List -->
+      <div class="dropdown-body">
+        @if (filteredNotifications.length === 0) {
+          <div class="empty-state">
+            @if (isPatient()) {
+              <svg class="empty-icon icon-patient-empty" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p class="empty-title">Aucun rappel pour le moment</p>
+              <span class="empty-subtitle">Vos rendez-vous à venir et prochaines prises de médicaments s'afficheront ici.</span>
+            } @else {
+              <svg class="empty-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+              </svg>
+              <p>Aucune alerte hospitalière pour le moment</p>
+            }
+          </div>
+        } @else {
+          <div class="notif-list">
+            @for (notif of filteredNotifications; track notif.id_notification) {
+              <div
+                class="notif-item"
+                [class.unread]="!notif.lu"
+                [class.type-urgence]="notif.type_notification === 'LIT_URGENCE'"
+                [class.type-patient]="notif.type_notification === 'PATIENT_ARRIVE'"
+                [class.type-rdv]="notif.type_notification === 'RAPPEL_RDV' || notif.type_notification === 'NOUVEAU_RDV'"
+                [class.type-medicament]="notif.type_notification === 'PRISE_MEDICAMENT'"
+              >
+                <!-- Icon by Type -->
+                <div class="notif-icon-wrap">
+                  @switch (notif.type_notification) {
+                    @case ('RAPPEL_RDV') {
+                      <div class="type-icon icon-rdv" title="Rappel Rendez-vous">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                    }
+                    @case ('PRISE_MEDICAMENT') {
+                      <div class="type-icon icon-medicament" title="Prise de Médicament">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                        </svg>
+                      </div>
+                    }
+                    @case ('LIT_URGENCE') {
+                      <div class="type-icon icon-urgence" title="Lit d'Urgence">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                      </div>
+                    }
+                    @case ('PATIENT_ARRIVE') {
+                      <div class="type-icon icon-patient" title="Patient Arrivé">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                      </div>
+                    }
+                    @default {
+                      <div class="type-icon icon-default">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                    }
+                  }
+                </div>
+
+                <!-- Content -->
+                <div class="notif-content">
+                  <div class="notif-title-row">
+                    <span class="notif-title">{{ notif.titre }}</span>
+                    <span class="notif-time">{{ formatDate(notif.date_creation) }}</span>
+                  </div>
+                  <p class="notif-msg">{{ notif.message }}</p>
+
+                  <div class="notif-actions">
+                    @if (isPatient()) {
+                      @if (notif.type_notification === 'RAPPEL_RDV' || notif.type_notification === 'NOUVEAU_RDV') {
+                        <button type="button" class="btn-link-action btn-rdv-action" (click)="navigateToTarget(notif)">
+                          Voir mes rendez-vous →
+                        </button>
+                      }
+                      @if (notif.type_notification === 'PRISE_MEDICAMENT') {
+                        <button type="button" class="btn-link-action btn-med-action" (click)="navigateToTarget(notif)">
+                          Consulter l'ordonnance →
+                        </button>
+                      }
+                    }
+
+                    @if (!notif.lu) {
+                      <button (click)="onMarkAsRead(notif, $event)" class="btn-ack">
+                        Marquer comme lu
+                      </button>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Floating Real-Time Alert Toasts -->
+  <aside class="toast-container" aria-live="polite" aria-atomic="true">
+    @for (toast of notificationService.activeToasts(); track toast.id) {
+      <div
+        class="live-toast animate-slide-left"
+        [class.toast-lit]="toast.type === 'LIT_URGENCE'"
+        [class.toast-patient]="toast.type === 'PATIENT_ARRIVE'"
+        [class.toast-rdv]="toast.type === 'RAPPEL_RDV' || toast.type === 'NOUVEAU_RDV'"
+        [class.toast-med]="toast.type === 'PRISE_MEDICAMENT'"
+      >
+        <div class="toast-indicator"></div>
+        <div class="toast-body">
+          <div class="toast-header-row">
+            <span class="toast-type">
+              @switch (toast.type) {
+                @case ('LIT_URGENCE') { 🚨 LIT D'URGENCE }
+                @case ('PATIENT_ARRIVE') { ⏰ SALLE D'ATTENTE }
+                @case ('RAPPEL_RDV') { 📅 RAPPEL RENDEZ-VOUS }
+                @case ('PRISE_MEDICAMENT') { 💊 PRISE DE MÉDICAMENT }
+                @default { ℹ️ NOTIFICATION }
+              }
+            </span>
+            <button (click)="dismissToast(toast, $event)" class="toast-close" aria-label="Fermer">
+              &times;
+            </button>
+          </div>
+          <h4 class="toast-title">{{ toast.titre }}</h4>
+          <p class="toast-text">{{ toast.message }}</p>
+        </div>
+      </div>
+    }
+  </aside>
+</div>

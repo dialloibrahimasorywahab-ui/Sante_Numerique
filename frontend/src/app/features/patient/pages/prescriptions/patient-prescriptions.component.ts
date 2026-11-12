@@ -60,14 +60,21 @@ export class PatientPrescriptionsComponent implements OnInit {
   }
 
   getDoctorName(p: OrdonnanceDto): string {
-    const doc = p.consultation_details?.medecin_details;
-    if (doc) {
+    const details = p.consultationDetails || p.consultation_details;
+    const doc = details?.medecinDetails || details?.medecin_details;
+    if (doc?.nom || doc?.prenom) {
       return `Dr. ${doc.prenom || ''} ${doc.nom || ''}`.trim();
+    }
+    const direct = p.medecinNom || p.medecin_nom;
+    if (direct) {
+      return direct;
     }
     return 'Médecin traitant';
   }
 
   getDoctorSpecialty(p: OrdonnanceDto): string {
-    return p.consultation_details?.medecin_details?.specialite || 'Médecine générale';
+    const details = p.consultationDetails || p.consultation_details;
+    const doc = details?.medecinDetails || details?.medecin_details;
+    return doc?.specialiteDisplay || doc?.specialite || 'Médecine générale';
   }
 }

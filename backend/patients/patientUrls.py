@@ -1,8 +1,13 @@
 from django.urls import path
 from . import views
 
-
 urlpatterns = [
+    # Recherche dédiée d'un patient
+    path(
+        "search/",
+        views.search_patient_view,
+        name="patient-search"
+    ),
 
     # Lister (GET) ou créer (POST) un patient
     path(

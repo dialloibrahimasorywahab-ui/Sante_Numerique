@@ -454,7 +454,29 @@ def update_rendezvous(request, rdv_id):
 
     if serializer.is_valid():
         try:
+            old_statut = rdv.statut
             updated = rendezvous_service.update_rendezvous(rdv, **serializer.validated_data)
+            
+            # Émission de notification temps réel si passage en attente (arrivée patient)
+            if updated.statut == "EN_ATTENTE" and old_statut != "EN_ATTENTE":
+                try:
+                    from notifications.services import NotificationService
+                    from notifications.models import NotificationHospitaliere
+                    patient_nom = f"{updated.patient.id_utilisateur.prenom} {updated.patient.id_utilisateur.nom}" if updated.patient and updated.patient.id_utilisateur else f"Patient #{updated.patient_id}"
+                    medecin_user = getattr(getattr(updated, 'medecin', None), 'idUtilisateur', None)
+                    med_nom = f"Dr. {medecin_user.prenom} {medecin_user.nom}" if medecin_user else "Médecin"
+
+                    NotificationService().emettre_notification(
+                        type_notification=NotificationHospitaliere.TypeNotification.PATIENT_ARRIVE,
+                        titre=f"Arrivée patient : {patient_nom}",
+                        message=f"Le patient {patient_nom} est en salle d'attente pour sa consultation de {updated.heure} avec {med_nom}.",
+                        destinataire_role=NotificationHospitaliere.DestinataireRole.MEDECIN,
+                        destinataire_user=medecin_user,
+                        donnees={"id_rdv": updated.id, "id_patient": updated.patient_id, "heure": str(updated.heure)}
+                    )
+                except Exception as notif_err:
+                    logger.warning("Échec émission alerte arrivée patient: %s", str(notif_err))
+
             return Response(RendezVousSerializer(updated).data, status=status.HTTP_200_OK)
         except (ConflictError, ValueError) as e:
             return Response({"error": "Données de modification invalides.", "detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -465,6 +487,47 @@ def update_rendezvous(request, rdv_id):
             return Response({"error": "Erreur interne lors de la modification du rendez-vous."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@extend_schema(
+    tags=["Rendez-vous"],
+    summary="Signaler l'arrivée d'un patient en salle d'attente",
+    description="Passe le statut du rendez-vous à EN_ATTENTE et déclenche une notification en temps réel au praticien.",
+    request=None,
+    responses={200: _rendezvous_action_response("en_attente"), 404: MessageResponseSerializer},
+)
+@api_view(["PATCH", "POST"])
+@permission_classes([IsStaffOrAdmin])
+def marquer_arrive_rendezvous(request, rdv_id):
+    rdv = rendezvous_service.get_rendezvous(rdv_id)
+    if rdv is None:
+        return Response({"message": "Rendez-vous introuvable"}, status=status.HTTP_404_NOT_FOUND)
+
+    updated = rendezvous_service.update_rendezvous(rdv, statut="EN_ATTENTE")
+
+    try:
+        from notifications.services import NotificationService
+        from notifications.models import NotificationHospitaliere
+        patient_nom = f"{updated.patient.id_utilisateur.prenom} {updated.patient.id_utilisateur.nom}" if updated.patient and updated.patient.id_utilisateur else f"Patient #{updated.patient_id}"
+        medecin_user = getattr(getattr(updated, 'medecin', None), 'idUtilisateur', None)
+        med_nom = f"Dr. {medecin_user.prenom} {medecin_user.nom}" if medecin_user else "Médecin"
+
+        NotificationService().emettre_notification(
+            type_notification=NotificationHospitaliere.TypeNotification.PATIENT_ARRIVE,
+            titre=f"Arrivée patient : {patient_nom}",
+            message=f"Le patient {patient_nom} est installé en salle d'attente pour sa consultation de {updated.heure} avec {med_nom}.",
+            destinataire_role=NotificationHospitaliere.DestinataireRole.MEDECIN,
+            destinataire_user=medecin_user,
+            donnees={"id_rdv": updated.id, "id_patient": updated.patient_id, "heure": str(updated.heure)}
+        )
+    except Exception as notif_err:
+        logger.warning("Échec émission alerte arrivée patient: %s", str(notif_err))
+
+    return Response(
+        {"message": "Patient marqué comme arrivé en salle d'attente.", "rendezvous": RendezVousSerializer(updated).data},
+        status=status.HTTP_200_OK
+    )
+
 
 
 @extend_schema(

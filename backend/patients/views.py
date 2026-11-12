@@ -59,12 +59,12 @@ def create_patient(request):
             patients = patient_service.get_all_patient(actif_only=actif_only)
         return paginate_response(patients, request, PatientSerializer)
 
-    serializer = PatientSerializer(data=request.data)
+    serializer = PatientSerializer(data=request.data, context={"request": request})
 
     if serializer.is_valid():
         try:
             patient = patient_service.createPatient(**serializer.validated_data)
-            serializer = PatientSerializer(patient)
+            serializer = PatientSerializer(patient, context={"request": request})
 
             return Response(
                 serializer.data,
@@ -145,7 +145,7 @@ def get_patient(request, patient_id):
             try:
                 updated = serializer.save()
                 return Response(
-                    PatientSerializer(updated).data,
+                    PatientSerializer(updated, context={"request": request}).data,
                     status=status.HTTP_200_OK
                 )
             except IntegrityError as e:
@@ -158,7 +158,7 @@ def get_patient(request, patient_id):
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    serializer = PatientSerializer(patient)
+    serializer = PatientSerializer(patient, context={"request": request})
     return Response(
         serializer.data,
         status=status.HTTP_200_OK
@@ -192,7 +192,7 @@ def update_patient(request, patient_id):
     if serializer.is_valid():
         try:
             patient = patient_service.update_patient(patient, **serializer.validated_data)
-            serializer = PatientSerializer(patient)
+            serializer = PatientSerializer(patient, context={"request": request})
 
             return Response(
                 serializer.data,
@@ -241,3 +241,41 @@ def delete_patient(request, patient_id):
         {"message": "Compte patient désactivé (archivé) avec succès. L'historique médical a été préservé."},
         status=status.HTTP_200_OK
     )
+
+
+# Recherche rapide d'un patient
+@extend_schema(
+    tags=["Patients"],
+    summary="Rechercher un patient (téléphone, ID, nom, sécurité sociale)",
+    description="Recherche rapide d'un patient existant par numéro de téléphone, identifiant ID patient, nom, prénom, email ou n° sécurité sociale.",
+    parameters=[
+        OpenApiParameter(name="q", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False, description="Terme de recherche (téléphone, nom, prénom, ID ou sécu)."),
+        SEARCH_PARAM,
+    ],
+    responses={200: PatientSerializer(many=True)},
+)
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def search_patient_view(request):
+    from django.db.models import Q
+    from .models import Patient
+    query = request.query_params.get("q") or request.query_params.get("search") or ""
+    query = query.strip()
+
+    if not query:
+        qs = patient_service.get_all_patient(actif_only=True)[:20]
+        return Response(PatientSerializer(qs, many=True, context={"request": request}).data)
+
+    filters = (
+        Q(id_utilisateur__nom__icontains=query) |
+        Q(id_utilisateur__prenom__icontains=query) |
+        Q(id_utilisateur__telephone__icontains=query) |
+        Q(id_utilisateur__email__icontains=query) |
+        Q(numero_securite_sociale__icontains=query)
+    )
+    if query.isdigit():
+        filters |= Q(id_patient=int(query))
+        filters |= Q(id_utilisateur_id=int(query))
+
+    qs = Patient.objects.filter(filters, id_utilisateur__actif=True).select_related("id_utilisateur").distinct()[:30]
+    return Response(PatientSerializer(qs, many=True, context={"request": request}).data)

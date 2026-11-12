@@ -114,6 +114,7 @@
     } @else {
       <!-- TABLE RENDEZ-VOUS -->
       @if (activeTab() === 'rendezvous') {
+        <div class="table-responsive">
         <table class="data-table">
           <thead>
             <tr>
@@ -134,7 +135,7 @@
                     </div>
                     <div>
                       <div class="user-name detail-link" [routerLink]="['/admin/details', 'patients', rdv.patient_id || rdv.patient]">
-                        {{ rdv.patient_details?.prenom || rdv.patient_detail?.prenom }} {{ rdv.patient_details?.nom || rdv.patient_detail?.nom || ('Patient #' + (rdv.patient_id || rdv.patient)) }}
+                        {{ rdv.patientDetails?.prenom || rdv.patient_details?.prenom || rdv.patient_detail?.prenom || rdv.patientPrenom || rdv.patient_prenom || '' }} {{ rdv.patientDetails?.nom || rdv.patient_details?.nom || rdv.patient_detail?.nom || rdv.patientNom || rdv.patient_nom || ('Patient #' + (rdv.patient_id || rdv.patient)) }}
                       </div>
                       <div class="user-sub">
                         {{ rdv.patient_details?.telephone || rdv.patient_detail?.telephone || 'Sans tél' }}
@@ -147,7 +148,7 @@
                     <div class="avatar-circle doc">Dr</div>
                     <div>
                       <div class="user-name detail-link" [routerLink]="['/admin/details', 'medecins', rdv.medecin_id || rdv.medecin]">
-                        Dr. {{ rdv.medecin_details?.prenom || rdv.medecin_detail?.prenom }} {{ rdv.medecin_details?.nom || rdv.medecin_detail?.nom || ('Médecin #' + (rdv.medecin_id || rdv.medecin)) }}
+                        Dr. {{ rdv.medecinDetails?.prenom || rdv.medecin_details?.prenom || rdv.medecin_detail?.prenom || rdv.medecinPrenom || rdv.medecin_prenom || '' }} {{ rdv.medecinDetails?.nom || rdv.medecin_details?.nom || rdv.medecin_detail?.nom || rdv.medecinNom || rdv.medecin_nom || ('Médecin #' + (rdv.medecin_id || rdv.medecin)) }}
                       </div>
                       <div class="user-sub">
                         {{ rdv.medecin_details?.specialite || rdv.medecin_detail?.specialite || 'Généraliste' }}
@@ -173,10 +174,12 @@
             }
           </tbody>
         </table>
+      </div>
       }
 
       <!-- TABLE CONSULTATIONS -->
       @if (activeTab() === 'consultations') {
+        <div class="table-responsive">
         <table class="data-table">
           <thead>
             <tr>
@@ -195,12 +198,12 @@
                 </td>
                 <td>
                   <div class="user-name detail-link" [routerLink]="['/admin/details', 'patients', c.patient_id || c.patient]">
-                    {{ c.patient_details?.prenom || c.patient?.prenom }} {{ c.patient_details?.nom || c.patient?.nom || ('Patient #' + (c.patient_id || c.patient)) }}
+                    {{ c.patientDetails?.prenom || c.patient_details?.prenom || c.patient?.prenom || c.patient_prenom || '' }} {{ c.patientDetails?.nom || c.patient_details?.nom || c.patient?.nom || c.patient_nom || ('Patient #' + (c.patient_id || c.patient)) }}
                   </div>
                 </td>
                 <td>
                   <div class="user-name text-emerald-800 detail-link" [routerLink]="['/admin/details', 'medecins', c.medecin_id || c.medecin]">
-                    Dr. {{ c.medecin_details?.prenom || c.medecin?.prenom }} {{ c.medecin_details?.nom || c.medecin?.nom || ('Médecin #' + (c.medecin_id || c.medecin)) }}
+                    Dr. {{ c.medecinDetails?.prenom || c.medecin_details?.prenom || c.medecin?.prenom || c.medecin_prenom || '' }} {{ c.medecinDetails?.nom || c.medecin_details?.nom || c.medecin?.nom || c.medecin_nom || ('Médecin #' + (c.medecin_id || c.medecin)) }}
                   </div>
                 </td>
                 <td>
@@ -227,10 +230,12 @@
             }
           </tbody>
         </table>
+      </div>
       }
 
       <!-- TABLE HOSPITALISATIONS -->
       @if (activeTab() === 'hospitalisations') {
+        <div class="table-responsive">
         <table class="data-table">
           <thead>
             <tr>
@@ -252,7 +257,7 @@
                     </div>
                     <div>
                       <div class="user-name detail-link" [routerLink]="['/admin/details', 'patients', h.patient_id || h.patient]">
-                        {{ h.patient_details?.prenom }} {{ h.patient_details?.nom || ('Patient #' + (h.patient_id || h.patient)) }}
+                        {{ h.patientDetails?.prenom || h.patient_details?.prenom || h.patientPrenom || h.patient_prenom || '' }} {{ h.patientDetails?.nom || h.patient_details?.nom || h.patientNom || h.patient_nom || ('Patient #' + (h.patient_id || h.patient)) }}
                       </div>
                       <div class="user-sub">{{ h.motif || 'Soins hospitaliers' }}</div>
                     </div>
@@ -260,12 +265,12 @@
                 </td>
                 <td>
                   <div class="user-name text-emerald-800 detail-link" [routerLink]="['/admin/details', 'medecins', h.medecin_id || h.medecin]">
-                    Dr. {{ h.medecin_details?.prenom }} {{ h.medecin_details?.nom || 'Non assigné' }}
+                    Dr. {{ h.medecinDetails?.prenom || h.medecin_details?.prenom || h.medecinPrenom || h.medecin_prenom || '' }} {{ h.medecinDetails?.nom || h.medecin_details?.nom || h.medecinNom || h.medecin_nom || 'Non assigné' }}
                   </div>
                 </td>
                 <td>
                   <div class="infra-cell">
-                    <span class="infra-icon-circle bg-teal-50 text-teal-700">🛏️</span>
+                    <span class="infra-icon-circle bg-teal-50 text-teal-700"><svg class="w-4 h-4 text-teal-600 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-9 2h18a1 1 0 001-1V5a1 1 0 00-1-1H3a1 1 0 00-1 1v14a1 1 0 001 1z"/></svg></span>
                     <span class="detail-link" [routerLink]="['/admin/details', 'hospitalisations', h.id || h.idHospitalisation]">{{ formatLitName(h.lit_details?.numero_lit || h.lit) }} ({{ formatChambre(h.lit_details?.chambre_detail || h.lit_details?.chambre) }})</span>
                   </div>
                 </td>
@@ -280,10 +285,12 @@
             }
           </tbody>
         </table>
+      </div>
       }
 
       <!-- TABLE ORDONNANCES -->
       @if (activeTab() === 'ordonnances') {
+        <div class="table-responsive">
         <table class="data-table">
           <thead>
             <tr>
@@ -300,10 +307,10 @@
                 <td>
                   <span class="ref-badge detail-link" [routerLink]="['/admin/details', 'ordonnances', ord.id || ord.idOrdonnance]">{{ ord.reference || ('ORD-' + ord.id) }}</span>
                 </td>
-                <td>{{ formatDate(ord.date_ordonnance) }}</td>
+                <td>{{ formatDate(ord.dateOrdonnance || ord.date_ordonnance) }}</td>
                 <td>
                   <div class="user-name">
-                    {{ ord.consultation_details?.patient_details?.prenom || ord.consultation?.patient_details?.prenom || 'Dossier #' + (ord.consultation || ord.id) }}
+                    {{ (ord.consultationDetails?.patientDetails?.prenom ? (ord.consultationDetails?.patientDetails?.prenom + ' ' + ord.consultationDetails?.patientDetails?.nom) : null) || (ord.consultation_details?.patient_details?.prenom ? (ord.consultation_details?.patient_details?.prenom + ' ' + ord.consultation_details?.patient_details?.nom) : null) || ord.patientNom || ord.patient_nom || 'Dossier #' + (ord.consultation || ord.id) }}
                   </div>
                 </td>
                 <td>
@@ -318,6 +325,7 @@
             }
           </tbody>
         </table>
+      </div>
       }
 
       <!-- PAGINATION -->

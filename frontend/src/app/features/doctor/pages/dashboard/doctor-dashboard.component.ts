@@ -112,6 +112,27 @@ export class DoctorDashboardComponent implements OnInit {
     }
   }
 
+  getPatientFullName(item: any): string {
+    if (!item) return 'Patient';
+    const p = item.patientDetails || item.patient_details || item.patientDetail || item.patient_detail;
+    if (p && (p.prenom || p.nom)) {
+      return `${p.prenom || ''} ${p.nom || ''}`.trim();
+    }
+    const prenom = item.patient_prenom || item.patientPrenom || '';
+    const nom = item.patient_nom || item.patientNom || '';
+    if (prenom || nom) {
+      return `${prenom} ${nom}`.trim();
+    }
+    const id = item.patient || item.id_patient || item.idPatient;
+    return id ? `Patient #${id}` : 'Patient suivi';
+  }
+
+  getPatientPhone(item: any): string {
+    if (!item) return '';
+    const p = item.patientDetails || item.patient_details || item.patientDetail || item.patient_detail;
+    return p?.telephone || item.patient_telephone || item.patientTelephone || '';
+  }
+
   getPatientId(item: DoctorAppointmentDto | DoctorConsultationDto): number {
     return Number(item.patient || item.patient_details?.id_patient || item.patient_details?.idPatient || 0);
   }

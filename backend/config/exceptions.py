@@ -1,6 +1,11 @@
 from rest_framework.views import exception_handler
 
 
+class ConflictError(Exception):
+    """Exception levée en cas de conflit de ressources ou de créneau."""
+    pass
+
+
 def custom_exception_handler(exc, context):
     """
     Gestionnaire d'exceptions DRF personnalisé :

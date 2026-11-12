@@ -14,7 +14,7 @@
         </div>
         <div class="brand-titles">
           <span class="brand-main">Santé Numérique</span>
-          <span class="brand-sub">Espace Administrateur</span>
+          <span class="brand-sub">{{ brandSubTitle() }}</span>
         </div>
       </div>
     </div>
@@ -35,82 +35,167 @@
       <div class="status-indicator-dot" title="Session active"></div>
     </div>
 
-    <!-- Navigation organisée par sections (identique à l'administration) -->
+    <!-- Navigation organisée selon le rôle connecté -->
     <nav class="sidebar-nav">
-      <!-- Section 1 : Vue d'ensemble -->
-      <div class="nav-section">
-        <div class="section-title">VUE D'ENSEMBLE</div>
-        <ul class="nav-list">
-          <li>
-            <a class="nav-link" routerLink="/admin/dashboard">
-              <span class="nav-icon"><i class="ri-dashboard-line"></i></span>
-              <span class="nav-label">Tableau de bord</span>
-            </a>
-          </li>
-          <li>
-            <a class="nav-link active" routerLink="/parcours">
-              <span class="nav-icon"><i class="ri-route-line"></i></span>
-              <span class="nav-label">Parcours & Localisation</span>
-            </a>
-          </li>
-        </ul>
-      </div>
+      @if (userRole() === 'MEDECIN') {
+        <!-- Navigation Spécifique Praticien -->
+        <div class="nav-section">
+          <div class="section-title">VUE D'ENSEMBLE</div>
+          <ul class="nav-list">
+            <li>
+              <a class="nav-link" routerLink="/medecin/dashboard">
+                <span class="nav-icon"><i class="ri-dashboard-line"></i></span>
+                <span class="nav-label">Tableau de bord</span>
+              </a>
+            </li>
+            <li>
+              <a class="nav-link active" routerLink="/parcours">
+                <span class="nav-icon"><i class="ri-route-line"></i></span>
+                <span class="nav-label">Parcours & Localisation</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+        <div class="nav-section">
+          <div class="section-title">ACTIVITÉ MÉDICALE</div>
+          <ul class="nav-list">
+            <li>
+              <a class="nav-link" routerLink="/medecin/hospitalisations">
+                <span class="nav-icon"><i class="ri-hotel-bed-line"></i></span>
+                <span class="nav-label">Admissions & Lits</span>
+              </a>
+            </li>
+            <li>
+              <a class="nav-link" routerLink="/medecin/patients">
+                <span class="nav-icon"><i class="ri-team-line"></i></span>
+                <span class="nav-label">Mes Patients</span>
+              </a>
+            </li>
+            <li>
+              <a class="nav-link" routerLink="/medecin/consultations">
+                <span class="nav-icon"><i class="ri-stethoscope-line"></i></span>
+                <span class="nav-label">Mes Consultations</span>
+              </a>
+            </li>
+            <li>
+              <a class="nav-link" routerLink="/medecin/rendez-vous">
+                <span class="nav-icon"><i class="ri-calendar-line"></i></span>
+                <span class="nav-label">Mes Rendez-vous</span>
+              </a>
+            </li>
+            <li>
+              <a class="nav-link" routerLink="/medecin/ordonnances">
+                <span class="nav-icon"><i class="ri-file-list-3-line"></i></span>
+                <span class="nav-label">Mes Ordonnances</span>
+              </a>
+            </li>
+            <li>
+              <a class="nav-link" routerLink="/medecin/profil">
+                <span class="nav-icon"><i class="ri-user-line"></i></span>
+                <span class="nav-label">Mon Profil</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      } @else if (userRole() === 'INFIRMIER') {
+        <!-- Navigation Soignant -->
+        <div class="nav-section">
+          <div class="section-title">VUE D'ENSEMBLE</div>
+          <ul class="nav-list">
+            <li>
+              <a class="nav-link" routerLink="/personnel/dashboard">
+                <span class="nav-icon"><i class="ri-dashboard-line"></i></span>
+                <span class="nav-label">Tableau de bord</span>
+              </a>
+            </li>
+            <li>
+              <a class="nav-link active" routerLink="/parcours">
+                <span class="nav-icon"><i class="ri-route-line"></i></span>
+                <span class="nav-label">Parcours & Localisation</span>
+              </a>
+            </li>
+            <li>
+              <a class="nav-link" routerLink="/personnel/hospitalisations">
+                <span class="nav-icon"><i class="ri-hotel-bed-line"></i></span>
+                <span class="nav-label">Patients Hospitalisés</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      } @else {
+        <!-- Navigation Administrateur par défaut -->
+        <div class="nav-section">
+          <div class="section-title">VUE D'ENSEMBLE</div>
+          <ul class="nav-list">
+            <li>
+              <a class="nav-link" routerLink="/admin/dashboard">
+                <span class="nav-icon"><i class="ri-dashboard-line"></i></span>
+                <span class="nav-label">Tableau de bord</span>
+              </a>
+            </li>
+            <li>
+              <a class="nav-link active" routerLink="/parcours">
+                <span class="nav-icon"><i class="ri-route-line"></i></span>
+                <span class="nav-label">Parcours & Localisation</span>
+              </a>
+            </li>
+          </ul>
+        </div>
 
-      <!-- Section 2 : Gestion des utilisateurs -->
-      <div class="nav-section">
-        <div class="section-title">GESTION DES UTILISATEURS</div>
-        <ul class="nav-list">
-          <li>
-            <a class="nav-link" routerLink="/admin/patients">
-              <span class="nav-icon"><i class="ri-team-line"></i></span>
-              <span class="nav-label">Patients</span>
-            </a>
-          </li>
-          <li>
-            <a class="nav-link" routerLink="/admin/medecins">
-              <span class="nav-icon"><i class="ri-stethoscope-line"></i></span>
-              <span class="nav-label">Médecins</span>
-            </a>
-          </li>
-          <li>
-            <a class="nav-link" routerLink="/admin/personnel">
-              <span class="nav-icon"><i class="ri-nurse-line"></i></span>
-              <span class="nav-label">Personnel soignant</span>
-            </a>
-          </li>
-        </ul>
-      </div>
+        <div class="nav-section">
+          <div class="section-title">GESTION DES UTILISATEURS</div>
+          <ul class="nav-list">
+            <li>
+              <a class="nav-link" routerLink="/admin/patients">
+                <span class="nav-icon"><i class="ri-team-line"></i></span>
+                <span class="nav-label">Patients</span>
+              </a>
+            </li>
+            <li>
+              <a class="nav-link" routerLink="/admin/medecins">
+                <span class="nav-icon"><i class="ri-stethoscope-line"></i></span>
+                <span class="nav-label">Médecins</span>
+              </a>
+            </li>
+            <li>
+              <a class="nav-link" routerLink="/admin/personnel">
+                <span class="nav-icon"><i class="ri-nurse-line"></i></span>
+                <span class="nav-label">Personnel soignant</span>
+              </a>
+            </li>
+          </ul>
+        </div>
 
-      <!-- Section 3 : Gestion hospitalière -->
-      <div class="nav-section">
-        <div class="section-title">GESTION HOSPITALIÈRE</div>
-        <ul class="nav-list">
-          <li>
-            <a class="nav-link" routerLink="/admin/services">
-              <span class="nav-icon"><i class="ri-hospital-line"></i></span>
-              <span class="nav-label">Services & Pôles</span>
-            </a>
-          </li>
-          <li>
-            <a class="nav-link" routerLink="/admin/batiments">
-              <span class="nav-icon"><i class="ri-building-line"></i></span>
-              <span class="nav-label">Bâtiments</span>
-            </a>
-          </li>
-          <li>
-            <a class="nav-link" routerLink="/admin/chambres">
-              <span class="nav-icon"><i class="ri-door-open-line"></i></span>
-              <span class="nav-label">Chambres</span>
-            </a>
-          </li>
-          <li>
-            <a class="nav-link" routerLink="/admin/lits">
-              <span class="nav-icon"><i class="ri-hotel-bed-line"></i></span>
-              <span class="nav-label">Lits d'hospitalisation</span>
-            </a>
-          </li>
-        </ul>
-      </div>
+        <div class="nav-section">
+          <div class="section-title">GESTION HOSPITALIÈRE</div>
+          <ul class="nav-list">
+            <li>
+              <a class="nav-link" routerLink="/admin/services">
+                <span class="nav-icon"><i class="ri-hospital-line"></i></span>
+                <span class="nav-label">Services & Pôles</span>
+              </a>
+            </li>
+            <li>
+              <a class="nav-link" routerLink="/admin/batiments">
+                <span class="nav-icon"><i class="ri-building-line"></i></span>
+                <span class="nav-label">Bâtiments</span>
+              </a>
+            </li>
+            <li>
+              <a class="nav-link" routerLink="/admin/chambres">
+                <span class="nav-icon"><i class="ri-door-open-line"></i></span>
+                <span class="nav-label">Chambres</span>
+              </a>
+            </li>
+            <li>
+              <a class="nav-link" routerLink="/admin/lits">
+                <span class="nav-icon"><i class="ri-hotel-bed-line"></i></span>
+                <span class="nav-label">Lits d'hospitalisation</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      }
     </nav>
 
     <!-- Pied de page Sidebar avec Déconnexion -->

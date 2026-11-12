@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule, RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { DoctorService } from '../../services/doctor.service';
+import { PdfDownloadService } from '../../../../core/services/pdf-download.service';
 import { DoctorConsultationDto, DoctorPrescriptionDto } from '../../models/doctor.models';
 
 @Component({
@@ -15,9 +16,11 @@ import { DoctorConsultationDto, DoctorPrescriptionDto } from '../../models/docto
 export class DoctorConsultationDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private doctorService = inject(DoctorService);
+  private pdfDownloadService = inject(PdfDownloadService);
   authService = inject(AuthService);
 
   isLoading = signal<boolean>(true);
+  isDownloadingPdf = signal<boolean>(false);
   errorMessage = signal<string | null>(null);
 
   consultationId = signal<number>(0);
@@ -57,4 +60,23 @@ export class DoctorConsultationDetailComponent implements OnInit {
       }
     });
   }
+
+  downloadCertificatePdf(): void {
+    const cons = this.consultation();
+    if (!cons) return;
+    const id = cons.id || cons.idConsultation;
+    if (!id) return;
+
+    this.isDownloadingPdf.set(true);
+    this.pdfDownloadService.downloadConsultationPdf(id).subscribe({
+      next: () => {
+        this.isDownloadingPdf.set(false);
+      },
+      error: () => {
+        this.isDownloadingPdf.set(false);
+        this.errorMessage.set('Erreur lors du téléchargement du certificat médical.');
+      }
+    });
+  }
 }
+

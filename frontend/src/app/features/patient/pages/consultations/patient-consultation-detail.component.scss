@@ -36,6 +36,40 @@
     }
   }
 
+  .action-buttons-group {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .btn-pdf-download {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #ffffff;
+    background: linear-gradient(135deg, #0284c7, #0369a1);
+    border: none;
+    padding: 0.55rem 1.15rem;
+    border-radius: 0.65rem;
+    cursor: pointer;
+    box-shadow: 0 3px 10px rgba(2, 132, 199, 0.25);
+    transition: all 0.2s ease;
+
+    &:hover:not(:disabled) {
+      background: linear-gradient(135deg, #0369a1, #075985);
+      transform: translateY(-1px);
+      box-shadow: 0 5px 14px rgba(2, 132, 199, 0.35);
+    }
+
+    &:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+  }
+
   .btn-print {
     display: inline-flex;
     align-items: center;

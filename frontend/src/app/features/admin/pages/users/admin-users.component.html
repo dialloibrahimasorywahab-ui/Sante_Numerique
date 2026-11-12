@@ -144,6 +144,7 @@
     } @else {
       <!-- TABLE PATIENTS -->
       @if (activeTab() === 'patients') {
+        <div class="table-responsive">
         <table class="data-table">
           <thead>
             <tr>
@@ -215,10 +216,12 @@
             }
           </tbody>
         </table>
+      </div>
       }
 
       <!-- TABLE MEDECINS -->
       @if (activeTab() === 'medecins') {
+        <div class="table-responsive">
         <table class="data-table">
           <thead>
             <tr>
@@ -288,10 +291,12 @@
             }
           </tbody>
         </table>
+      </div>
       }
 
       <!-- TABLE PERSONNEL -->
       @if (activeTab() === 'personnel') {
+        <div class="table-responsive">
         <table class="data-table">
           <thead>
             <tr>
@@ -360,6 +365,7 @@
             }
           </tbody>
         </table>
+      </div>
       }
 
       <!-- PAGINATION -->
@@ -559,7 +565,7 @@
             <div class="form-group">
               <label>Spécialité Médicale <span class="req">*</span></label>
               <select [(ngModel)]="medecinForm.specialite" name="specialite" required>
-                <option value="MEDECINE_GENERALE">Médecine Générale</option>
+                <option value="GENERALISTE">Médecine Générale</option>
                 <option value="CARDIOLOGIE">Cardiologie</option>
                 <option value="PEDIATRIE">Pédiatrie</option>
                 <option value="GYNECOLOGIE">Gynécologie - Obstétrique</option>
@@ -568,6 +574,7 @@
                 <option value="OPHTALMOLOGIE">Ophtalmologie</option>
                 <option value="RADIOLOGIE">Radiologie & Imagerie</option>
                 <option value="CHIRURGIE">Chirurgie Générale</option>
+                <option value="PSYCHIATRIE">Psychiatrie</option>
               </select>
             </div>
 
@@ -584,14 +591,6 @@
             <div class="form-group">
               <label>Bureau / Consultation</label>
               <input type="text" [(ngModel)]="medecinForm.bureau" name="bureau" placeholder="Ex: Cabinet 204 - Bât. A" />
-            </div>
-            <div class="form-group">
-              <label>Login</label>
-              <input type="text" [(ngModel)]="medecinForm.login" name="Login" placeholder="Entrez le login du medecin" />
-            </div>
-            <div class="form-group">
-              <label>Password </label>
-              <input type="password" [(ngModel)]="medecinForm.motDePasse" name="password" placeholder="Entrez un mot de passe" />
             </div>
           </div>
 
@@ -655,14 +654,24 @@
             </div>
 
             <div class="form-group">
+              <label>Login <span class="req">*</span></label>
+              <input type="text" [(ngModel)]="personnelForm.login" name="login" required placeholder="ibsd" />
+            </div>
+
+            <div class="form-group">
+              <label>Mot de passe <span class="req">*</span></label>
+              <input type="password" [(ngModel)]="personnelForm.motDePasse" name="Password" required placeholder="limboco@224" />
+            </div>
+
+            <div class="form-group">
               <label>Catégorie / Rôle <span class="req">*</span></label>
               <select [(ngModel)]="personnelForm.typePersonnel" name="typePersonnel" required>
                 <option value="INFIRMIER">Infirmier(ère)</option>
-                <option value="AIDE_SOIGNANT">Aide-Soignant(e)</option>
                 <option value="SAGE_FEMME">Sage-Femme</option>
-                <option value="TECHNICIEN">Technicien de Laboratoire</option>
+                <option value="TECHNICIEN">Technicien de Laboratoire / Radiologie</option>
                 <option value="PHARMACIEN">Pharmacien(ne)</option>
                 <option value="ADMINISTRATIF">Agent d'Accueil / Administratif</option>
+                <option value="AUTRE">Aide-Soignant(e) / Autre Personnel</option>
               </select>
             </div>
 
@@ -679,15 +688,6 @@
             <div class="form-group">
               <label>Pôle / Service d'Affectation</label>
               <input type="text" [(ngModel)]="personnelForm.serviceHopital" name="serviceHopital" placeholder="Ex: Pôle Urgences & Réanimation" />
-            </div>
-
-            <div class="form-group">
-              <label>Login <span class="req">*</span></label>
-              <input type="text" [(ngModel)]="personnelForm.login" name="login" placeholder="Ibsd" />
-            </div>
-            <div class="form-group">
-              <label>Mot de passe <span class="req">*</span></label>
-              <input type="text" [(ngModel)]="personnelForm.motDePasse" name="mot de passe" placeholder="limboco@224" />
             </div>
           </div>
 

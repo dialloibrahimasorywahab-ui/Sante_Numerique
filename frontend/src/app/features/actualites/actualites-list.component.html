@@ -1,0 +1,414 @@
+<div class="actualites-page-root">
+
+  <!-- =========================================================================
+       1. HERO BANNER — Actualités et conseils santé
+       ========================================================================= -->
+  <section class="actualites-hero">
+    <div class="container hero-container">
+      <div class="hero-content">
+        <div class="hero-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="hero-badge-icon">
+            <path d="M19 20H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v1m2 13a2 2 0 0 1-2-2V7m2 13a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path>
+          </svg>
+          <span>ESPACE INFORMATION & PRÉVENTION</span>
+        </div>
+
+        <h1 class="hero-title">
+          Actualités et <span class="highlight-text">conseils santé</span>
+        </h1>
+
+        <p class="hero-subtitle">
+          Retrouvez les dernières avancées médicales du Centre Hospitalier, nos recommandations de santé publique et toute la vie de nos pôles de soins.
+        </p>
+
+        <!-- Barre de recherche rapide -->
+        <div class="hero-search-wrapper">
+          <div class="search-input-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="search-icon">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input
+              type="text"
+              [(ngModel)]="searchQuery"
+              (keyup.enter)="onSearch()"
+              placeholder="Rechercher un sujet, un vaccin, un conseil santé..."
+              class="search-input"
+            />
+            @if (searchQuery()) {
+              <button (click)="clearSearch()" class="clear-btn" title="Effacer la recherche">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            }
+          </div>
+          <button (click)="onSearch()" class="btn-search-action">
+            <span>Rechercher</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="arrow-icon">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       2. CONTENU PRINCIPAL : À LA UNE + FILTRES + GRILLE
+       ========================================================================= -->
+  <main class="container actualites-main-content">
+
+    <!-- ARTICLE À LA UNE (Visible si page 1 et pas de recherche spécifique) -->
+    @if (!searchQuery() && selectedCategorySlug() === 'all' && currentPage() === 1 && featuredArticle()) {
+      <section class="featured-section">
+        <div class="section-title-wrap">
+          <span class="pulse-dot"></span>
+          <h2 class="section-subtitle">À LA UNE DE L'HÔPITAL</h2>
+        </div>
+
+        <article class="featured-card" [routerLink]="['/actualites', featuredArticle()?.slug || featuredArticle()?.id]">
+          <div class="featured-image-col">
+            <img [src]="featuredArticle()?.image" [alt]="featuredArticle()?.titre" class="featured-img" loading="lazy" />
+            <div class="featured-overlay"></div>
+            <div class="featured-tag-badge">
+              <svg viewBox="0 0 24 24" fill="currentColor" class="star-icon">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+              </svg>
+              <span>Édition Spéciale</span>
+            </div>
+          </div>
+
+          <div class="featured-content-col">
+            <div class="meta-row">
+              <span class="category-pill" [ngClass]="getBadgeClass(featuredArticle()?.categorieCouleur)">
+                {{ featuredArticle()?.categorieNom }}
+              </span>
+              <span class="date-text">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="meta-icon">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                {{ formatDate(featuredArticle()?.datePublication) }}
+              </span>
+              <span class="read-time">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="meta-icon">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                {{ featuredArticle()?.tempsLecture }} min de lecture
+              </span>
+            </div>
+
+            <h3 class="featured-title">
+              {{ featuredArticle()?.titre }}
+            </h3>
+
+            <p class="featured-resume">
+              {{ featuredArticle()?.resume }}
+            </p>
+
+            <div class="featured-footer">
+              <span class="author-info">
+                <div class="avatar-circle">
+                  {{ featuredArticle()?.auteurNom?.charAt(0) || 'M' }}
+                </div>
+                <span>{{ featuredArticle()?.auteurNom }}</span>
+              </span>
+
+              <div class="featured-actions">
+                <button
+                  type="button"
+                  (click)="shareArticle(featuredArticle()!, $event)"
+                  class="btn-icon-share"
+                  title="Partager cet article"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="18" cy="5" r="3"></circle>
+                    <circle cx="6" cy="12" r="3"></circle>
+                    <circle cx="18" cy="19" r="3"></circle>
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                  </svg>
+                </button>
+
+                <span class="btn-read-featured">
+                  <span>Lire l'article</span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="arrow-icon">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                  </svg>
+                </span>
+              </div>
+            </div>
+          </div>
+        </article>
+      </section>
+    }
+
+    <!-- =======================================================================
+         BARRE DE NAVIGATION PAR CATÉGORIES & OPTIONS DE TRI
+         ======================================================================= -->
+    <section class="filters-and-sort-section">
+      <div class="categories-bar">
+        <!-- Chip "Toutes" -->
+        <button
+          type="button"
+          (click)="onSelectCategory('all')"
+          class="category-chip"
+          [class.active]="selectedCategorySlug() === 'all'"
+        >
+          <span>Toutes les actualités</span>
+        </button>
+
+        <!-- Chips dynamiques des catégories -->
+        @for (cat of actualiteService.categories(); track cat.id) {
+          <button
+            type="button"
+            (click)="onSelectCategory(cat.slug)"
+            class="category-chip"
+            [class.active]="selectedCategorySlug() === cat.slug"
+          >
+            <span>{{ cat.nom }}</span>
+            @if (cat.totalArticles && cat.totalArticles > 0) {
+              <span class="chip-count">{{ cat.totalArticles }}</span>
+            }
+          </button>
+        }
+      </div>
+
+      <!-- Ligne d'état & Tri -->
+      <div class="sort-and-meta-row">
+        <div class="results-count-text">
+          @if (actualiteService.isLoading()) {
+            <span>Chargement des articles...</span>
+          } @else {
+            <span><strong>{{ actualiteService.totalCount() }}</strong> publication(s) trouvée(s)</span>
+            @if (selectedCategorySlug() !== 'all') {
+              <span class="active-filter-badge">
+                dans <em>{{ selectedCategorySlug() }}</em>
+                <button (click)="onSelectCategory('all')" class="remove-filter-btn" title="Supprimer le filtre">×</button>
+              </span>
+            }
+          }
+        </div>
+
+        <div class="sort-selector">
+          <label for="sortSelect">Trier par :</label>
+          <select
+            id="sortSelect"
+            [ngModel]="selectedOrdering()"
+            (ngModelChange)="onOrderingChange($event)"
+            class="sort-dropdown"
+          >
+            <option value="-date_publication">Plus récents</option>
+            <option value="date_publication">Plus anciens</option>
+            <option value="-vues">Plus consultés</option>
+            <option value="titre">Titre (A à Z)</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- =======================================================================
+         ÉTAT DE CHARGEMENT : SKELETON LOADERS
+         ======================================================================= -->
+    @if (actualiteService.isLoading()) {
+      <div class="articles-grid">
+        @for (item of [1, 2, 3, 4, 5, 6]; track item) {
+          <div class="article-skeleton-card">
+            <div class="skeleton-img"></div>
+            <div class="skeleton-body">
+              <div class="skeleton-line w-30"></div>
+              <div class="skeleton-line w-80"></div>
+              <div class="skeleton-line w-95"></div>
+              <div class="skeleton-line w-60"></div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- =======================================================================
+         ÉTAT VIDE : AUCUN ARTICLE TROUVÉ
+         ======================================================================= -->
+    @else if (!gridArticles().length) {
+      <div class="empty-state-box">
+        <div class="empty-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            <line x1="11" y1="8" x2="11" y2="12"></line>
+            <line x1="11" y1="14" x2="11.01" y2="14"></line>
+          </svg>
+        </div>
+        <h3 class="empty-title">Aucune actualité ne correspond à vos critères</h3>
+        <p class="empty-desc">
+          Essayez de modifier vos termes de recherche ou de sélectionner une autre catégorie thématique.
+        </p>
+        <button (click)="resetFilters()" class="btn btn-teal mt-4">
+          <span>Réinitialiser les filtres</span>
+        </button>
+      </div>
+    }
+
+    <!-- =======================================================================
+         GRILLE D'ARTICLES
+         ======================================================================= -->
+    @else {
+      <div class="articles-grid">
+        @for (art of gridArticles(); track art.id) {
+          <article class="article-card" [routerLink]="['/actualites', art.slug || art.id]">
+            <!-- Image de l'article -->
+            <div class="card-media">
+              <img [src]="art.image" [alt]="art.titre" class="card-img" loading="lazy" />
+              <div class="card-overlay"></div>
+
+              <!-- Badge Catégorie -->
+              <span class="card-category-badge" [ngClass]="getBadgeClass(art.categorieCouleur)">
+                {{ art.categorieNom }}
+              </span>
+
+              @if (art.estALaUne) {
+                <span class="une-mini-badge" title="Article à la une">
+                  <svg viewBox="0 0 24 24" fill="currentColor" class="star-icon">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                  </svg>
+                  <span>À la une</span>
+                </span>
+              }
+            </div>
+
+            <!-- Corps de la carte -->
+            <div class="card-body">
+              <div class="card-meta">
+                <span class="meta-date">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mini-icon">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                  </svg>
+                  {{ formatDate(art.datePublication) }}
+                </span>
+                <span class="meta-separator">•</span>
+                <span class="meta-read-time">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mini-icon">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                  {{ art.tempsLecture }} min
+                </span>
+              </div>
+
+              <h3 class="card-title" [title]="art.titre">
+                {{ art.titre }}
+              </h3>
+
+              <p class="card-resume">
+                {{ art.resume }}
+              </p>
+            </div>
+
+            <!-- Pied de la carte -->
+            <div class="card-footer">
+              <span class="card-author">
+                <div class="mini-avatar">
+                  {{ art.auteurNom?.charAt(0) || 'M' }}
+                </div>
+                <span class="author-text">{{ art.auteurNom }}</span>
+              </span>
+
+              <div class="card-actions">
+                <button
+                  type="button"
+                  (click)="shareArticle(art, $event)"
+                  class="card-share-btn"
+                  title="Partager"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="18" cy="5" r="3"></circle>
+                    <circle cx="6" cy="12" r="3"></circle>
+                    <circle cx="18" cy="19" r="3"></circle>
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                  </svg>
+                </button>
+
+                <span class="card-read-link">
+                  <span>Lire la suite</span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="arrow-svg">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                  </svg>
+                </span>
+              </div>
+            </div>
+          </article>
+        }
+      </div>
+
+      <!-- =======================================================================
+           PAGINATION
+           ======================================================================= -->
+      @if (actualiteService.totalPages() > 1) {
+        <nav class="pagination-wrapper" aria-label="Pagination des actualités">
+          <button
+            type="button"
+            (click)="goToPage(currentPage() - 1)"
+            [disabled]="currentPage() === 1"
+            class="pagination-btn pagination-prev"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            <span>Précédent</span>
+          </button>
+
+          <div class="pagination-pages">
+            @for (p of [].constructor(actualiteService.totalPages()); track $index) {
+              <button
+                type="button"
+                (click)="goToPage($index + 1)"
+                class="pagination-page-number"
+                [class.active]="currentPage() === ($index + 1)"
+              >
+                {{ $index + 1 }}
+              </button>
+            }
+          </div>
+
+          <button
+            type="button"
+            (click)="goToPage(currentPage() + 1)"
+            [disabled]="currentPage() === actualiteService.totalPages()"
+            class="pagination-btn pagination-next"
+          >
+            <span>Suivant</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        </nav>
+      }
+    }
+
+  </main>
+
+  <!-- Notification Toast pour le partage de lien -->
+  @if (copiedArticleId()) {
+    <div class="share-toast" role="status">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="toast-icon">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+      </svg>
+      <span>Lien de l'article copié dans le presse-papier !</span>
+    </div>
+  }
+
+</div>
+

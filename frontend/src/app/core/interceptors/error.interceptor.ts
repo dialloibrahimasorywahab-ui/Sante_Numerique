@@ -30,8 +30,8 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
           friendlyMessage = 'Les données fournies sont invalides.';
         }
       } else if (error.status === 401) {
-        if (req.url.includes('/users/login/')) {
-          friendlyMessage = 'Identifiants incorrects.';
+        if (req.url.includes('/users/login/') || req.url.includes('login')) {
+          friendlyMessage = error.error?.message || 'Identifiants incorrects.';
         } else {
           friendlyMessage = 'Votre session a expiré. Veuillez vous reconnecter.';
         }
@@ -40,7 +40,11 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       } else if (error.status === 404) {
         friendlyMessage = 'La ressource demandée est introuvable.';
       } else if (error.status === 409) {
-        friendlyMessage = 'Un conflit est survenu avec les informations fournies.';
+        friendlyMessage = error.error?.message || 'Un conflit est survenu avec les informations fournies.';
+      } else if (error.status === 429) {
+        friendlyMessage = error.error?.detail || error.error?.message || 'Trop de tentatives. Veuillez patienter un instant avant de réessayer.';
+      } else if (error.status === 0) {
+        friendlyMessage = 'Impossible de contacter le serveur backend. Veuillez vérifier votre connexion.';
       } else if (error.status >= 500) {
         friendlyMessage = 'Une erreur est survenue sur le serveur. Veuillez réessayer.';
       }

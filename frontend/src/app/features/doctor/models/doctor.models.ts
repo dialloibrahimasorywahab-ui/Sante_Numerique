@@ -68,10 +68,14 @@ export interface DoctorAppointmentDto {
   id_patient?: number;
   patient_details?: DoctorPatientDto;
   patient_detail?: DoctorPatientDto;
+  patientDetails?: DoctorPatientDto;
+  patientDetail?: DoctorPatientDto;
   medecin: number;
   id_medecin?: number;
   medecin_details?: DoctorProfileDto;
   medecin_detail?: DoctorProfileDto;
+  medecinDetails?: DoctorProfileDto;
+  medecinDetail?: DoctorProfileDto;
   date_rdv: string;
   dateRdv?: string;
   heure: string;
@@ -97,15 +101,20 @@ export interface DoctorConsultationDto {
   id_patient?: number;
   patient_details?: DoctorPatientDto;
   patient_detail?: DoctorPatientDto;
+  patientDetails?: DoctorPatientDto;
+  patientDetail?: DoctorPatientDto;
   medecin: number;
   id_medecin?: number;
   medecin_details?: DoctorProfileDto;
   medecin_detail?: DoctorProfileDto;
+  medecinDetails?: DoctorProfileDto;
+  medecinDetail?: DoctorProfileDto;
   rdv?: number | null;
   rdv_details?: DoctorAppointmentDto | null;
   frais?: number | null;
   frais_details?: FraisConsultationDto | null;
   date_cons: string;
+  dateCons?: string;
   symptomes?: string;
   diagnostic?: string;
   observations?: string;
@@ -117,6 +126,7 @@ export interface CreateConsultationDto {
   medecin: number;
   rdv?: number | null;
   date_cons: string;
+  dateCons?: string;
   symptomes?: string;
   diagnostic?: string;
   observations?: string;
@@ -129,8 +139,14 @@ export interface DoctorPrescriptionDto {
   idOrdonnance?: number;
   consultation: number;
   consultation_details?: DoctorConsultationDto;
+  consultationDetails?: DoctorConsultationDto;
+  medecin_nom?: string;
+  medecinNom?: string;
+  patient_nom?: string;
+  patientNom?: string;
   reference: string;
-  date_ordonnance: string;
+  date_ordonnance?: string;
+  dateOrdonnance?: string;
   observation?: string | null;
   actif: boolean;
 }
@@ -205,4 +221,122 @@ export interface PaginatedResult<T> {
   next?: string | null;
   previous?: string | null;
   results: T[];
+}
+
+
+export type StatutHospitalisation = 'PROGRAMMEE' | 'EN_COURS' | 'TERMINEE' | 'ANNULEE';
+export type PrioriteAdmission = 'NORMAL' | 'URGENT' | 'TRES_URGENT';
+
+export interface DoctorHospitalisationDto {
+  id: number;
+  idHospitalisation?: number;
+  id_admission?: number;
+  patient: number;
+  patient_nom?: string;
+  patientNom?: string;
+  patient_details?: DoctorPatientDto;
+  medecin?: number;
+  medecin_nom?: string;
+  medecinNom?: string;
+  medecin_details?: DoctorProfileDto;
+  lit?: number;
+  lit_numero?: string;
+  litNumero?: string;
+  lit_details?: any;
+  chambre_numero?: string;
+  chambreNumero?: string;
+  batiment_nom?: string;
+  batimentNom?: string;
+  date_entree: string;
+  dateEntree?: string;
+  date_sortie?: string | null;
+  dateSortie?: string | null;
+  motif?: string;
+  statut: StatutHospitalisation;
+  statut_display?: string;
+  priorite?: PrioriteAdmission;
+  priorite_display?: string;
+  diagnostic_provisoire?: string;
+  diagnosticProvisoire?: string;
+  symptomes?: string;
+  service_nom?: string;
+  serviceNom?: string;
+  antecedents?: string;
+  allergies?: string;
+  traitements_en_cours?: string;
+  traitementsEnCours?: string;
+  observation?: string;
+  actif?: boolean;
+  patient_identifiants?: any;
+  nouveau_patient_cree?: boolean;
+}
+
+export interface CreateHospitalisationDto {
+  patient?: number | null;
+  medecin?: number | null;
+  lit?: number | null;
+  date_entree?: string;
+  date_sortie?: string | null;
+  motif?: string;
+  statut?: StatutHospitalisation;
+  observation?: string;
+  priorite?: PrioriteAdmission | string;
+  diagnostic_provisoire?: string;
+  diagnosticProvisoire?: string;
+  symptomes?: string;
+  service_nom?: string;
+  serviceNom?: string;
+  antecedents?: string;
+  allergies?: string;
+  traitements_en_cours?: string;
+  traitementsEnCours?: string;
+  nouveau_patient?: boolean;
+  nom?: string;
+  prenom?: string;
+  telephone?: string;
+  email?: string;
+  date_naissance?: string | null;
+  sexe?: string;
+  adresse?: string;
+  groupe_sanguin?: string;
+  numero_securite_sociale?: string;
+  personne_a_contacter?: string;
+}
+
+export interface AdmissionConfirmationDto {
+  id: number;
+  id_admission: number;
+  patient_id?: number;
+  patient_nom?: string;
+  patient_telephone?: string;
+  lit_label?: string;
+  service_nom?: string;
+  statut: string;
+  priorite?: string;
+  date_entree: string;
+  nouveau_patient_cree?: boolean;
+  patient_identifiants?: {
+    login: string;
+    email: string;
+    mot_de_passe_initial: string;
+    patient_id: number;
+    nom: string;
+    prenom: string;
+    message?: string;
+  };
+}
+
+export interface AvailableBedDto {
+  id_lit: number;
+  numero_lit: number | string;
+  etat: string;
+  chambre?: {
+    id_chambre: number;
+    numero_chambre: number | string;
+    type_chambre?: string;
+    batiment?: {
+      id_batiment: number;
+      nom: string;
+    };
+  };
 }

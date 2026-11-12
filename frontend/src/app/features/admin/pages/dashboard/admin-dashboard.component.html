@@ -902,15 +902,25 @@
                   <tr>
                     <td>
                       <div class="table-time-cell">
-                        <span class="font-bold text-slate-800">{{ rdv.heure || 'N/D' }}</span>
-                        <span class="text-xs text-slate-500">{{ formatDate(rdv.dateRdv) }}</span>
+                        <span class="font-bold text-slate-900 text-sm">{{ rdv.heure || '--:--' }}</span>
+                        <span class="text-xs text-slate-500 font-medium">{{ formatDate(rdv.dateRdv) }}</span>
                       </div>
                     </td>
                     <td>
-                      <span class="font-semibold text-slate-800">{{ rdv.patientNom }}</span>
+                      <div class="patient-cell-wrapper">
+                        <span class="font-semibold text-slate-900 block text-sm">{{ rdv.patientNom }}</span>
+                        @if (rdv.patientTelephone) {
+                          <span class="text-xs text-slate-500 block">{{ rdv.patientTelephone }}</span>
+                        }
+                      </div>
                     </td>
                     <td>
-                      <span class="text-slate-600">{{ rdv.medecinNom }}</span>
+                      <div class="doctor-cell-wrapper">
+                        <span class="text-slate-800 font-medium block">{{ rdv.medecinNom }}</span>
+                        @if (rdv.medecinSpecialite) {
+                          <span class="text-xs text-emerald-700 block font-semibold">{{ rdv.medecinSpecialite }}</span>
+                        }
+                      </div>
                     </td>
                     <td>
                       <span class="badge" [ngClass]="getRdvBadgeClass(rdv.statut)">
@@ -969,19 +979,26 @@
                 @for (hosp of currentHospitalizations(); track hosp.id) {
                   <tr>
                     <td>
-                      <span class="font-bold text-slate-800">{{ hosp.patientNom }}</span>
-                      <span class="block text-xs text-slate-500">{{ hosp.motif }}</span>
+                      <div class="patient-cell-wrapper">
+                        <span class="font-bold text-slate-900 block text-sm">{{ hosp.patientNom }}</span>
+                        <span class="text-xs text-slate-500 block line-clamp-1 mt-0.5">{{ hosp.motif }}</span>
+                      </div>
                     </td>
                     <td>
-                      <span class="badge badge-bed">
-                        {{ hosp.chambreNumero ? hosp.chambreNumero + ' — ' : '' }}{{ hosp.litNumero }}
-                      </span>
+                      <div class="bed-cell-wrapper">
+                        <span class="badge badge-bed">
+                          {{ hosp.chambreNumero ? hosp.chambreNumero + ' — ' : '' }}{{ hosp.litNumero }}
+                        </span>
+                        @if (hosp.batimentNom) {
+                          <span class="text-[11px] text-slate-500 block mt-0.5">{{ hosp.batimentNom }}</span>
+                        }
+                      </div>
                     </td>
                     <td>
-                      <span class="text-slate-600">{{ hosp.medecinNom }}</span>
+                      <span class="text-slate-800 font-medium">{{ hosp.medecinNom }}</span>
                     </td>
                     <td>
-                      <span class="text-xs text-slate-500">{{ formatDate(hosp.dateEntree) }}</span>
+                      <span class="text-xs text-slate-500 font-medium">{{ formatDate(hosp.dateEntree) }}</span>
                     </td>
                   </tr>
                 }

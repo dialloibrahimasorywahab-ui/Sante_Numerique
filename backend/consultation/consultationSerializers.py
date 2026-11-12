@@ -51,6 +51,20 @@ class ConsultationReadSerializer(serializers.ModelSerializer):
     medecin_details = MedecinSerializer(source='medecin', read_only=True)
     rdv_details = RendezVousSerializer(source='rdv', read_only=True)
     frais_details = FraisConsultationSerializer(source='frais', read_only=True)
+    patient_nom = serializers.SerializerMethodField()
+    medecin_nom = serializers.SerializerMethodField()
+
+    def get_patient_nom(self, obj):
+        if obj.patient and obj.patient.id_utilisateur:
+            p = obj.patient.id_utilisateur
+            return f"{p.prenom} {p.nom}".strip()
+        return ""
+
+    def get_medecin_nom(self, obj):
+        if obj.medecin and obj.medecin.id_utilisateur:
+            m = obj.medecin.id_utilisateur
+            return f"Dr. {m.prenom} {m.nom}".strip()
+        return "Non assigné"
 
     class Meta:
         model = Consultation
@@ -65,6 +79,8 @@ class ConsultationReadSerializer(serializers.ModelSerializer):
             'rdv_details',
             'frais',
             'frais_details',
+            'patient_nom',
+            'medecin_nom',
             'date_cons',
             'symptomes',
             'diagnostic',

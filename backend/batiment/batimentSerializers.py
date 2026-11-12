@@ -1,5 +1,6 @@
 # pyrefly: ignore [missing-import]
 from rest_framework import serializers
+from drf_spectacular.utils import extend_schema_field
 from .models import Batiment
 
 
@@ -44,7 +45,8 @@ class BatimentSerializer(serializers.ModelSerializer):
             'actif',
         ]
 
-    def get_reference(self, obj):
+    @extend_schema_field(serializers.CharField)
+    def get_reference(self, obj) -> str:
         return f"BAT-{obj.id_batiment:02d}"
 
     def validate_nom(self, value):

@@ -1,0 +1,548 @@
+.notification-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.bell-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  background: #ffffff;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover, &.active {
+    background: #f1f5f9;
+    color: #0284c7;
+    border-color: #cbd5e1;
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.08);
+  }
+
+  .bell-icon {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+.live-dot {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #10b981;
+  box-shadow: 0 0 0 2px #ffffff, 0 0 6px #10b981;
+}
+
+.unread-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.4);
+  animation: pulse-scale 2s infinite;
+}
+
+@keyframes pulse-scale {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 380px;
+  max-width: 90vw;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 20px 35px -10px rgba(15, 23, 42, 0.15), 0 0 1px 1px rgba(0, 0, 0, 0.04);
+  z-index: 1000;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.dropdown-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+
+  .header-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0;
+    }
+  }
+
+  .badge-live {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 7px;
+    background: #ecfdf5;
+    color: #059669;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 600;
+
+    .pulse-indicator {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #10b981;
+      animation: pulse-ring 1.5s infinite;
+    }
+  }
+
+  .badge-patient-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 8px;
+    background: #e0f2fe;
+    color: #0369a1;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 600;
+
+    .dot-patient {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #0284c7;
+    }
+  }
+
+  .btn-mark-all {
+    background: none;
+    border: none;
+    color: #0284c7;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 6px;
+    transition: background 0.15s ease;
+
+    &:hover {
+      background: #e0f2fe;
+    }
+  }
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.3); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+.dropdown-filters {
+  display: flex;
+  gap: 6px;
+  padding: 10px 14px;
+  background: #ffffff;
+  border-bottom: 1px solid #f1f5f9;
+  overflow-x: auto;
+
+  .filter-pill {
+    background: #f1f5f9;
+    border: 1px solid transparent;
+    color: #64748b;
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+
+    &:hover {
+      background: #e2e8f0;
+      color: #1e293b;
+    }
+
+    &.active {
+      background: #0284c7;
+      color: #ffffff;
+      box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25);
+    }
+
+    &.pill-urgence.active {
+      background: #ef4444;
+      box-shadow: 0 2px 6px rgba(239, 68, 68, 0.25);
+    }
+
+    &.pill-arrive.active {
+      background: #0d9488;
+      box-shadow: 0 2px 6px rgba(13, 148, 136, 0.25);
+    }
+
+    &.pill-rdv.active {
+      background: #0284c7;
+      box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25);
+    }
+
+    &.pill-medicament.active {
+      background: #7c3aed;
+      box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25);
+    }
+  }
+}
+
+.dropdown-body {
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 36px 20px;
+  color: #94a3b8;
+  text-align: center;
+
+  .empty-icon {
+    width: 38px;
+    height: 38px;
+    margin-bottom: 10px;
+    color: #cbd5e1;
+
+    &.icon-patient-empty {
+      color: #38bdf8;
+      width: 42px;
+      height: 42px;
+    }
+  }
+
+  p {
+    font-size: 13px;
+    margin: 0;
+  }
+
+  .empty-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 4px 0;
+  }
+
+  .empty-subtitle {
+    font-size: 11.5px;
+    color: #64748b;
+    max-width: 250px;
+    line-height: 1.4;
+  }
+}
+
+.notif-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.notif-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  background: #ffffff;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: #f8fafc;
+  }
+
+  &.unread {
+    background: #f0f9ff;
+
+    &.type-urgence {
+      background: #fef2f2;
+    }
+
+    &.type-patient {
+      background: #f0fdfa;
+    }
+
+    &.type-rdv {
+      background: #f0f9ff;
+    }
+
+    &.type-medicament {
+      background: #faf5ff;
+    }
+  }
+
+  &.type-rdv {
+    border-left: 3.5px solid #0284c7;
+  }
+
+  &.type-medicament {
+    border-left: 3.5px solid #7c3aed;
+  }
+
+  .notif-icon-wrap {
+    flex-shrink: 0;
+    margin-top: 2px;
+
+    .type-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      &.icon-urgence {
+        background: #fee2e2;
+        color: #ef4444;
+      }
+
+      &.icon-patient {
+        background: #ccfbf1;
+        color: #0d9488;
+      }
+
+      &.icon-rdv {
+        background: #e0f2fe;
+        color: #0284c7;
+      }
+
+      &.icon-medicament {
+        background: #f3e8ff;
+        color: #7c3aed;
+      }
+
+      &.icon-default {
+        background: #e0f2fe;
+        color: #0284c7;
+      }
+    }
+  }
+
+  .notif-content {
+    flex: 1;
+    min-width: 0;
+
+    .notif-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 6px;
+      margin-bottom: 3px;
+
+      .notif-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: #0f172a;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .notif-time {
+        font-size: 11px;
+        color: #94a3b8;
+        flex-shrink: 0;
+      }
+    }
+
+    .notif-msg {
+      font-size: 12px;
+      color: #475569;
+      line-height: 1.45;
+      margin: 0 0 6px 0;
+    }
+
+    .notif-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+
+      .btn-link-action {
+        background: none;
+        border: none;
+        font-size: 11.5px;
+        font-weight: 700;
+        cursor: pointer;
+        padding: 3px 6px;
+        border-radius: 6px;
+        transition: all 0.15s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+
+        &.btn-rdv-action {
+          color: #0284c7;
+          &:hover {
+            background: #e0f2fe;
+            text-decoration: underline;
+          }
+        }
+
+        &.btn-med-action {
+          color: #7c3aed;
+          &:hover {
+            background: #f3e8ff;
+            text-decoration: underline;
+          }
+        }
+      }
+
+      .btn-ack {
+        background: none;
+        border: 1px solid #cbd5e1;
+        color: #475569;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 6px;
+        cursor: pointer;
+        margin-left: auto;
+        transition: all 0.15s ease;
+
+        &:hover {
+          background: #0284c7;
+          border-color: #0284c7;
+          color: #ffffff;
+        }
+      }
+    }
+  }
+}
+
+/* Floating Toasts container */
+.toast-container {
+  position: fixed;
+  top: 76px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.live-toast {
+  pointer-events: auto;
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.2), 0 0 1px 1px rgba(0, 0, 0, 0.06);
+  display: flex;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  animation: slide-left 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+
+  .toast-indicator {
+    width: 6px;
+    background: #0284c7;
+  }
+
+  &.toast-lit {
+    .toast-indicator { background: #ef4444; }
+    .toast-type { color: #dc2626; }
+  }
+
+  &.toast-patient {
+    .toast-indicator { background: #0d9488; }
+    .toast-type { color: #0f766e; }
+  }
+
+  &.toast-rdv {
+    .toast-indicator { background: #0284c7; }
+    .toast-type { color: #0284c7; }
+  }
+
+  &.toast-med {
+    .toast-indicator { background: #7c3aed; }
+    .toast-type { color: #7c3aed; }
+  }
+
+  .toast-body {
+    flex: 1;
+    padding: 12px 14px;
+
+    .toast-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+
+      .toast-type {
+        font-size: 10.5px;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+      }
+
+      .toast-close {
+        background: none;
+        border: none;
+        color: #94a3b8;
+        font-size: 18px;
+        line-height: 1;
+        cursor: pointer;
+        padding: 0 4px;
+
+        &:hover { color: #0f172a; }
+      }
+    }
+
+    .toast-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0 0 3px 0;
+    }
+
+    .toast-text {
+      font-size: 12px;
+      color: #475569;
+      margin: 0;
+      line-height: 1.4;
+    }
+  }
+}
+
+@keyframes slide-left {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}

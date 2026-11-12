@@ -1,0 +1,611 @@
+<div class="hospitalisations-page">
+
+  <!-- EN-TÊTE DE LA PAGE -->
+  <header class="page-header">
+    <div class="header-left">
+      <div class="header-icon-box">
+        <svg class="w-7 h-7 text-teal-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v11m0-4h18m0 4V7m0 4H7a2 2 0 00-2 2v1m16-3a2 2 0 00-2-2h-3a2 2 0 00-2 2v1M7 9a2 2 0 110-4 2 2 0 010 4z"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="page-title">Admissions & Hospitalisations</h1>
+        <p class="page-subtitle">Gestion des lits, admissions directes avec création d'espace patient et suivi des séjours</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <a routerLink="/medecin/admissions/nouveau" class="btn-primary-teal">
+        <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+        </svg>
+        <span>Nouvelle Admission</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- CARTES DE STATISTIQUES MÉDICALES -->
+  <section class="stats-grid">
+    <div class="stat-card stat-encours">
+      <div class="stat-icon-wrapper">
+        <svg class="w-6 h-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+        </svg>
+      </div>
+      <div class="stat-content">
+        <span class="stat-label">Hospitalisations en cours</span>
+        <span class="stat-value">{{ stats().enCours }}</span>
+        <span class="stat-hint">Patients actuellement admis</span>
+      </div>
+    </div>
+
+    <div class="stat-card stat-dispo">
+      <div class="stat-icon-wrapper">
+        <svg class="w-6 h-6 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v11m0-4h18m0 4V7m0 4H7a2 2 0 00-2 2v1m16-3a2 2 0 00-2-2h-3a2 2 0 00-2 2v1M7 9a2 2 0 110-4 2 2 0 010 4z"/>
+        </svg>
+      </div>
+      <div class="stat-content">
+        <span class="stat-label">Lits disponibles</span>
+        <span class="stat-value">{{ stats().litsDispos }}</span>
+        <span class="stat-hint">Prêts pour affectation immédiate</span>
+      </div>
+    </div>
+
+    <div class="stat-card stat-terminees">
+      <div class="stat-icon-wrapper">
+        <svg class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <div class="stat-content">
+        <span class="stat-label">Traitements terminés (Sorties)</span>
+        <span class="stat-value">{{ stats().terminees }}</span>
+        <span class="stat-hint">Séjours clôturés avec succès</span>
+      </div>
+    </div>
+
+    <div class="stat-card stat-total">
+      <div class="stat-icon-wrapper">
+        <svg class="w-6 h-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+        </svg>
+      </div>
+      <div class="stat-content">
+        <span class="stat-label">Total des séjours suivis</span>
+        <span class="stat-value">{{ stats().total }}</span>
+        <span class="stat-hint">Historique global d'admissions</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- BARRE DE RECHERCHE ET FILTRES -->
+  <section class="toolbar-card">
+    <div class="status-tabs">
+      @for (filter of statusFilters; track filter.value) {
+        <button
+          type="button"
+          (click)="onStatusChange(filter.value)"
+          [class.active]="activeStatut() === filter.value"
+          class="tab-btn"
+        >
+          {{ filter.label }}
+        </button>
+      }
+    </div>
+
+    <div class="search-box">
+      <svg class="w-5 h-5 text-gray-400 search-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        (keyup.enter)="onSearch()"
+        placeholder="Rechercher par patient, motif, lit..."
+        class="search-input"
+      />
+      @if (searchTerm()) {
+        <button (click)="clearSearch()" class="search-clear-btn" aria-label="Effacer">×</button>
+      }
+      <button (click)="onSearch()" class="search-submit-btn">Filtrer</button>
+    </div>
+  </section>
+
+  <!-- TABLEAU DES ADMISSIONS -->
+  <section class="table-card">
+    @if (isLoading()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Chargement des dossiers d'hospitalisation...</p>
+      </div>
+    } @else if (hospitalisations().length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon-circle">
+          <svg class="w-10 h-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v11m0-4h18m0 4V7m0 4H7a2 2 0 00-2 2v1m16-3a2 2 0 00-2-2h-3a2 2 0 00-2 2v1M7 9a2 2 0 110-4 2 2 0 010 4z"/>
+          </svg>
+        </div>
+        <h3 class="empty-title">Aucune hospitalisation trouvée</h3>
+        <p class="empty-desc">Aucun séjour ne correspond aux critères de recherche actuels.</p>
+        <button (click)="openAdmissionModal()" class="btn-primary-teal mt-4">
+          <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          Admettre un patient
+        </button>
+      </div>
+    } @else {
+      <div class="table-responsive">
+        <table class="modern-table">
+          <thead>
+            <tr>
+              <th>Patient</th>
+              <th>Emplacement (Chambre & Lit)</th>
+              <th>Date d'admission</th>
+              <th>Statut</th>
+              <th>Motif & Observations</th>
+              <th>Médecin responsable</th>
+              <th class="text-right">Actions médicales</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (hosp of hospitalisations(); track hosp.id) {
+              <tr class="table-row">
+                <!-- PATIENT -->
+                <td>
+                  <div class="patient-cell">
+                    <div class="patient-avatar-circle">
+                      <span>{{ getPatientName(hosp).charAt(0).toUpperCase() }}</span>
+                    </div>
+                    <div class="patient-meta">
+                      <span class="patient-name">{{ getPatientName(hosp) }}</span>
+                      <span class="patient-phone">{{ getPatientPhone(hosp) }}</span>
+                    </div>
+                  </div>
+                </td>
+
+                <!-- EMPLACEMENT -->
+                <td>
+                  <div class="location-badge">
+                    <svg class="w-4 h-4 text-teal-600 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                    </svg>
+                    <span>{{ getBedRoom(hosp) }}</span>
+                  </div>
+                </td>
+
+                <!-- DATE ENTRÉE -->
+                <td>
+                  <div class="date-cell">
+                    <span class="date-main">{{ hosp.date_entree | date:'dd/MM/yyyy' }}</span>
+                    <span class="date-time">{{ hosp.date_entree | date:'HH:mm' }}</span>
+                  </div>
+                </td>
+
+                <!-- STATUT -->
+                <td>
+                  <span class="badge" [ngClass]="getStatusBadgeClass(hosp.statut)">
+                    {{ getStatusLabel(hosp.statut) }}
+                  </span>
+                </td>
+
+                <!-- MOTIF & OBSERVATION -->
+                <td>
+                  <div class="motif-cell">
+                    <span class="motif-title">{{ hosp.motif || 'Non spécifié' }}</span>
+                    @if (hosp.observation) {
+                      <span class="motif-obs" [title]="hosp.observation">{{ hosp.observation }}</span>
+                    }
+                  </div>
+                </td>
+
+                <!-- MÉDECIN -->
+                <td>
+                  <span class="doctor-badge">{{ getDoctorName(hosp) }}</span>
+                </td>
+
+                <!-- ACTIONS -->
+                <td class="text-right">
+                  <div class="actions-group">
+                    @if (hosp.statut === 'EN_COURS') {
+                      <button
+                        (click)="openDischargeModal(hosp)"
+                        class="btn-action-discharge"
+                        title="Terminer le traitement et enregistrer la sortie"
+                      >
+                        <svg class="w-4 h-4 mr-1 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        <span>Fin de soins / Sortie</span>
+                      </button>
+                    }
+
+                    <a
+                      [routerLink]="['/medecin/admissions', hosp.id]"
+                      class="btn-action-view"
+                      title="Consulter les détails de cette admission"
+                    >
+                      <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                      </svg>
+                      <span>Détail</span>
+                    </a>
+
+                    <a
+                      [routerLink]="['/medecin/patients', hosp.patient]"
+                      class="btn-action-view"
+                      title="Consulter le dossier médical complet du patient"
+                    >
+                      <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                      </svg>
+                      <span>Dossier</span>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <!-- MODALE NOUVELLE ADMISSION AVEC CRÉATION COMPTE PATIENT             -->
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  @if (isAdmissionModalOpen()) {
+    <div class="modal-backdrop" (click)="closeAdmissionModal()"></div>
+    <div class="modal-dialog modal-lg">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <div class="modal-icon-badge">
+            <svg class="w-6 h-6 text-teal-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v11m0-4h18m0 4V7m0 4H7a2 2 0 00-2 2v1m16-3a2 2 0 00-2-2h-3a2 2 0 00-2 2v1M7 9a2 2 0 110-4 2 2 0 010 4z"/>
+            </svg>
+          </div>
+          <div>
+            <h2 class="modal-title">Enregistrer une Admission Hospitalière</h2>
+            <p class="modal-subtitle">Attribuez un lit et créez immédiatement le dossier & l'espace patient si nécessaire</p>
+          </div>
+        </div>
+        <button (click)="closeAdmissionModal()" class="modal-close-btn" aria-label="Fermer">✕</button>
+      </div>
+
+      <!-- SUCCÈS CRÉATION DU COMPTE PATIENT -->
+      @if (createdAccountSuccess()) {
+        <div class="account-created-banner">
+          <div class="banner-icon">
+            <svg class="w-8 h-8 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <div class="banner-body">
+            <h3 class="banner-title">Admission enregistrée & Espace Patient créé !</h3>
+            <p class="banner-text">
+              L'admission est validée, le lit a été réservé et un compte patient actif a été généré avec succès.
+            </p>
+            <div class="credentials-box">
+              <div class="cred-item">
+                <span class="cred-label">Patient :</span>
+                <span class="cred-val">{{ createdAccountSuccess()?.prenom }} {{ createdAccountSuccess()?.nom }}</span>
+              </div>
+              <div class="cred-item">
+                <span class="cred-label">Identifiant de connexion :</span>
+                <span class="cred-val highlight">{{ createdAccountSuccess()?.login }}</span>
+              </div>
+              <div class="cred-item">
+                <span class="cred-label">Mot de passe temporaire :</span>
+                <span class="cred-val highlight">{{ createdAccountSuccess()?.motDePasse }}</span>
+              </div>
+            </div>
+            <p class="banner-hint">
+              Le patient peut se connecter dès maintenant sur son portail. Vous pourrez compléter les informations complémentaires et examens durant son séjour ou à sa sortie.
+            </p>
+          </div>
+          <div class="banner-footer">
+            <button (click)="closeAdmissionModal()" class="btn-primary-teal">
+              Terminer & Voir la liste
+            </button>
+          </div>
+        </div>
+      } @else {
+        <!-- FORMULAIRE D'ADMISSION -->
+        <form [formGroup]="admissionForm" (ngSubmit)="submitAdmission()" class="modal-form">
+
+          @if (feedbackMessage()) {
+            <div class="alert-box" [ngClass]="'alert-' + feedbackMessage()?.type">
+              <span>{{ feedbackMessage()?.text }}</span>
+            </div>
+          }
+
+          <!-- SÉLECTION DU MODE PATIENT -->
+          <div class="section-container">
+            <label class="section-label">Sélection du patient :</label>
+            <div class="segmented-control">
+              <button
+                type="button"
+                [class.active]="admissionMode() === 'existant'"
+                (click)="setAdmissionMode('existant')"
+                class="segment-btn"
+              >
+                <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                </svg>
+                Patient déjà enregistré
+              </button>
+              <button
+                type="button"
+                [class.active]="admissionMode() === 'nouveau'"
+                (click)="setAdmissionMode('nouveau')"
+                class="segment-btn"
+              >
+                <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+                </svg>
+                Nouveau patient (Première admission — Créer espace patient)
+              </button>
+            </div>
+          </div>
+
+          <!-- MODE PATIENT EXISTANT -->
+          @if (admissionMode() === 'existant') {
+            <div class="form-group">
+              <label class="form-label" for="patientSelect">Choisir un patient existant <span class="required">*</span></label>
+              <div class="patient-select-wrapper">
+                <input
+                  type="text"
+                  placeholder="Rechercher par nom, prénom ou téléphone..."
+                  (input)="filterPatientList($any($event.target).value)"
+                  class="form-control mb-2"
+                />
+                <select id="patientSelect" formControlName="patient" class="form-control select-enhanced">
+                  <option [ngValue]="null">-- Sélectionner un patient --</option>
+                  @for (p of filteredPatients(); track p.id_patient) {
+                    <option [value]="p.id_patient">
+                      {{ p.prenom }} {{ p.nom }} (Tél: {{ p.telephone || 'N/A' }} — Groupe: {{ p.groupe_sanguin || 'N/A' }})
+                    </option>
+                  }
+                </select>
+              </div>
+              @if (admissionForm.get('patient')?.touched && admissionForm.get('patient')?.hasError('required')) {
+                <span class="form-error">Veuillez sélectionner un patient existant.</span>
+              }
+            </div>
+          }
+
+          <!-- MODE NOUVEAU PATIENT -->
+          @if (admissionMode() === 'nouveau') {
+            <div class="new-patient-box">
+              <div class="info-callout">
+                <svg class="w-5 h-5 text-teal-600 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span>
+                  <strong>Création simultanée de l'espace patient :</strong> Le compte du patient sera automatiquement généré. Il pourra être complété avec les antécédents et examens une fois son traitement terminé ou au fur et à mesure des soins.
+                </span>
+              </div>
+
+              <div class="form-grid-2">
+                <div class="form-group">
+                  <label class="form-label">Nom de famille <span class="required">*</span></label>
+                  <input type="text" formControlName="nom" placeholder="Ex: Touré" class="form-control" />
+                  @if (admissionForm.get('nom')?.touched && admissionForm.get('nom')?.hasError('required')) {
+                    <span class="form-error">Le nom est obligatoire.</span>
+                  }
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Prénom(s) <span class="required">*</span></label>
+                  <input type="text" formControlName="prenom" placeholder="Ex: Aminata" class="form-control" />
+                  @if (admissionForm.get('prenom')?.touched && admissionForm.get('prenom')?.hasError('required')) {
+                    <span class="form-error">Le prénom est obligatoire.</span>
+                  }
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Numéro de téléphone <span class="required">*</span></label>
+                  <input type="tel" formControlName="telephone" placeholder="Ex: 620112233" class="form-control" />
+                  @if (admissionForm.get('telephone')?.touched && admissionForm.get('telephone')?.hasError('required')) {
+                    <span class="form-error">Le téléphone est obligatoire pour créer le compte.</span>
+                  }
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Sexe biologique <span class="required">*</span></label>
+                  <select formControlName="sexe" class="form-control">
+                    <option value="M">Masculin (M)</option>
+                    <option value="F">Féminin (F)</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Date de naissance</label>
+                  <input type="date" formControlName="date_naissance" class="form-control" />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Groupe sanguin</label>
+                  <select formControlName="groupe_sanguin" class="form-control">
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                    <option value="O+">O+</option>
+                    <option value="O-">O-</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Adresse de résidence</label>
+                  <input type="text" formControlName="adresse" placeholder="Ex: Dixinn, Conakry" class="form-control" />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">N° Sécurité Sociale / ID</label>
+                  <input type="text" formControlName="numero_securite_sociale" placeholder="Ex: SS-2026-99" class="form-control" />
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- SÉLECTION DU LIT & PARAMÈTRES D'HOSPITALISATION -->
+          <div class="section-divider"></div>
+
+          <div class="form-grid-2">
+            <!-- LIT DISPONIBLE -->
+            <div class="form-group">
+              <label class="form-label" for="litSelect">Lit d'hospitalisation disponible <span class="required">*</span></label>
+              <select id="litSelect" formControlName="lit" class="form-control select-enhanced">
+                <option [ngValue]="null">-- Sélectionner un lit disponible --</option>
+                @for (bed of availableBeds(); track bed.id_lit) {
+                  <option [value]="bed.id_lit">
+                    {{ bed.chambre?.batiment?.nom || 'Bâtiment' }} — Chambre {{ bed.chambre?.numero_chambre || 'N/A' }} — Lit {{ bed.numero_lit }}
+                  </option>
+                }
+              </select>
+              @if (availableBeds().length === 0) {
+                <span class="form-warning">Attention : Aucun lit disponible actuellement. Veuillez libérer un lit ou en créer un.</span>
+              }
+              @if (admissionForm.get('lit')?.touched && admissionForm.get('lit')?.hasError('required')) {
+                <span class="form-error">Veuillez sélectionner un lit disponible.</span>
+              }
+            </div>
+
+            <!-- DATE D'ENTRÉE -->
+            <div class="form-group">
+              <label class="form-label">Date et heure d'entrée <span class="required">*</span></label>
+              <input type="datetime-local" formControlName="date_entree" class="form-control" />
+              @if (admissionForm.get('date_entree')?.touched && admissionForm.get('date_entree')?.hasError('required')) {
+                <span class="form-error">La date d'entrée est requise.</span>
+              }
+            </div>
+          </div>
+
+          <!-- MOTIF DE L'ADMISSION -->
+          <div class="form-group">
+            <label class="form-label">Motif de l'admission <span class="required">*</span></label>
+            <input
+              type="text"
+              formControlName="motif"
+              placeholder="Ex: Détresse respiratoire aiguë, Surveillance post-opératoire, Crise fébrile..."
+              class="form-control"
+            />
+            @if (admissionForm.get('motif')?.touched && admissionForm.get('motif')?.hasError('required')) {
+              <span class="form-error">Le motif d'hospitalisation est requis.</span>
+            }
+          </div>
+
+          <!-- OBSERVATIONS / DIAGNOSTIC D'ENTRÉE -->
+          <div class="form-group">
+            <label class="form-label">Diagnostic d'entrée & Observations cliniques initiales</label>
+            <textarea
+              formControlName="observation"
+              rows="3"
+              placeholder="Constantes initiales, protocole de perfusion, consignes d'alerte..."
+              class="form-control"
+            ></textarea>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" (click)="closeAdmissionModal()" class="btn-secondary">
+              Annuler
+            </button>
+            <button
+              type="submit"
+              [disabled]="isSubmitting() || availableBeds().length === 0"
+              class="btn-primary-teal"
+            >
+              @if (isSubmitting()) {
+                <div class="spinner-sm mr-2"></div>
+                Enregistrement en cours...
+              } @else {
+                <svg class="w-5 h-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                Valider l'admission
+              }
+            </button>
+          </div>
+        </form>
+      }
+    </div>
+  }
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <!-- MODALE SORTIE / CLÔTURE DE TRAITEMENT                             -->
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  @if (isDischargeModalOpen()) {
+    <div class="modal-backdrop" (click)="closeDischargeModal()"></div>
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <div class="modal-icon-badge badge-success">
+            <svg class="w-6 h-6 text-emerald-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <div>
+            <h2 class="modal-title">Clôturer le séjour / Sortie du patient</h2>
+            <p class="modal-subtitle">
+              Patient : <strong>{{ selectedHospForDischarge() ? getPatientName(selectedHospForDischarge()!) : '' }}</strong>
+            </p>
+          </div>
+        </div>
+        <button (click)="closeDischargeModal()" class="modal-close-btn" aria-label="Fermer">✕</button>
+      </div>
+
+      <form [formGroup]="dischargeForm" (ngSubmit)="submitDischarge()" class="modal-form">
+        <div class="info-callout">
+          <svg class="w-5 h-5 text-emerald-600 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span>
+            La validation de la sortie va marquer l'hospitalisation comme <strong>TERMINEE</strong> et libérer immédiatement le lit pour de nouveaux patients.
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Date et heure de sortie <span class="required">*</span></label>
+          <input type="datetime-local" formControlName="date_sortie" class="form-control" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Observations de fin de traitement & Recommandations de sortie <span class="required">*</span></label>
+          <textarea
+            formControlName="observation"
+            rows="4"
+            placeholder="Évolution clinique favorable, prescription de sortie, consignes de repos ou suivi en consultation externe..."
+            class="form-control"
+          ></textarea>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" (click)="closeDischargeModal()" class="btn-secondary">
+            Annuler
+          </button>
+          <button
+            type="submit"
+            [disabled]="isSubmitting()"
+            class="btn-primary-emerald"
+          >
+            @if (isSubmitting()) {
+              <div class="spinner-sm mr-2"></div>
+              Sortie en cours...
+            } @else {
+              <svg class="w-5 h-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              Valider la sortie & Libérer le lit
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+
+</div>
+

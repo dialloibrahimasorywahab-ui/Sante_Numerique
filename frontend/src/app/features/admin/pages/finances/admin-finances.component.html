@@ -168,7 +168,8 @@
         <p>Aucun frais de consultation ne correspond aux filtres sélectionnés.</p>
       </div>
     } @else {
-      <table class="data-table">
+      <div class="table-responsive">
+        <table class="data-table">
         <thead>
           <tr>
             <th>N° Facture</th>
@@ -236,6 +237,7 @@
           }
         </tbody>
       </table>
+      </div>
 
       <!-- PAGINATION -->
       @if (totalPages() > 1) {

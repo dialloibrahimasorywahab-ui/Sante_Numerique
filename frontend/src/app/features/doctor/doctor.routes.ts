@@ -44,6 +44,40 @@ export const doctorRoutes: Routes = [
         title: 'Dossier Patient — Espace Médecin'
       },
       {
+        path: 'hospitalisations',
+        loadComponent: () =>
+          import('./pages/hospitalisations/doctor-hospitalisations.component').then(
+            m => m.DoctorHospitalisationsComponent
+          ),
+        title: 'Admissions & Lits — Espace Médecin'
+      },
+      {
+        path: 'admissions',
+        redirectTo: 'hospitalisations',
+        pathMatch: 'full'
+      },
+      {
+        path: 'admissions/nouveau',
+        loadComponent: () =>
+          import('./pages/admissions/doctor-admission-create.component').then(
+            m => m.DoctorAdmissionCreateComponent
+          ),
+        title: 'Nouvelle Admission — Espace Médecin'
+      },
+      {
+        path: 'admissions/:id',
+        loadComponent: () =>
+          import('./pages/admissions/doctor-admission-detail.component').then(
+            m => m.DoctorAdmissionDetailComponent
+          ),
+        title: 'Détail Admission — Espace Médecin'
+      },
+      {
+        path: 'hospitalisations/nouveau',
+        redirectTo: 'admissions/nouveau',
+        pathMatch: 'full'
+      },
+      {
         path: 'consultations',
         loadComponent: () =>
           import('./pages/consultations/doctor-consultations.component').then(
@@ -82,6 +116,14 @@ export const doctorRoutes: Routes = [
             m => m.DoctorPrescriptionCreateComponent
           ),
         title: 'Rédiger une Ordonnance — Espace Médecin'
+      },
+      {
+        path: 'documents',
+        loadComponent: () =>
+          import('./pages/documents/doctor-documents.component').then(
+            m => m.DoctorDocumentsComponent
+          ),
+        title: 'Imagerie & Documents Médicaux — Espace Médecin'
       },
       {
         path: 'disponibilites',

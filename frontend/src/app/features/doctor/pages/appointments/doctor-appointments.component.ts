@@ -229,5 +229,25 @@ export class DoctorAppointmentsComponent implements OnInit {
       default: return rdv.statut;
     }
   }
-}
+  getPatientFullName(rdv: any): string {
+    if (!rdv) return 'Patient';
+    const p = rdv.patientDetails || rdv.patient_details || rdv.patientDetail || rdv.patient_detail;
+    if (p && (p.prenom || p.nom)) {
+      return `${p.prenom || ''} ${p.nom || ''}`.trim();
+    }
+    const prenom = rdv.patient_prenom || rdv.patientPrenom || '';
+    const nom = rdv.patient_nom || rdv.patientNom || '';
+    if (prenom || nom) {
+      return `${prenom} ${nom}`.trim();
+    }
+    const id = rdv.patient || rdv.id_patient || rdv.idPatient;
+    return id ? `Patient #${id}` : 'Patient suivi';
+  }
 
+  getPatientPhone(rdv: any): string {
+    if (!rdv) return 'Pas de téléphone';
+    const p = rdv.patientDetails || rdv.patient_details || rdv.patientDetail || rdv.patient_detail;
+    return p?.telephone || rdv.patient_telephone || rdv.patientTelephone || 'Pas de téléphone';
+  }
+
+}

@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute } from '@angular/router';
 import { PatientConsultationService } from '../../services/patient-consultation.service';
+import { PdfDownloadService } from '../../../../core/services/pdf-download.service';
 import { ConsultationDto } from '../../models/patient.models';
 import { formatDate as formatSharedDate } from '../../../../shared/utils';
 
@@ -15,10 +16,12 @@ import { formatDate as formatSharedDate } from '../../../../shared/utils';
 export class PatientConsultationDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private consultationService = inject(PatientConsultationService);
+  private pdfDownloadService = inject(PdfDownloadService);
 
   consultationId = signal<number | null>(null);
   consultation = signal<ConsultationDto | null>(null);
   isLoading = signal<boolean>(true);
+  isDownloadingPdf = signal<boolean>(false);
   errorMessage = signal<string | null>(null);
 
   ngOnInit(): void {
@@ -53,6 +56,22 @@ export class PatientConsultationDetailComponent implements OnInit {
 
   printReport(): void {
     window.print();
+  }
+
+  downloadOfficialPdf(): void {
+    const cons = this.consultation();
+    if (!cons) return;
+
+    this.isDownloadingPdf.set(true);
+    this.pdfDownloadService.downloadConsultationPdf(cons.id).subscribe({
+      next: () => {
+        this.isDownloadingPdf.set(false);
+      },
+      error: () => {
+        this.isDownloadingPdf.set(false);
+        this.errorMessage.set('Erreur lors du téléchargement du certificat médical PDF.');
+      }
+    });
   }
 
   formatDate(dateStr?: string): string {

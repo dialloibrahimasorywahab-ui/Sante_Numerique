@@ -84,7 +84,11 @@ def register_medical_staff():
     personnel_service = PersonnelService()
 
     print("=== Initialisation du Dictionnaire des Services Hospitaliers ===")
-    services = service_svc.seed_default_services()
+    services = []
+    for s_nom in ["URGENCES", "LABORATOIRE", "PHARMACIE", "MATERNITE", "ADMINISTRATION", "CHIRURGIE", "RADIOLOGIE", "CARDIOLOGIE", "PEDIATRIE", "MEDECINE_GENERALE"]:
+        s = service_svc.get_or_create_service_by_nom(s_nom)
+        if s:
+            services.append(s)
     print(f"[OK] {len(services)} services enregistrés dans le dictionnaire !")
 
     print("\n=== Début de l'enregistrement du Personnel Médical ===")

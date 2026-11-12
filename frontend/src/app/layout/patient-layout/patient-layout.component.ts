@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { NotificationBellComponent } from '../../shared/components/notification-bell/notification-bell.component';
 
 interface NavItem {
   label: string;
@@ -13,7 +14,7 @@ interface NavItem {
 @Component({
   selector: 'app-patient-layout',
   standalone: true,
-  imports: [CommonModule, RouterModule, RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterModule, RouterOutlet, RouterLink, RouterLinkActive, NotificationBellComponent],
   templateUrl: './patient-layout.component.html',
   styleUrl: './patient-layout.component.scss'
 })
@@ -28,6 +29,7 @@ export class PatientLayoutComponent {
     { label: 'Mes Rendez-vous', route: '/patient/rendez-vous', icon: 'calendar' },
     { label: 'Mes Consultations', route: '/patient/consultations', icon: 'stethoscope' },
     { label: 'Mes Ordonnances', route: '/patient/ordonnances', icon: 'prescription' },
+    { label: 'Mes Documents (GED)', route: '/patient/documents', icon: 'document' },
     { label: 'Mes Hospitalisations', route: '/patient/hospitalisations', icon: 'hospital' },
     { label: 'Mon Profil', route: '/patient/profil', icon: 'user' }
   ];

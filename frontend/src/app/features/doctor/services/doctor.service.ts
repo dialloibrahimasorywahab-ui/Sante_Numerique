@@ -17,7 +17,11 @@ import {
   IndisponibiliteMedecinDto,
   CreneauxResponseDto,
   DoctorDashboardStats,
-  PaginatedResult
+  PaginatedResult,
+  DoctorHospitalisationDto,
+  CreateHospitalisationDto,
+  AvailableBedDto,
+  AdmissionConfirmationDto
 } from '../models/doctor.models';
 
 @Injectable({
@@ -219,6 +223,127 @@ export class DoctorService {
 
   createPrescription(dto: CreatePrescriptionDto): Observable<DoctorPrescriptionDto> {
     return this.http.post<DoctorPrescriptionDto>(`${this.apiUrl}/ordonnances/`, dto, {
+      withCredentials: true
+    });
+  }
+
+  // ==========================================
+  // ADMISSIONS & HOSPITALISATIONS
+  // ==========================================
+
+  searchPatients(q: string): Observable<DoctorPatientDto[]> {
+    if (!q || !q.trim()) {
+      return this.getPatients(1, '').pipe(map(res => res.results || []));
+    }
+    const params = new HttpParams().set('q', q.trim());
+    return this.http.get<any>(`${this.apiUrl}/patients/search/`, {
+      params,
+      withCredentials: true
+    }).pipe(
+      map(res => {
+        if (Array.isArray(res)) return res;
+        return res.results || [];
+      }),
+      catchError(() => {
+        return this.getPatients(1, q).pipe(map(r => r.results || []));
+      })
+    );
+  }
+
+  getServicesList(): Observable<any[]> {
+    return this.http.get<any>(`${this.apiUrl}/services/`, {
+      withCredentials: true
+    }).pipe(
+      map(res => {
+        if (Array.isArray(res)) return res;
+        return res.results || [];
+      }),
+      catchError(() => of([]))
+    );
+  }
+
+  getHospitalisations(page = 1, statut = '', search = '', medecinId?: number): Observable<PaginatedResult<DoctorHospitalisationDto>> {
+    let params = new HttpParams().set('page', page.toString());
+    if (statut.trim()) params = params.set('statut', statut.trim());
+    if (search.trim()) params = params.set('search', search.trim());
+    if (medecinId) params = params.set('medecin_id', medecinId.toString());
+
+    return this.http.get<any>(`${this.apiUrl}/hospitalisations/`, {
+      params,
+      withCredentials: true
+    }).pipe(
+      map(res => {
+        if (Array.isArray(res)) {
+          return { count: res.length, results: res };
+        }
+        return {
+          count: res.count ?? res.results?.length ?? 0,
+          next: res.next,
+          previous: res.previous,
+          results: res.results || []
+        };
+      })
+    );
+  }
+
+  getAdmissionsEnCours(page = 1, search = '', mesPatients = false): Observable<PaginatedResult<DoctorHospitalisationDto>> {
+    let params = new HttpParams().set('page', page.toString());
+    if (search.trim()) params = params.set('search', search.trim());
+    if (mesPatients) params = params.set('mes_patients', 'true');
+
+    return this.http.get<any>(`${this.apiUrl}/hospitalisations/en-cours/`, {
+      params,
+      withCredentials: true
+    }).pipe(
+      map(res => {
+        if (Array.isArray(res)) {
+          return { count: res.length, results: res };
+        }
+        return {
+          count: res.count ?? res.results?.length ?? 0,
+          next: res.next,
+          previous: res.previous,
+          results: res.results || []
+        };
+      }),
+      catchError(() => this.getHospitalisations(page, 'EN_COURS', search))
+    );
+  }
+
+  getAdmissionDetail(id: number): Observable<DoctorHospitalisationDto> {
+    return this.http.get<DoctorHospitalisationDto>(`${this.apiUrl}/hospitalisations/${id}/`, {
+      withCredentials: true
+    });
+  }
+
+  getAvailableBeds(): Observable<AvailableBedDto[]> {
+    const params = new HttpParams().set('etat', 'DISPONIBLE').set('all', 'false');
+    return this.http.get<any>(`${this.apiUrl}/lits/`, {
+      params,
+      withCredentials: true
+    }).pipe(
+      map(res => {
+        if (Array.isArray(res)) return res;
+        return res.results || [];
+      }),
+      catchError(() => of([]))
+    );
+  }
+
+  admitPatient(data: CreateHospitalisationDto): Observable<AdmissionConfirmationDto> {
+    return this.http.post<AdmissionConfirmationDto>(`${this.apiUrl}/hospitalisations/`, data, {
+      withCredentials: true
+    });
+  }
+
+  dischargePatient(id: number, data: { observation?: string }): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/hospitalisations/${id}/cloturer/`, data, {
+      withCredentials: true
+    });
+  }
+
+  updateHospitalisation(id: number, data: Partial<DoctorHospitalisationDto>): Observable<any> {
+    return this.http.patch<any>(`${this.apiUrl}/hospitalisations/${id}/`, data, {
       withCredentials: true
     });
   }

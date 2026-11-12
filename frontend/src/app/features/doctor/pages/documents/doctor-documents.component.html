@@ -1,0 +1,309 @@
+<div class="doctor-documents-page">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="title-group">
+      <h1>Gestion Électronique des Documents &amp; Imagerie Médicale</h1>
+      <p>
+        Consultez et versez les examens radiologiques, IRM, scanners, bilans biologiques et comptes-rendus protégés par chiffrement fort au repos.
+      </p>
+    </div>
+
+    <button type="button" class="btn-primary" (click)="openUploadModal()">
+      <svg class="btn-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+      </svg>
+      <span>Ajouter un examen / document</span>
+    </button>
+  </div>
+
+  <!-- Filters Toolbar -->
+  <div class="filters-toolbar">
+    <!-- Categories horizontal scroll -->
+    <div class="category-scroll-bar">
+      @for (cat of documentService.categoriesList; track cat.code) {
+        <button
+          type="button"
+          class="cat-chip"
+          [class.active]="selectedCategory() === cat.code"
+          (click)="onCategorySelect(cat.code)"
+        >
+          <span>{{ cat.nom }}</span>
+        </button>
+      }
+    </div>
+
+    <!-- Search input -->
+    <div class="search-input-wrap">
+      <svg class="search-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+      <input
+        type="text"
+        placeholder="Rechercher par titre, patient ou mot-clé..."
+        [(ngModel)]="searchQuery"
+        (ngModelChange)="onSearchChange()"
+        class="search-input"
+      />
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (documentService.isLoading()) {
+    <div class="skeleton-grid">
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+    </div>
+  } @else if (documentService.documents().length === 0) {
+    <!-- Empty State -->
+    <div class="empty-state">
+      <div class="empty-icon-wrap">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      </div>
+      <h3>Aucun document médical dans cette vue</h3>
+      <p>Aucun cliché ou rapport ne correspond aux filtres sélectionnés.</p>
+      <button type="button" class="btn-empty-upload" (click)="openUploadModal()">
+        Verser un document au dossier patient
+      </button>
+    </div>
+  } @else {
+    <!-- Documents Grid -->
+    <div class="documents-grid">
+      @for (doc of documentService.documents(); track (doc.idDocument || doc.id_document || doc.id)) {
+        <div class="document-card">
+          <!-- Card Header Bar -->
+          <div class="card-header-bar">
+            <span class="category-badge">
+              {{ doc.categorieDisplay || doc.categorie_display || doc.categorie }}
+            </span>
+            <span class="security-badge" title="Chiffrement matériel/logiciel AES-256">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              <span>AES-256</span>
+            </span>
+          </div>
+
+          <!-- Patient & Title -->
+          <div class="card-body">
+            <div class="doc-icon-container">
+              <svg class="file-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+            </div>
+
+            <div class="doc-meta">
+              <h3 class="doc-title" [title]="doc.titre">{{ doc.titre }}</h3>
+              <p class="patient-name">
+                <strong>Patient :</strong> {{ doc.patientPrenom || doc.patient_prenom || '' }} {{ doc.patientNom || doc.patient_nom || '' }} (Dossier #{{ doc.patient }})
+              </p>
+            </div>
+          </div>
+
+          <!-- Metadata Rows -->
+          <div class="card-details">
+            <div class="detail-row">
+              <span class="detail-label">Examen réalisé le :</span>
+              <span class="detail-val">{{ formatDate(doc.dateDocument || doc.date_document) }}</span>
+            </div>
+
+            <div class="detail-row">
+              <span class="detail-label">Fichier original :</span>
+              <span class="detail-val truncate" [title]="doc.nomOriginal || doc.nom_original">{{ doc.nomOriginal || doc.nom_original }}</span>
+            </div>
+
+            <div class="detail-row">
+              <span class="detail-label">Poids du document :</span>
+              <span class="detail-val">{{ formatSize(doc.tailleOctets ?? doc.taille_octets ?? 0) }}</span>
+            </div>
+
+            @if (doc.observation) {
+              <p class="doc-observation">
+                <i>Note clinique :</i> {{ doc.observation }}
+              </p>
+            }
+          </div>
+
+          <!-- Card Actions -->
+          <div class="card-footer">
+            <button
+              type="button"
+              class="btn-download"
+              (click)="downloadDocument(doc)"
+              [disabled]="decryptingDocId() === (doc.idDocument || doc.id_document || doc.id)"
+              title="Déchiffrer et ouvrir le document"
+            >
+              @if (decryptingDocId() === (doc.idDocument || doc.id_document || doc.id)) {
+                <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                </svg>
+                <span>Déchiffrement...</span>
+              } @else {
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                <span>Déchiffrer &amp; Ouvrir</span>
+              }
+            </button>
+
+            <button
+              type="button"
+              class="btn-delete"
+              (click)="deleteDocument(doc)"
+              title="Archiver ce document"
+            >
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Modal Téléversement Praticien -->
+  @if (isUploadModalOpen()) {
+    <div class="modal-backdrop" (click)="closeUploadModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Verser un document médical ou cliché d'imagerie</h3>
+          <button type="button" class="btn-close" (click)="closeUploadModal()">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          @if (uploadSuccessMessage()) {
+            <div class="alert alert-success">
+              {{ uploadSuccessMessage() }}
+            </div>
+          }
+
+          @if (uploadErrorMessage()) {
+            <div class="alert alert-error">
+              {{ uploadErrorMessage() }}
+            </div>
+          }
+
+          <form (ngSubmit)="onSubmitUpload()">
+            <!-- Sélection Patient -->
+            <div class="form-group">
+              <label for="selectPatient">Patient concerné *</label>
+              <select
+                id="selectPatient"
+                class="form-control"
+                [(ngModel)]="selectedPatientId"
+                name="selectedPatientId"
+                required
+              >
+                @for (pat of patientsList(); track pat.id_patient) {
+                  <option [value]="pat.id_patient">
+                    {{ pat.prenom }} {{ pat.nom }} (Dossier #{{ pat.id_patient }})
+                  </option>
+                }
+              </select>
+            </div>
+
+            <!-- Titre -->
+            <div class="form-group">
+              <label for="docTitle">Intitulé de l'acte / examen *</label>
+              <input
+                id="docTitle"
+                type="text"
+                class="form-control"
+                placeholder="Ex: Scanner cérébral avec injection, Cliché poumon face..."
+                [(ngModel)]="newDocTitle"
+                name="newDocTitle"
+                required
+              />
+            </div>
+
+            <!-- Catégorie -->
+            <div class="form-group">
+              <label for="docCategory">Catégorie médicale *</label>
+              <select
+                id="docCategory"
+                class="form-control"
+                [(ngModel)]="newDocCategorie"
+                name="newDocCategorie"
+              >
+                <option value="RADIO">Radiographie</option>
+                <option value="SCANNER">Scanner / Tomodensitométrie</option>
+                <option value="IRM">IRM</option>
+                <option value="ECHOGRAPHIE">Échographie</option>
+                <option value="ANALYSE_SANG">Analyse Sanguine / NFS</option>
+                <option value="ANALYSE_URINE">Analyse Urinaire</option>
+                <option value="ANAPATH">Anatomopathologie / Biopsie</option>
+                <option value="COMPTE_RENDU">Compte-rendu opératoire / clinique</option>
+                <option value="CERTIFICAT">Certificat médical officiel</option>
+                <option value="ORDONNANCE">Ordonnance numérisée</option>
+                <option value="AUTRE">Autre document</option>
+              </select>
+            </div>
+
+            <!-- Date de réalisation -->
+            <div class="form-group">
+              <label for="docDate">Date de réalisation</label>
+              <input
+                id="docDate"
+                type="date"
+                class="form-control"
+                [(ngModel)]="newDocDate"
+                name="newDocDate"
+              />
+            </div>
+
+            <!-- Fichier -->
+            <div class="form-group">
+              <label for="docFile">Sélectionnez le fichier (PDF, JPEG, PNG, DICOM) *</label>
+              <input
+                id="docFile"
+                type="file"
+                class="form-control file-input"
+                (change)="onFileSelected($event)"
+                required
+              />
+              @if (selectedFile) {
+                <span class="file-chosen-hint">
+                  Sélectionné : {{ selectedFile.name }} ({{ formatSize(selectedFile.size) }})
+                </span>
+              }
+            </div>
+
+            <!-- Observation -->
+            <div class="form-group">
+              <label for="docObs">Conclusions et compte-rendu radiologique</label>
+              <textarea
+                id="docObs"
+                class="form-control"
+                rows="2"
+                placeholder="Conclusions cliniques du praticien..."
+                [(ngModel)]="newDocObservation"
+                name="newDocObservation"
+              ></textarea>
+            </div>
+
+            <div class="modal-security-notice">
+              <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+              <span>Chiffrement immédiat AES-256 et empreinte cryptographique SHA-256 générée.</span>
+            </div>
+
+            <div class="modal-footer">
+              <button type="button" class="btn-cancel" (click)="closeUploadModal()">Annuler</button>
+              <button type="submit" class="btn-submit" [disabled]="isSubmitting()">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                <span>{{ isSubmitting() ? 'Chiffrement en cours...' : 'Enregistrer au dossier' }}</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  }
+</div>

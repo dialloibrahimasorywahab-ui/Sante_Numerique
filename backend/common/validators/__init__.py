@@ -5,6 +5,7 @@ from .validators import (
     validate_blood_group,
     validate_numero_ordre,
     validate_nouveau_ne_metrics,
+    generate_secure_password,
 )
 
 __all__ = [
@@ -14,4 +15,5 @@ __all__ = [
     "validate_blood_group",
     "validate_numero_ordre",
     "validate_nouveau_ne_metrics",
+    "generate_secure_password",
 ]

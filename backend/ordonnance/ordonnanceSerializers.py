@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import Ordonnance
-from consultation.consultationSerializers import ConsultationSerializer
+from consultation.consultationSerializers import ConsultationSerializer, ConsultationReadSerializer
 from ligne_ordonnance.ligneSerializers import LigneOrdonnanceSerializer
 
 
@@ -39,8 +39,10 @@ class OrdonnanceSerializer(serializers.ModelSerializer):
 class OrdonnanceReadSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
     idOrdonnance = serializers.IntegerField(source='id', read_only=True)
-    consultation_details = ConsultationSerializer(source='consultation', read_only=True)
+    consultation_details = ConsultationReadSerializer(source='consultation', read_only=True)
     lignes = LigneOrdonnanceSerializer(many=True, read_only=True)
+    medecin_nom = serializers.SerializerMethodField()
+    patient_nom = serializers.SerializerMethodField()
 
     class Meta:
         model = Ordonnance
@@ -49,6 +51,8 @@ class OrdonnanceReadSerializer(serializers.ModelSerializer):
             'idOrdonnance',
             'consultation',
             'consultation_details',
+            'medecin_nom',
+            'patient_nom',
             'reference',
             'date_ordonnance',
             'observation',
@@ -56,3 +60,24 @@ class OrdonnanceReadSerializer(serializers.ModelSerializer):
             'actif',
         ]
 
+    def get_medecin_nom(self, obj):
+        try:
+            if obj.consultation and obj.consultation.medecin:
+                m = obj.consultation.medecin
+                user = getattr(m, 'id_utilisateur', None) or getattr(m, 'idUtilisateur', None)
+                if user:
+                    return f"Dr. {user.prenom or ''} {user.nom or ''}".strip()
+        except Exception:
+            pass
+        return None
+
+    def get_patient_nom(self, obj):
+        try:
+            if obj.consultation and obj.consultation.patient:
+                p = obj.consultation.patient
+                user = getattr(p, 'id_utilisateur', None) or getattr(p, 'idUtilisateur', None)
+                if user:
+                    return f"{user.prenom or ''} {user.nom or ''}".strip()
+        except Exception:
+            pass
+        return None

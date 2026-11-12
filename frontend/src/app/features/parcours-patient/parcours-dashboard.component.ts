@@ -133,6 +133,36 @@ export class ParcoursDashboardComponent implements OnInit, OnDestroy {
     }
   });
 
+  brandSubTitle = computed(() => {
+    const r = this.userRole();
+    if (r === 'MEDECIN') return 'Espace Praticien';
+    if (r === 'INFIRMIER') return 'Espace Soignant';
+    if (r === 'PATIENT') return 'Espace Patient';
+    return 'Espace Administrateur';
+  });
+
+  dashboardLink = computed(() => {
+    const r = this.userRole();
+    if (r === 'MEDECIN') return '/medecin/dashboard';
+    if (r === 'INFIRMIER') return '/personnel/dashboard';
+    if (r === 'PATIENT') return '/patient/dashboard';
+    return '/admin/dashboard';
+  });
+
+  patientsLink = computed(() => {
+    const r = this.userRole();
+    if (r === 'MEDECIN') return '/medecin/patients';
+    if (r === 'INFIRMIER') return '/personnel/patients';
+    return '/admin/patients';
+  });
+
+  hospitalisationsLink = computed(() => {
+    const r = this.userRole();
+    if (r === 'MEDECIN') return '/medecin/hospitalisations';
+    if (r === 'INFIRMIER') return '/personnel/hospitalisations';
+    return '/admin/lits';
+  });
+
   userInitials = computed(() => {
     const u = this.currentUser();
     if (!u) return 'AD';

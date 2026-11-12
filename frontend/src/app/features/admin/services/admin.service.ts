@@ -171,73 +171,73 @@ export class AdminService {
    * Récupère les rendez-vous récents.
    */
   getRecentAppointments(limit: number = 6): Observable<RecentAppointmentItem[]> {
-    return this.http.get<PaginatedResponse<any> | any[]>(`${this.apiUrl}/rendezvous/all/?page_size=${limit}`, this.httpOptions).pipe(
+return this.http.get<PaginatedResponse<any> | any[]>(`${this.apiUrl}/rendezvous/all/?page_size=${limit}`, this.httpOptions).pipe(
       map(res => {
         const items: any[] = Array.isArray(res) ? res : (res?.results || []);
         return items.slice(0, limit).map(rdv => {
-          const patientUser = rdv.patient_details || rdv.patient_detail || rdv.patient?.idUtilisateur || rdv.patient?.id_utilisateur;
-          const medecinUser = rdv.medecin_details || rdv.medecin_detail || rdv.medecin?.idUtilisateur || rdv.medecin?.id_utilisateur;
+          const patientUser = rdv.patientDetails || rdv.patientDetail || rdv.patient_details || rdv.patient_detail || (typeof rdv.patient === 'object' ? rdv.patient : null);
+          const medecinUser = rdv.medecinDetails || rdv.medecinDetail || rdv.medecin_details || rdv.medecin_detail || (typeof rdv.medecin === 'object' ? rdv.medecin : null);
 
-          const pPrenom = patientUser?.prenom || '';
-          const pNom = patientUser?.nom || '';
-          const patientNom = (pPrenom || pNom) ? `${pPrenom} ${pNom}`.trim() : `Patient #${rdv.patient_id || rdv.patient || ''}`;
+          const pPrenom = patientUser?.prenom || patientUser?.idUtilisateur?.prenom || patientUser?.id_utilisateur?.prenom || '';
+          const pNom = patientUser?.nom || patientUser?.idUtilisateur?.nom || patientUser?.id_utilisateur?.nom || '';
+          const patientNom = (pPrenom || pNom) ? `${pPrenom} ${pNom}`.trim() : (rdv.patientNom || `Patient #${rdv.idPatient || rdv.patient_id || rdv.patient || ''}`);
 
-          const mPrenom = medecinUser?.prenom || '';
-          const mNom = medecinUser?.nom || '';
-          const medecinNom = (mPrenom || mNom) ? `Dr. ${mPrenom} ${mNom}`.trim() : `Dr. Médecin #${rdv.medecin_id || rdv.medecin || ''}`;
+          const mPrenom = medecinUser?.prenom || medecinUser?.idUtilisateur?.prenom || medecinUser?.id_utilisateur?.prenom || '';
+          const mNom = medecinUser?.nom || medecinUser?.idUtilisateur?.nom || medecinUser?.id_utilisateur?.nom || '';
+          const medecinNom = (mPrenom || mNom) ? `Dr. ${mPrenom} ${mNom}`.trim() : (rdv.medecinNom || `Dr. Médecin #${rdv.idMedecin || rdv.medecin_id || rdv.medecin || ''}`);
 
           return {
-            id: rdv.id,
+            id: rdv.id || rdv.idRendezVous,
             patientNom,
-            patientTelephone: patientUser?.telephone || '',
+            patientTelephone: patientUser?.telephone || patientUser?.idUtilisateur?.telephone || '',
             medecinNom,
-            medecinSpecialite: rdv.medecin?.specialiteDisplay || rdv.medecin?.specialite || '',
-            dateRdv: rdv.date_rdv,
-            heure: rdv.heure ? rdv.heure.substring(0, 5) : '',
+            medecinSpecialite: rdv.medecin?.specialiteDisplay || rdv.medecin?.specialite || medecinUser?.specialiteDisplay || medecinUser?.specialite || '',
+            dateRdv: rdv.dateRdv || rdv.date_rdv || rdv.date || '',
+            heure: rdv.heure ? rdv.heure.substring(0, 5) : (rdv.time || ''),
             motif: rdv.motif || 'Consultation générale',
             statut: rdv.statut || 'EN_ATTENTE',
-            statutDisplay: this.getRdvStatutLabel(rdv.statut)
+            statutDisplay: rdv.statutDisplay || this.getRdvStatutLabel(rdv.statut)
           };
         });
       }),
       catchError(() => of([]))
     );
   }
-
   /**
    * Récupère les hospitalisations actuellement en cours.
    */
   getCurrentHospitalizations(limit: number = 6): Observable<CurrentHospitalizationItem[]> {
-    return this.http.get<PaginatedResponse<any> | any[]>(`${this.apiUrl}/hospitalisations/?statut=EN_COURS&page_size=${limit}`, this.httpOptions).pipe(
+return this.http.get<PaginatedResponse<any> | any[]>(`${this.apiUrl}/hospitalisations/?statut=EN_COURS&page_size=${limit}`, this.httpOptions).pipe(
       map(res => {
         const items: any[] = Array.isArray(res) ? res : (res?.results || []);
         return items.slice(0, limit).map(hosp => {
-          const patientUser = hosp.patient_details || hosp.patient?.idUtilisateur || hosp.patient?.id_utilisateur;
-          const medecinUser = hosp.medecin_details || hosp.medecin?.idUtilisateur || hosp.medecin?.id_utilisateur;
+          const patientUser = hosp.patientDetails || hosp.patientDetail || hosp.patient_details || hosp.patient_detail || (typeof hosp.patient === 'object' ? hosp.patient : null);
+          const medecinUser = hosp.medecinDetails || hosp.medecinDetail || hosp.medecin_details || hosp.medecin_detail || (typeof hosp.medecin === 'object' ? hosp.medecin : null);
 
-          const pPrenom = patientUser?.prenom || '';
-          const pNom = patientUser?.nom || '';
-          const patientNom = (pPrenom || pNom) ? `${pPrenom} ${pNom}`.trim() : `Patient #${hosp.patient_id || hosp.patient || ''}`;
+          const pPrenom = patientUser?.prenom || patientUser?.idUtilisateur?.prenom || patientUser?.id_utilisateur?.prenom || '';
+          const pNom = patientUser?.nom || patientUser?.idUtilisateur?.nom || patientUser?.id_utilisateur?.nom || '';
+          const patientNom = (pPrenom || pNom) ? `${pPrenom} ${pNom}`.trim() : (hosp.patientNom || `Patient #${hosp.idPatient || hosp.patient_id || hosp.patient || ''}`);
 
-          const mPrenom = medecinUser?.prenom || '';
-          const mNom = medecinUser?.nom || '';
-          const medecinNom = (mPrenom || mNom) ? `Dr. ${mPrenom} ${mNom}`.trim() : 'Non assigné';
+          const mPrenom = medecinUser?.prenom || medecinUser?.idUtilisateur?.prenom || medecinUser?.id_utilisateur?.prenom || '';
+          const mNom = medecinUser?.nom || medecinUser?.idUtilisateur?.nom || medecinUser?.id_utilisateur?.nom || '';
+          const medecinNom = (mPrenom || mNom) ? `Dr. ${mPrenom} ${mNom}`.trim() : (hosp.medecinNom || 'Non assigné');
 
-          const lit = hosp.lit_details || hosp.lit;
-          const litNumero = lit?.numero_lit || (lit?.id ? `Lit #${lit.id}` : 'Lit N/D');
-          const chambre = lit?.chambre || hosp.chambre_details;
-          const chambreNumero = chambre?.numero_chambre ? `Chambre ${chambre.numero_chambre}` : '';
-          const batimentNom = chambre?.batiment?.nom || '';
+          const lit = hosp.litDetails || hosp.litDetail || hosp.lit_details || hosp.lit;
+          const litNumero = lit?.numeroLit || lit?.numero_lit || (typeof lit === 'object' && lit?.id ? `Lit #${lit.id}` : (typeof lit === 'string' ? lit : 'Lit standard'));
+          const chambre = lit?.chambreDetail || lit?.chambre || hosp.chambreDetails || hosp.chambre_details;
+          const chNum = chambre?.numeroChambre || chambre?.numero_chambre;
+          const chambreNumero = chNum ? `Chambre ${chNum}` : '';
+          const batimentNom = chambre?.batimentDetail?.nom || chambre?.batiment?.nom || '';
 
           return {
-            id: hosp.id,
+            id: hosp.id || hosp.idHospitalisation,
             patientNom,
-            patientId: hosp.patient_id || hosp.patient?.id_patient || hosp.patient?.id,
+            patientId: hosp.idPatient || hosp.patient_id || hosp.patient?.id_patient || hosp.patient?.id,
             medecinNom,
             litNumero,
             chambreNumero,
             batimentNom,
-            dateEntree: hosp.date_entree,
+            dateEntree: hosp.dateEntree || hosp.date_entree || hosp.date || '',
             motif: hosp.motif || 'Soins hospitaliers',
             statut: hosp.statut || 'EN_COURS'
           };
@@ -246,7 +246,6 @@ export class AdminService {
       catchError(() => of([]))
     );
   }
-
   /**
    * Récupère les pôles de soins et calcule la répartition des effectifs.
    */

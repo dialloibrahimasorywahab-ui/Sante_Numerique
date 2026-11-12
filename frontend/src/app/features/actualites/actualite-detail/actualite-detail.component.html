@@ -1,0 +1,232 @@
+<div class="article-detail-root">
+
+  <!-- =========================================================================
+       1. FIL D'ARIANE (BREADCRUMB)
+       ========================================================================= -->
+  <nav class="breadcrumb-bar" aria-label="Fil d'Ariane">
+    <div class="container breadcrumb-container">
+      <a routerLink="/" class="crumb-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="home-icon">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+        <span>Accueil</span>
+      </a>
+      <span class="crumb-sep">/</span>
+      <a routerLink="/actualites" class="crumb-link">Actualités</a>
+      @if (article()) {
+        <span class="crumb-sep">/</span>
+        <span class="crumb-current">{{ article()?.titre }}</span>
+      }
+    </div>
+  </nav>
+
+  <!-- =========================================================================
+       2. CONTENU DE L'ARTICLE OU ÉTAT DE CHARGEMENT / ERREUR
+       ========================================================================= -->
+  <main class="container article-main-wrapper">
+
+    <!-- État de chargement -->
+    @if (isLoading()) {
+      <div class="article-loading-box">
+        <div class="spinner-circle"></div>
+        <p>Chargement de l'article...</p>
+      </div>
+    }
+
+    <!-- État d'erreur -->
+    @else if (errorMessage() || !article()) {
+      <div class="article-error-box">
+        <div class="error-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+        </div>
+        <h2>Article introuvable</h2>
+        <p>{{ errorMessage() || "L'article que vous cherchez n'existe pas ou n'est plus en ligne." }}</p>
+        <a routerLink="/actualites" class="btn btn-teal mt-4">
+          <span>Retour aux actualités</span>
+        </a>
+      </div>
+    }
+
+    <!-- Article chargé -->
+    @else {
+      <article class="article-sheet">
+
+        <!-- En-tête de l'article -->
+        <header class="article-header">
+          <div class="article-meta-top">
+            <span class="category-badge" [ngClass]="getBadgeClass(article()?.categorieCouleur)">
+              {{ article()?.categorieNom }}
+            </span>
+            <span class="meta-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon-inline">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              {{ formatDate(article()?.datePublication) }}
+            </span>
+            <span class="meta-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon-inline">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              {{ article()?.tempsLecture }} min de lecture
+            </span>
+            <span class="meta-item views-counter">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon-inline">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+              {{ article()?.vues }} consultation(s)
+            </span>
+          </div>
+
+          <h1 class="article-title">{{ article()?.titre }}</h1>
+
+          <!-- Chapeau / Résumé de l'article -->
+          <div class="article-lead">
+            {{ article()?.resume }}
+          </div>
+
+          <!-- Auteur et actions rapides -->
+          <div class="author-and-share-bar">
+            <div class="author-block">
+              <div class="author-avatar">
+                {{ article()?.auteurNom?.charAt(0) || 'M' }}
+              </div>
+              <div class="author-texts">
+                <strong class="author-name">{{ article()?.auteurNom }}</strong>
+                <span class="author-role">Centre Hospitalier Universitaire — Santé Numérique</span>
+              </div>
+            </div>
+
+            <!-- Boutons de partage direct -->
+            <div class="share-buttons-group">
+              <button (click)="copyToClipboard()" class="btn-share-icon" title="Copier le lien de l'article">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                </svg>
+              </button>
+
+              <button (click)="shareArticle('whatsapp')" class="btn-share-icon whatsapp" title="Partager sur WhatsApp">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 9.27 20.92 6.78 19.05 4.91C17.18 3.03 14.69 2 12.04 2M12.05 3.67C14.25 3.67 16.31 4.53 17.87 6.09C19.42 7.65 20.28 9.72 20.28 11.92C20.28 16.46 16.58 20.15 12.04 20.15C10.56 20.15 9.11 19.76 7.85 19L7.55 18.83L4.43 19.65L5.26 16.61L5.06 16.29C4.24 15 3.8 13.47 3.8 11.91C3.81 7.37 7.5 3.67 12.05 3.67Z"></path>
+                </svg>
+              </button>
+
+              <button (click)="shareArticle('facebook')" class="btn-share-icon facebook" title="Partager sur Facebook">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+                </svg>
+              </button>
+
+              <button (click)="shareArticle('twitter')" class="btn-share-icon twitter" title="Partager sur X (Twitter)">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <!-- Grande image de couverture -->
+        <figure class="article-cover-figure">
+          <img [src]="article()?.image" [alt]="article()?.titre" class="article-cover-img" />
+          <figcaption class="cover-caption">Illustration : actualités médicales et vie hospitalière</figcaption>
+        </figure>
+
+        <!-- Corps du texte / Contenu de l'article -->
+        <div class="article-content-body">
+          @for (paragraph of (article()?.contenu || '').split('\n'); track $index) {
+            @if (paragraph.trim()) {
+              <p>{{ paragraph }}</p>
+            }
+          }
+        </div>
+
+        <!-- Section de fin d'article & Partage élargi -->
+        <footer class="article-footer-box">
+          <div class="disclaimer-text">
+            <strong>Note d'information médicale :</strong> Les articles et recommandations diffusés sur cet espace sont validés par la commission médicale d'établissement. En cas de doute ou d'urgence, contactez directement le 15 ou notre permanence des soins au <strong>+224 627 68 47 02</strong>.
+          </div>
+
+          <div class="footer-actions-row">
+            <a routerLink="/actualites" class="btn-back-link">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+              </svg>
+              <span>Retour à toutes les actualités</span>
+            </a>
+
+            <button (click)="copyToClipboard()" class="btn-copy-wide">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <span>Partager cet article</span>
+            </button>
+          </div>
+        </footer>
+
+      </article>
+
+      <!-- =======================================================================
+           3. SUGGESTIONS D'ARTICLES (« À LIRE AUSSI »)
+           ======================================================================= -->
+      @if (suggestions().length > 0) {
+        <section class="suggestions-section">
+          <div class="suggestions-header">
+            <span class="sub-badge">SUGGESTIONS</span>
+            <h2 class="suggestions-title">À lire également</h2>
+          </div>
+
+          <div class="suggestions-grid">
+            @for (sug of suggestions(); track sug.id) {
+              <a [routerLink]="['/actualites', sug.slug || sug.id]" class="suggestion-card">
+                <div class="suggestion-media">
+                  <img [src]="sug.image" [alt]="sug.titre" class="sug-img" loading="lazy" />
+                  <span class="sug-cat-badge" [ngClass]="getBadgeClass(sug.categorieCouleur)">
+                    {{ sug.categorieNom }}
+                  </span>
+                </div>
+                <div class="suggestion-info">
+                  <span class="sug-date">{{ formatDate(sug.datePublication) }}</span>
+                  <h3 class="sug-title">{{ sug.titre }}</h3>
+                  <span class="sug-read-more">
+                    <span>Lire</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                      <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                  </span>
+                </div>
+              </a>
+            }
+          </div>
+        </section>
+      }
+    }
+
+  </main>
+
+  <!-- Notification Toast -->
+  @if (toastMessage()) {
+    <div class="toast-popup" role="status">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+      </svg>
+      <span>{{ toastMessage() }}</span>
+    </div>
+  }
+
+</div>
+

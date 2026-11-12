@@ -90,7 +90,7 @@ class User(AbstractUser):
     @mot_de_passe_hash.setter
     def mot_de_passe_hash(self, raw_password):
         if raw_password:
-            if raw_password.startswith(("pbkdf2_", "bcrypt", "argon2", "scrypt")):
+            if raw_password.startswith(("pbkdf2_", "bcrypt", "argon2", "scrypt", "md5$")):
                 self.password = raw_password
             else:
                 self.set_password(raw_password)
@@ -135,6 +135,18 @@ class User(AbstractUser):
     @derniereConnexion.setter
     def derniereConnexion(self, val):
         self.derniere_connexion = val
+
+    @property
+    def medecin_profile(self):
+        return getattr(self, 'medecin', None)
+
+    @property
+    def patient_profile(self):
+        return getattr(self, 'patient', None)
+
+    @property
+    def personnel_profile(self):
+        return getattr(self, 'personnel', None)
 
     def __str__(self):
         return f"{self.login} ({self.prenom} {self.nom})"

@@ -223,3 +223,59 @@ def ordonnance_delete_view(request, pk):
     msg = f"Ordonnance #{pk} supprimée définitivement." if hard else f"Ordonnance #{pk} archivée."
     return Response({"message": msg}, status=status.HTTP_200_OK)
 
+
+
+@extend_schema(
+    tags=["Ordonnance"],
+    summary="Télécharger l'ordonnance médicale officielle en PDF",
+    description="Génère et télécharge l'ordonnance médicale en PDF avec en-tête hospitalier officiel, posologies détaillées, QR code de contrôle et signature électronique.",
+    responses={
+        200: OpenApiTypes.BINARY,
+        403: ErrorResponseSerializer,
+        404: ErrorResponseSerializer,
+    },
+)
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def ordonnance_pdf_view(request, pk):
+    from django.http import HttpResponse
+    from .pdf_service import generate_ordonnance_pdf_bytes
+
+    ord_obj = ordonnance_service.repository.get_ordonnance_by_id(pk)
+    if not ord_obj:
+        return Response({"error": f"Ordonnance #{pk} introuvable."}, status=status.HTTP_404_NOT_FOUND)
+
+    user_role = getattr(request.user, "role", None)
+
+    # Contrôle d'accès : Administrateur, Infirmier, Médecin prescripteur ou Patient bénéficiaire
+    if user_role in ["ADMINISTRATEUR", "INFIRMIER"]:
+        pass
+    elif user_role == "MEDECIN":
+        if not ord_obj.consultation or not ord_obj.consultation.medecin or ord_obj.consultation.medecin.idUtilisateur != request.user:
+            return Response(
+                {"error": "Accès refusé. Vous ne pouvez télécharger que les ordonnances issues de vos propres consultations."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+    elif user_role == "PATIENT":
+        if not ord_obj.consultation or not ord_obj.consultation.patient or ord_obj.consultation.patient.id_utilisateur != request.user:
+            return Response(
+                {"error": "Accès refusé. Vous ne pouvez télécharger que vos propres ordonnances."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+    else:
+        return Response({"error": "Accès refusé."}, status=status.HTTP_403_FORBIDDEN)
+
+    try:
+        pdf_bytes = generate_ordonnance_pdf_bytes(ord_obj)
+        ref_slug = ord_obj.reference.replace('/', '_') if ord_obj.reference else str(ord_obj.id)
+        filename = f"ordonnance_{ref_slug}.pdf"
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        response["Content-Length"] = len(pdf_bytes)
+        return response
+    except Exception as e:
+        logger.exception("Erreur lors de la génération du PDF de l'ordonnance #%s: %s", pk, str(e))
+        return Response(
+            {"error": "Échec de génération du document PDF de l'ordonnance."},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

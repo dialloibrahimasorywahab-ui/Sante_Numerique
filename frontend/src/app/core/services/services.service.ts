@@ -4,6 +4,7 @@ import { Observable, map, catchError, of, throwError } from 'rxjs';
 import { PaginatedResponse } from '../models/models';
 import { ServiceHospitalier } from '../../features/services-hospitaliers/models/models';
 import { DoctorProfile, HospitalService } from '../../features/landing/services/hospital.service';
+import { environment } from '../../../environments/environment';
 
 export interface ServiceDetailExtended extends ServiceHospitalier {
   poleCategorie?: string;
@@ -21,7 +22,7 @@ export class ServicesService {
   private http = inject(HttpClient);
   private hospitalService = inject(HospitalService);
 
-  private readonly API_BASE_URL = 'http://127.0.0.1:8000';
+  private readonly API_BASE_URL = environment.apiUrl;
 
   // State Signals
   servicesList = signal<ServiceHospitalier[]>([]);

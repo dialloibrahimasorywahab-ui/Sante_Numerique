@@ -1,6 +1,8 @@
+from django.contrib.auth.hashers import identify_hasher
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
+from drf_spectacular.utils import extend_schema_field
 from common.validators import validate_phone_number, validate_date_not_in_future
 from .models import User
 
@@ -12,6 +14,7 @@ class UserSerializers(serializers.ModelSerializer):
     mot_de_passe_hash = serializers.CharField(write_only=True, required=False, allow_blank=True)
     motDePasseHash = serializers.CharField(source="mot_de_passe_hash", write_only=True, required=False, allow_blank=True)
     idUser = serializers.IntegerField(source="id_user", read_only=True)
+    derniere_connexion = serializers.DateTimeField(read_only=True)
     derniereConnexion = serializers.DateTimeField(source="derniere_connexion", read_only=True)
     idPatient = serializers.SerializerMethodField()
     patient_id = serializers.SerializerMethodField()
@@ -20,74 +23,93 @@ class UserSerializers(serializers.ModelSerializer):
     idPersonnel = serializers.SerializerMethodField()
     personnel_id = serializers.SerializerMethodField()
 
+    @extend_schema_field(serializers.IntegerField(allow_null=True))
     def get_idPatient(self, obj):
         if hasattr(obj, 'patient') and obj.patient:
             return obj.patient.id_patient
         return None
 
+    @extend_schema_field(serializers.IntegerField(allow_null=True))
     def get_patient_id(self, obj):
         return self.get_idPatient(obj)
 
+    @extend_schema_field(serializers.IntegerField(allow_null=True))
     def get_idMedecin(self, obj):
         if hasattr(obj, 'medecin') and obj.medecin:
             return obj.medecin.id_medecin
         return None
 
+    @extend_schema_field(serializers.IntegerField(allow_null=True))
     def get_medecin_id(self, obj):
         return self.get_idMedecin(obj)
 
+    @extend_schema_field(serializers.IntegerField(allow_null=True))
     def get_idPersonnel(self, obj):
         if hasattr(obj, 'personnel') and obj.personnel:
             return obj.personnel.id_personnel
         return None
 
+    @extend_schema_field(serializers.IntegerField(allow_null=True))
     def get_personnel_id(self, obj):
         return self.get_idPersonnel(obj)
 
     class Meta:
         model = User
         fields = [
-            "id_user",
-            "idUser",
-            "nom",
-            "prenom",
-            "email",
-            "telephone",
-            "login",
-            "mot_de_passe_hash",
-            "motDePasseHash",
-            "role",
-            "derniere_connexion",
-            "derniereConnexion",
-            "date_naissance",
-            "dateNaissance",
-            "actif",
-            "idPatient",
-            "patient_id",
-            "idMedecin",
-            "medecin_id",
-            "idPersonnel",
-            "personnel_id",
+            'id_user',
+            'idUser',
+            'nom',
+            'prenom',
+            'email',
+            'telephone',
+            'login',
+            'mot_de_passe_hash',
+            'motDePasseHash',
+            'role',
+            'date_naissance',
+            'dateNaissance',
+            'actif',
+            'derniere_connexion',
+            'derniereConnexion',
+            'idPatient',
+            'patient_id',
+            'idMedecin',
+            'medecin_id',
+            'idPersonnel',
+            'personnel_id',
         ]
+        extra_kwargs = {
+            'role': {'required': False},
+            'actif': {'required': False},
+        }
 
     def to_internal_value(self, data):
+        """
+        Intercepte les clés alternatives envoyées par le client (motDePasse, password, dateNaissance, idUser)
+        avant que la validation par champ ne s'exécute.
+        """
         if isinstance(data, dict):
             data = data.copy()
-            pwd = data.get("password") or data.get("motDePasse") or data.get("mot_de_passe") or data.get("motDePasseHash")
-            if pwd:
-                data["mot_de_passe_hash"] = pwd
+            # Unification du champ mot de passe
+            for key in ["motDePasse", "password", "mot_de_passe"]:
+                if key in data and "mot_de_passe_hash" not in data and "motDePasseHash" not in data:
+                    data["mot_de_passe_hash"] = data[key]
+                    break
+            # Unification de dateNaissance -> date_naissance
             if "dateNaissance" in data and "date_naissance" not in data:
                 data["date_naissance"] = data["dateNaissance"]
+            # Unification de idUser -> id_user
+            if "idUser" in data and "id_user" not in data:
+                data["id_user"] = data["idUser"]
         return super().to_internal_value(data)
 
     def _is_admin_request(self):
-        """True si la requête provient d'un administrateur authentifié."""
         request = self.context.get("request")
-        return (
-            request is not None
-            and getattr(request, "user", None) is not None
+        return bool(
+            request
+            and hasattr(request, "user")
             and request.user.is_authenticated
-            and getattr(request.user, "role", None) == "ADMINISTRATEUR"
+            and getattr(request.user, "role", None) == User.Role.ADMINISTRATEUR
         )
 
     def validate(self, attrs):
@@ -114,7 +136,6 @@ class UserSerializers(serializers.ModelSerializer):
 
         else:
             # ---- MISE À JOUR ----
-            # CORRECTION PROBLÈME 2 & PROBLÈME 5 :
             # - Le rôle ne doit JAMAIS être modifié par un non-admin. Rejet explicite si modification tentée.
             # - Le statut actif/inactif ne peut être modifié que par un administrateur.
             # - Une valeur interdite ne doit jamais être acceptée silencieusement.
@@ -137,7 +158,15 @@ class UserSerializers(serializers.ModelSerializer):
         # Validation du mot de passe via validate_password de Django
         errors = {}
         raw_pwd = attrs.get("mot_de_passe_hash")
-        if raw_pwd and not raw_pwd.startswith(("pbkdf2_", "bcrypt", "argon2", "scrypt")):
+        is_already_hashed = False
+        if raw_pwd:
+            try:
+                identify_hasher(raw_pwd)
+                is_already_hashed = True
+            except (ValueError, Exception):
+                is_already_hashed = False
+
+        if raw_pwd and not is_already_hashed:
             login_val = attrs.get("login", getattr(self.instance, "login", "") if self.instance else "")
             email_val = attrs.get("email", getattr(self.instance, "email", "") if self.instance else "")
             nom_val = attrs.get("nom", getattr(self.instance, "nom", "") if self.instance else "")
@@ -176,71 +205,125 @@ class UserSerializers(serializers.ModelSerializer):
 class ChangePasswordSerializer(serializers.Serializer):
     """
     Sérialiseur pour le changement de mot de passe sécurisé par l'utilisateur connecté.
-    Accepte les clés en français et les alias en anglais pour compatibilité frontend.
+    Accepte les clés en français (snake_case et camelCase) et les alias en anglais pour compatibilité frontend.
     """
-    ancienMotDePasse = serializers.CharField(
-        required=True,
-        write_only=True,
-        style={"input_type": "password"},
-        help_text="Mot de passe actuel de l'utilisateur"
-    )
-    nouveauMotDePasse = serializers.CharField(
-        required=True,
-        write_only=True,
-        style={"input_type": "password"},
-        help_text="Nouveau mot de passe conforme aux règles de sécurité"
-    )
-    confirmationMotDePasse = serializers.CharField(
-        required=True,
-        write_only=True,
-        style={"input_type": "password"},
-        help_text="Confirmation du nouveau mot de passe"
-    )
+    ancien_mot_de_passe = serializers.CharField(write_only=True, required=False)
+    ancienMotDePasse = serializers.CharField(write_only=True, required=False)
+    oldPassword = serializers.CharField(write_only=True, required=False)
 
-    def to_internal_value(self, data):
-        if isinstance(data, dict):
-            data = data.copy()
-            if "old_password" in data and "ancienMotDePasse" not in data:
-                data["ancienMotDePasse"] = data["old_password"]
-            elif "ancien_mot_de_passe" in data and "ancienMotDePasse" not in data:
-                data["ancienMotDePasse"] = data["ancien_mot_de_passe"]
+    nouveau_mot_de_passe = serializers.CharField(write_only=True, required=False)
+    nouveauMotDePasse = serializers.CharField(write_only=True, required=False)
+    newPassword = serializers.CharField(write_only=True, required=False)
 
-            if "new_password" in data and "nouveauMotDePasse" not in data:
-                data["nouveauMotDePasse"] = data["new_password"]
-            elif "nouveau_mot_de_passe" in data and "nouveauMotDePasse" not in data:
-                data["nouveauMotDePasse"] = data["nouveau_mot_de_passe"]
-
-            if "confirm_password" in data and "confirmationMotDePasse" not in data:
-                data["confirmationMotDePasse"] = data["confirm_password"]
-            elif "confirmation_mot_de_passe" in data and "confirmationMotDePasse" not in data:
-                data["confirmationMotDePasse"] = data["confirmation_mot_de_passe"]
-            elif "confirmation" in data and "confirmationMotDePasse" not in data:
-                data["confirmationMotDePasse"] = data["confirmation"]
-        return super().to_internal_value(data)
+    confirmation = serializers.CharField(write_only=True, required=False)
+    confirmation_mot_de_passe = serializers.CharField(write_only=True, required=False)
+    confirmationMotDePasse = serializers.CharField(write_only=True, required=False)
+    confirmPassword = serializers.CharField(write_only=True, required=False)
 
     def validate(self, attrs):
-        request = self.context.get("request")
-        if not request or not request.user or not request.user.is_authenticated:
-            raise serializers.ValidationError({"detail": "Utilisateur non authentifié."})
-
-        user = request.user
-        ancien = attrs.get("ancienMotDePasse")
-        nouveau = attrs.get("nouveauMotDePasse")
-        confirmation = attrs.get("confirmationMotDePasse")
+        ancien = (
+            attrs.get("ancien_mot_de_passe")
+            or attrs.get("ancienMotDePasse")
+            or attrs.get("oldPassword")
+        )
+        nouveau = (
+            attrs.get("nouveau_mot_de_passe")
+            or attrs.get("nouveauMotDePasse")
+            or attrs.get("newPassword")
+        )
+        conf = (
+            attrs.get("confirmation_mot_de_passe")
+            or attrs.get("confirmationMotDePasse")
+            or attrs.get("confirmation")
+            or attrs.get("confirmPassword")
+        )
 
         errors = {}
-        if not user.check_password(ancien):
-            errors["ancienMotDePasse"] = ["L'ancien mot de passe est incorrect."]
-
-        if nouveau != confirmation:
-            errors["confirmationMotDePasse"] = ["Les deux nouveaux mots de passe ne correspondent pas."]
-
-        try:
-            validate_password(nouveau, user=user)
-        except DjangoValidationError as e:
-            errors["nouveauMotDePasse"] = list(e.messages)
+        if not ancien:
+            errors["ancien_mot_de_passe"] = ["L'ancien mot de passe est obligatoire."]
+            errors["ancienMotDePasse"] = ["L'ancien mot de passe est obligatoire."]
+        if not nouveau:
+            errors["nouveau_mot_de_passe"] = ["Le nouveau mot de passe est obligatoire."]
+            errors["nouveauMotDePasse"] = ["Le nouveau mot de passe est obligatoire."]
+        if not conf:
+            errors["confirmation_mot_de_passe"] = ["La confirmation du mot de passe est obligatoire."]
+            errors["confirmationMotDePasse"] = ["La confirmation du mot de passe est obligatoire."]
+            errors["confirmation"] = ["La confirmation du mot de passe est obligatoire."]
 
         if errors:
             raise serializers.ValidationError(errors)
 
+        if nouveau != conf:
+            err_msg = ["Le nouveau mot de passe et sa confirmation ne correspondent pas."]
+            raise serializers.ValidationError(
+                {
+                    "confirmation": err_msg,
+                    "confirmation_mot_de_passe": err_msg,
+                    "confirmationMotDePasse": err_msg,
+                }
+            )
+
+        user = self.context.get("request").user if self.context.get("request") else None
+        if user and not user.check_password(ancien):
+            raise serializers.ValidationError(
+                {
+                    "ancien_mot_de_passe": ["L'ancien mot de passe fourni est incorrect."],
+                    "ancienMotDePasse": ["L'ancien mot de passe fourni est incorrect."],
+                }
+            )
+
+        if ancien == nouveau:
+            raise serializers.ValidationError(
+                {
+                    "nouveau_mot_de_passe": ["Le nouveau mot de passe doit être différent de l'ancien."],
+                    "nouveauMotDePasse": ["Le nouveau mot de passe doit être différent de l'ancien."],
+                }
+            )
+
+        if user:
+            try:
+                validate_password(nouveau, user=user)
+            except DjangoValidationError as e:
+                raise serializers.ValidationError({
+                    "nouveau_mot_de_passe": list(e.messages),
+                    "nouveauMotDePasse": list(e.messages),
+                })
+
+        attrs["nouveau_mot_de_passe_valide"] = nouveau
+        attrs["nouveauMotDePasse"] = nouveau
+        attrs["nouveau_mot_de_passe"] = nouveau
+        return attrs
+
+
+class ResetPasswordAdminSerializer(serializers.Serializer):
+    """
+    Sérialiseur permettant à un ADMINISTRATEUR de réinitialiser le mot de passe d'un utilisateur.
+    """
+    nouveau_mot_de_passe = serializers.CharField(write_only=True, required=False)
+    nouveauMotDePasse = serializers.CharField(write_only=True, required=False)
+    newPassword = serializers.CharField(write_only=True, required=False)
+
+    def validate(self, attrs):
+        nouveau = (
+            attrs.get("nouveau_mot_de_passe")
+            or attrs.get("nouveauMotDePasse")
+            or attrs.get("newPassword")
+        )
+        errors = {}
+        if not nouveau:
+            errors["nouveauMotDePasse"] = ["Le nouveau mot de passe est obligatoire."]
+
+        if errors:
+            raise serializers.ValidationError(errors)
+
+        user = self.context.get("target_user")
+        if user:
+            try:
+                validate_password(nouveau, user=user)
+            except DjangoValidationError as e:
+                raise serializers.ValidationError({"nouveauMotDePasse": list(e.messages)})
+
+        attrs["nouveau_mot_de_passe_valide"] = nouveau
+        attrs["nouveauMotDePasse"] = nouveau
+        attrs["nouveau_mot_de_passe"] = nouveau
         return attrs

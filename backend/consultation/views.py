@@ -223,3 +223,58 @@ def consultation_delete_view(request, pk):
     msg = f"Consultation #{pk} supprimée définitivement." if hard else f"Consultation #{pk} archivée."
     return Response({"message": msg}, status=status.HTTP_200_OK)
 
+
+
+@extend_schema(
+    tags=["Consultation"],
+    summary="Télécharger le compte-rendu médical / certificat en PDF",
+    description="Génère et télécharge le certificat médical officiel et compte-rendu de consultation en PDF avec QR code d'authenticité et signature électronique.",
+    responses={
+        200: OpenApiTypes.BINARY,
+        403: ErrorResponseSerializer,
+        404: ErrorResponseSerializer,
+    },
+)
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def consultation_pdf_view(request, pk):
+    from django.http import HttpResponse
+    from .pdf_service import generate_consultation_pdf_bytes
+
+    cons = consultation_service.repository.get_consultation_by_id(pk)
+    if not cons:
+        return Response({"error": f"Consultation #{pk} introuvable."}, status=status.HTTP_404_NOT_FOUND)
+
+    user_role = getattr(request.user, "role", None)
+
+    # Vérification d'accès : Seul le patient concerné, le médecin consultant ou le staff peuvent télécharger l'acte
+    if user_role in ["ADMINISTRATEUR", "INFIRMIER"]:
+        pass
+    elif user_role == "MEDECIN":
+        if not cons.medecin or cons.medecin.idUtilisateur != request.user:
+            return Response(
+                {"error": "Accès refusé. Vous ne pouvez télécharger que les certificats de vos propres consultations."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+    elif user_role == "PATIENT":
+        if not cons.patient or cons.patient.id_utilisateur != request.user:
+            return Response(
+                {"error": "Accès refusé. Vous ne pouvez télécharger que vos propres comptes-rendus de consultation."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+    else:
+        return Response({"error": "Accès refusé."}, status=status.HTTP_403_FORBIDDEN)
+
+    try:
+        pdf_bytes = generate_consultation_pdf_bytes(cons)
+        filename = f"compte_rendu_consultation_{cons.id}.pdf"
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        response["Content-Length"] = len(pdf_bytes)
+        return response
+    except Exception as e:
+        logger.exception("Erreur lors de la génération du PDF de la consultation #%s: %s", pk, str(e))
+        return Response(
+            {"error": "Échec de génération du document PDF de consultation."},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

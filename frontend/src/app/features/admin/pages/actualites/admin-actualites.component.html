@@ -1,0 +1,430 @@
+<div class="admin-actualites-root">
+
+  <!-- =========================================================================
+       1. EN-TÊTE DE LA PAGE & STATISTIQUES
+       ========================================================================= -->
+  <header class="page-top-header">
+    <div class="header-titles">
+      <div class="breadcrumb-mini">ADMINISTRATION / PUBLICATIONS</div>
+      <h1 class="main-title">Gestion des Actualités & Conseils Santé</h1>
+      <p class="subtitle-text">Créez, publiez et organisez les articles d'information médicale pour les usagers et le public.</p>
+    </div>
+
+    <div class="header-actions">
+      <button (click)="openCreateModal()" class="btn-create-article">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="plus-icon">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span>Rédiger un article</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- KPI CARDS -->
+  <section class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-icon-wrap total">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+        </svg>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Total Articles</span>
+        <strong class="kpi-value">{{ stats().total }}</strong>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon-wrap published">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Articles Publiés</span>
+        <strong class="kpi-value published">{{ stats().publies }}</strong>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon-wrap draft">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 14 14"></polyline>
+        </svg>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Brouillons</span>
+        <strong class="kpi-value draft">{{ stats().brouillons }}</strong>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon-wrap views">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+          <circle cx="12" cy="12" r="3"></circle>
+        </svg>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Lectures Cumulées</span>
+        <strong class="kpi-value views">{{ stats().totalVues }}</strong>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       2. BARRE D'OUTILS ET FILTRES
+       ========================================================================= -->
+  <section class="toolbar-box">
+    <div class="search-field">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="search-svg">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input
+        type="text"
+        [(ngModel)]="filterSearch"
+        placeholder="Rechercher par titre ou mot-clé..."
+        class="input-search"
+      />
+    </div>
+
+    <div class="filters-group">
+      <!-- Filtre Catégorie -->
+      <select [(ngModel)]="filterCategorie" class="select-filter">
+        <option value="ALL">Toutes les catégories</option>
+        @for (c of categories(); track c.id) {
+          <option [value]="c.id">{{ c.nom }}</option>
+        }
+      </select>
+
+      <!-- Filtre Statut -->
+      <select [(ngModel)]="filterStatut" class="select-filter">
+        <option value="ALL">Tous les statuts</option>
+        <option value="PUBLIE">Publiés uniquement</option>
+        <option value="BROUILLON">Brouillons uniquement</option>
+      </select>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       3. TABLEAU DES ARTICLES
+       ========================================================================= -->
+  <section class="table-container-card">
+    @if (isLoading()) {
+      <div class="table-loading-box">
+        <div class="spinner-admin"></div>
+        <span>Chargement des articles...</span>
+      </div>
+    } @else if (!filteredArticles().length) {
+      <div class="table-empty-box">
+        <p>Aucun article ne correspond à votre filtre.</p>
+        <button (click)="openCreateModal()" class="btn-create-article small mt-2">
+          <span>Créer le premier article</span>
+        </button>
+      </div>
+    } @else {
+      <div class="table-responsive">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th class="th-img">Visuel</th>
+              <th class="th-title">Titre & Résumé</th>
+              <th class="th-cat">Catégorie</th>
+              <th class="th-status">Statut</th>
+              <th class="th-une">À la une</th>
+              <th class="th-date">Date pub.</th>
+              <th class="th-views">Vues</th>
+              <th class="th-actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (art of filteredArticles(); track art.id) {
+              <tr class="table-row">
+                <!-- Visuel -->
+                <td class="td-img">
+                  <div class="thumb-wrap">
+                    <img [src]="art.image" [alt]="art.titre" class="thumb-img" />
+                  </div>
+                </td>
+
+                <!-- Titre & Aperçu -->
+                <td class="td-title">
+                  <div class="title-cell">
+                    <a [routerLink]="['/actualites', art.slug || art.id]" target="_blank" class="art-link-title" title="Voir sur le site public">
+                      {{ art.titre }}
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="external-icon">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                        <polyline points="15 3 21 3 21 9"></polyline>
+                        <line x1="10" y1="14" x2="21" y2="3"></line>
+                      </svg>
+                    </a>
+                    <span class="art-short-desc">{{ art.resume }}</span>
+                  </div>
+                </td>
+
+                <!-- Catégorie -->
+                <td class="td-cat">
+                  <span class="badge-cat">{{ art.categorieNom }}</span>
+                </td>
+
+                <!-- Statut (Toggle en 1 clic) -->
+                <td class="td-status">
+                  <button
+                    type="button"
+                    (click)="toggleStatut(art, $event)"
+                    class="badge-status-btn"
+                    [class.publie]="art.statut === 'PUBLIE'"
+                    [class.brouillon]="art.statut === 'BROUILLON'"
+                    [title]="art.statut === 'PUBLIE' ? 'Cliquer pour passer en Brouillon' : 'Cliquer pour Publier immédiatement'"
+                  >
+                    <span class="dot-indicator"></span>
+                    <span>{{ art.statut === 'PUBLIE' ? 'Publié' : 'Brouillon' }}</span>
+                  </button>
+                </td>
+
+                <!-- À la une (Toggle en 1 clic) -->
+                <td class="td-une">
+                  <button
+                    type="button"
+                    (click)="toggleALaUne(art, $event)"
+                    class="star-toggle-btn"
+                    [class.active]="art.estALaUne"
+                    [title]="art.estALaUne ? 'Retirer de la une' : 'Mettre cet article à la une'"
+                  >
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                    </svg>
+                  </button>
+                </td>
+
+                <!-- Date -->
+                <td class="td-date">
+                  <span class="date-val">{{ formatDate(art.datePublication) }}</span>
+                </td>
+
+                <!-- Vues -->
+                <td class="td-views">
+                  <span class="views-val">{{ art.vues }}</span>
+                </td>
+
+                <!-- Actions -->
+                <td class="td-actions">
+                  <div class="actions-buttons-row">
+                    <button
+                      type="button"
+                      (click)="openEditModal(art)"
+                      class="btn-action edit"
+                      title="Modifier cet article"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                      </svg>
+                    </button>
+
+                    <button
+                      type="button"
+                      (click)="confirmDelete(art, $event)"
+                      class="btn-action delete"
+                      title="Supprimer cet article"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        <line x1="10" y1="11" x2="10" y2="17"></line>
+                        <line x1="14" y1="11" x2="14" y2="17"></line>
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+
+  <!-- =========================================================================
+       4. MODAL DE CRÉATION / ÉDITION D'ARTICLE
+       ========================================================================= -->
+  @if (isModalOpen()) {
+    <div class="modal-backdrop" (click)="closeModal()">
+      <div class="modal-dialog-box" (click)="$event.stopPropagation()">
+        
+        <header class="modal-top">
+          <div class="modal-titles">
+            <span class="mode-tag">{{ modalMode() === 'CREATE' ? 'NOUVEAU CONTENU' : 'MODIFICATION' }}</span>
+            <h2 class="modal-heading">
+              {{ modalMode() === 'CREATE' ? 'Rédiger une actualité' : 'Modifier l’actualité' }}
+            </h2>
+          </div>
+          <button (click)="closeModal()" class="btn-close-modal" title="Fermer">×</button>
+        </header>
+
+        <form [formGroup]="articleForm" (ngSubmit)="submitArticle()" class="modal-form-body">
+          
+          <!-- Titre -->
+          <div class="form-group">
+            <label for="fTitre" class="form-label">Titre de l'article <span class="required">*</span></label>
+            <input
+              id="fTitre"
+              type="text"
+              formControlName="titre"
+              placeholder="Ex: Campagne de sensibilisation au dépistage du diabète"
+              class="form-control"
+              [class.is-invalid]="articleForm.get('titre')?.touched && articleForm.get('titre')?.invalid"
+            />
+            @if (articleForm.get('titre')?.touched && articleForm.get('titre')?.invalid) {
+              <span class="field-error">Le titre est requis (minimum 5 caractères).</span>
+            }
+          </div>
+
+          <!-- Ligne Catégorie + Statut + À la une -->
+          <div class="form-row-three">
+            <!-- Catégorie -->
+            <div class="form-group">
+              <label for="fCat" class="form-label">Catégorie <span class="required">*</span></label>
+              <select id="fCat" formControlName="categorie" class="form-control">
+                @for (c of categories(); track c.id) {
+                  <option [value]="c.id">{{ c.nom }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- Statut -->
+            <div class="form-group">
+              <label for="fStatut" class="form-label">Statut <span class="required">*</span></label>
+              <select id="fStatut" formControlName="statut" class="form-control">
+                <option value="BROUILLON">Brouillon (non visible)</option>
+                <option value="PUBLIE">Publié (en ligne)</option>
+              </select>
+            </div>
+
+            <!-- À la une checkbox -->
+            <div class="form-group checkbox-align">
+              <label class="checkbox-label">
+                <input type="checkbox" formControlName="estALaUne" />
+                <span class="cb-text">Mettre à la une</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Résumé -->
+          <div class="form-group">
+            <label for="fResume" class="form-label">Résumé accrocheur <span class="required">*</span></label>
+            <textarea
+              id="fResume"
+              rows="2"
+              formControlName="resume"
+              placeholder="Bref aperçu affiché sur les cartes publiques et les réseaux sociaux..."
+              class="form-control"
+              [class.is-invalid]="articleForm.get('resume')?.touched && articleForm.get('resume')?.invalid"
+            ></textarea>
+            @if (articleForm.get('resume')?.touched && articleForm.get('resume')?.invalid) {
+              <span class="field-error">Le résumé est obligatoire (minimum 10 caractères).</span>
+            }
+          </div>
+
+          <!-- Image de couverture (URL ou fichier) -->
+          <div class="form-group">
+            <label class="form-label">Image de couverture</label>
+            <div class="image-inputs-split">
+              <input
+                type="url"
+                formControlName="imageUrl"
+                placeholder="Coller l'URL d'une image (ex: https://...)"
+                class="form-control"
+              />
+              <span class="or-separator">OU</span>
+              <label class="btn-file-upload">
+                <input type="file" (change)="onFileSelected($event)" accept="image/*" class="sr-only" />
+                <span>Téléverser un fichier</span>
+              </label>
+            </div>
+            @if (imagePreview()) {
+              <div class="preview-box">
+                <img [src]="imagePreview()" alt="Aperçu" class="preview-img" />
+                <span class="preview-label">Aperçu du visuel</span>
+              </div>
+            }
+          </div>
+
+          <!-- Contenu complet -->
+          <div class="form-group">
+            <label for="fContenu" class="form-label">Contenu complet rédigé <span class="required">*</span></label>
+            <textarea
+              id="fContenu"
+              rows="8"
+              formControlName="contenu"
+              placeholder="Rédigez l'article complet ici. Séparez les paragraphes par des retours à la ligne..."
+              class="form-control textarea-content"
+              [class.is-invalid]="articleForm.get('contenu')?.touched && articleForm.get('contenu')?.invalid"
+            ></textarea>
+            @if (articleForm.get('contenu')?.touched && articleForm.get('contenu')?.invalid) {
+              <span class="field-error">Le contenu complet est requis (minimum 20 caractères).</span>
+            }
+          </div>
+
+          <!-- Pied du formulaire -->
+          <footer class="modal-footer-actions">
+            <button type="button" (click)="closeModal()" class="btn-cancel">Annuler</button>
+            <button type="submit" [disabled]="isSubmitting()" class="btn-submit">
+              @if (isSubmitting()) {
+                <span>Enregistrement...</span>
+              } @else {
+                <span>{{ modalMode() === 'CREATE' ? 'Créer l’article' : 'Enregistrer les modifications' }}</span>
+              }
+            </button>
+          </footer>
+
+        </form>
+
+      </div>
+    </div>
+  }
+
+  <!-- =========================================================================
+       5. MODAL DE CONFIRMATION DE SUPPRESSION
+       ========================================================================= -->
+  @if (isDeleteModalOpen()) {
+    <div class="modal-backdrop" (click)="closeDeleteModal()">
+      <div class="modal-dialog-box delete-box" (click)="$event.stopPropagation()">
+        <div class="delete-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+        </div>
+        <h3>Confirmer la suppression</h3>
+        <p>Êtes-vous certain de vouloir supprimer définitivement l'article :<br>
+          <strong>« {{ articleToDelete()?.titre }} »</strong> ?
+        </p>
+        <div class="delete-actions-row">
+          <button (click)="closeDeleteModal()" class="btn-cancel">Annuler</button>
+          <button (click)="executeDelete()" class="btn-confirm-delete">Supprimer définitivement</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Toast Notification Feedback -->
+  @if (toastMessage()) {
+    <div class="admin-toast">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+      <span>{{ toastMessage() }}</span>
+    </div>
+  }
+
+</div>
+

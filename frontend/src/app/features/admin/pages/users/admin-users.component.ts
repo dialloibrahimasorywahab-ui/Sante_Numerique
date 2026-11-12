@@ -58,7 +58,7 @@ export class AdminUsersComponent implements OnInit {
     telephone: '',
     login: '',
     motDePasse: '',
-    specialite: 'MEDECINE_GENERALE',
+    specialite: 'GENERALISTE',
     matricule: '',
     numeroOrdre: '',
     bureau: 'Bureau 101',
@@ -163,7 +163,7 @@ export class AdminUsersComponent implements OnInit {
   }
 
   submitPatient(): void {
-    if (!this.patientForm.nom || !this.patientForm.prenom || !this.patientForm.email || !this.patientForm.telephone || !this.patientForm.sexe) {
+    if (!this.patientForm.nom || !this.patientForm.prenom || !this.patientForm.email || !this.patientForm.telephone || !this.patientForm.sexe || !this.patientForm.motDePasse) {
       this.formError.set('Veuillez renseigner tous les champs obligatoires (*).');
       return;
     }
@@ -177,7 +177,7 @@ export class AdminUsersComponent implements OnInit {
       email: this.patientForm.email.trim(),
       telephone: this.patientForm.telephone.trim(),
       login: this.patientForm.login?.trim() || this.patientForm.email.split('@')[0],
-      motDePasse: this.patientForm.motDePasse || 'PatientPass123!',
+      motDePasse: this.patientForm.motDePasse.trim(),
       date_naissance: this.patientForm.dateNaissance || null,
       sexe: this.patientForm.sexe,
       groupe_sanguin: this.patientForm.groupeSanguin,
@@ -195,14 +195,14 @@ export class AdminUsersComponent implements OnInit {
       },
       error: (err) => {
         this.isSubmitting.set(false);
-        const detail = err.error?.error || err.error?.message || (typeof err.error === 'string' ? err.error : 'Erreur lors de la création du patient.');
+        const detail = this.extractErrorMessage(err, 'Erreur lors de la création du patient.');
         this.formError.set(detail);
       }
     });
   }
 
   submitMedecin(): void {
-    if (!this.medecinForm.nom || !this.medecinForm.prenom || !this.medecinForm.email || !this.medecinForm.telephone || !this.medecinForm.matricule) {
+    if (!this.medecinForm.nom || !this.medecinForm.prenom || !this.medecinForm.email || !this.medecinForm.telephone || !this.medecinForm.matricule || !this.medecinForm.motDePasse) {
       this.formError.set('Veuillez renseigner tous les champs obligatoires (*).');
       return;
     }
@@ -216,7 +216,7 @@ export class AdminUsersComponent implements OnInit {
       email: this.medecinForm.email.trim(),
       telephone: this.medecinForm.telephone.trim(),
       login: this.medecinForm.login?.trim() || this.medecinForm.email.split('@')[0],
-      motDePasse: this.medecinForm.motDePasse || 'DocPass123!',
+      motDePasse: this.medecinForm.motDePasse.trim(),
       specialite: this.medecinForm.specialite,
       matricule: this.medecinForm.matricule.trim(),
       numeroOrdre: this.medecinForm.numeroOrdre?.trim() || `CNOM-${Math.floor(10000 + Math.random() * 90000)}`,
@@ -234,14 +234,14 @@ export class AdminUsersComponent implements OnInit {
       },
       error: (err) => {
         this.isSubmitting.set(false);
-        const detail = err.error?.error || err.error?.message || (typeof err.error === 'string' ? err.error : 'Erreur lors de l\'enregistrement du médecin.');
+        const detail = this.extractErrorMessage(err, 'Erreur lors de l\'enregistrement du médecin.');
         this.formError.set(detail);
       }
     });
   }
 
   submitPersonnel(): void {
-    if (!this.personnelForm.nom || !this.personnelForm.prenom || !this.personnelForm.email || !this.personnelForm.telephone || !this.personnelForm.matricule) {
+    if (!this.personnelForm.nom || !this.personnelForm.prenom || !this.personnelForm.email || !this.personnelForm.telephone || !this.personnelForm.matricule  || !this.personnelForm.login || !this.personnelForm.motDePasse) {
       this.formError.set('Veuillez renseigner tous les champs obligatoires (*).');
       return;
     }
@@ -255,7 +255,7 @@ export class AdminUsersComponent implements OnInit {
       email: this.personnelForm.email.trim(),
       telephone: this.personnelForm.telephone.trim(),
       login: this.personnelForm.login?.trim() || this.personnelForm.email.split('@')[0],
-      motDePasse: this.personnelForm.motDePasse || 'StaffPass123!',
+      motDePasse: this.personnelForm.motDePasse.trim(),
       matricule: this.personnelForm.matricule.trim(),
       typePersonnel: this.personnelForm.typePersonnel,
       poste: this.personnelForm.poste?.trim() || 'Personnel Soignant',
@@ -263,6 +263,7 @@ export class AdminUsersComponent implements OnInit {
       telephonePro: this.personnelForm.telephonePro?.trim() || this.personnelForm.telephone.trim(),
       emailPro: this.personnelForm.emailPro?.trim() || this.personnelForm.email.trim()
     };
+
 
     this.adminService.createEntity('personnel', payload).subscribe({
       next: () => {
@@ -273,7 +274,7 @@ export class AdminUsersComponent implements OnInit {
       },
       error: (err) => {
         this.isSubmitting.set(false);
-        const detail = err.error?.error || err.error?.message || (typeof err.error === 'string' ? err.error : 'Erreur lors de l\'enregistrement du membre du personnel.');
+        const detail = this.extractErrorMessage(err, 'Erreur lors de l\'enregistrement du membre du personnel.');
         this.formError.set(detail);
       }
     });
@@ -332,6 +333,28 @@ export class AdminUsersComponent implements OnInit {
     return formatSharedDate(dateStr);
   }
 
+  private extractErrorMessage(err: any, fallback: string): string {
+    if (!err) return fallback;
+    if (typeof err.error === 'string') return err.error;
+    if (err.error?.error) return err.error.error;
+    if (err.error?.message) return err.error.message;
+    if (err.error?.detail) return err.error.detail;
+    if (typeof err.error === 'object' && err.error !== null) {
+      const messages: string[] = [];
+      for (const [key, value] of Object.entries(err.error)) {
+        if (Array.isArray(value)) {
+          messages.push(`${key}: ${value.join(', ')}`);
+        } else if (typeof value === 'string') {
+          messages.push(`${key}: ${value}`);
+        }
+      }
+      if (messages.length > 0) {
+        return messages.join(' | ');
+      }
+    }
+    return fallback;
+  }
+
   private resetPatientForm(): void {
     this.patientForm = {
       nom: '',
@@ -357,7 +380,7 @@ export class AdminUsersComponent implements OnInit {
       telephone: '',
       login: '',
       motDePasse: '',
-      specialite: 'MEDECINE_GENERALE',
+      specialite: 'GENERALISTE',
       matricule: `MED-${Math.floor(1000 + Math.random() * 9000)}`,
       numeroOrdre: `CNOM-${Math.floor(10000 + Math.random() * 90000)}`,
       bureau: 'Bureau 101',

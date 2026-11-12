@@ -588,7 +588,11 @@ def change_password(request):
     serializer = ChangePasswordSerializer(data=request.data, context={"request": request})
     if serializer.is_valid():
         try:
-            nouveau_mdp = serializer.validated_data["nouveauMotDePasse"]
+            nouveau_mdp = (
+                serializer.validated_data.get("nouveauMotDePasse")
+                or serializer.validated_data.get("nouveau_mot_de_passe")
+                or serializer.validated_data.get("nouveau_mot_de_passe_valide")
+            )
             request.user.set_password(nouveau_mdp)
             request.user.save(update_fields=["password"])
 

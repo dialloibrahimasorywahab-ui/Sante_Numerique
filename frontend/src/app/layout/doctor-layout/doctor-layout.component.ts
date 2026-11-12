@@ -4,6 +4,7 @@ import { Router, RouterModule, RouterLink, RouterLinkActive, RouterOutlet } from
 import { AuthService } from '../../core/services/auth.service';
 import { DoctorService } from '../../features/doctor/services/doctor.service';
 import { DoctorProfileDto } from '../../features/doctor/models/doctor.models';
+import { NotificationBellComponent } from '../../shared/components/notification-bell/notification-bell.component';
 
 interface NavItem {
   label: string;
@@ -15,7 +16,7 @@ interface NavItem {
 @Component({
   selector: 'app-doctor-layout',
   standalone: true,
-  imports: [CommonModule, RouterModule, RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterModule, RouterOutlet, RouterLink, RouterLinkActive, NotificationBellComponent],
   templateUrl: './doctor-layout.component.html',
   styleUrl: './doctor-layout.component.scss'
 })
@@ -31,9 +32,11 @@ export class DoctorLayoutComponent implements OnInit {
     { label: 'Tableau de bord', route: '/medecin/dashboard', icon: 'dashboard' },
     { label: 'Mes Rendez-vous', route: '/medecin/rendez-vous', icon: 'calendar' },
     { label: 'Mes Patients', route: '/medecin/patients', icon: 'users' },
+    { label: 'Admissions & Lits', route: '/medecin/hospitalisations', icon: 'bed' },
     { label: 'Mes Consultations', route: '/medecin/consultations', icon: 'stethoscope' },
     { label: 'Parcours & Localisation', route: '/parcours', icon: 'route' },
     { label: 'Mes Ordonnances', route: '/medecin/ordonnances', icon: 'prescription' },
+    { label: 'Imagerie & Documents (GED)', route: '/medecin/documents', icon: 'document' },
     { label: 'Disponibilités & Absences', route: '/medecin/disponibilites', icon: 'clock' },
     { label: 'Mon Profil', route: '/medecin/profil', icon: 'user' }
   ];

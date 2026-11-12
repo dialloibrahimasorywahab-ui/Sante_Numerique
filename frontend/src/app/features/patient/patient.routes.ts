@@ -68,6 +68,14 @@ export const patientRoutes: Routes = [
         title: 'Détail de l’Ordonnance — Espace Patient'
       },
       {
+        path: 'documents',
+        loadComponent: () =>
+          import('./pages/documents/patient-documents.component').then(
+            m => m.PatientDocumentsComponent
+          ),
+        title: 'Mes Documents Médicaux & Imagerie — Espace Patient'
+      },
+      {
         path: 'hospitalisations',
         loadComponent: () =>
           import('./pages/hospitalizations/patient-hospitalizations.component').then(

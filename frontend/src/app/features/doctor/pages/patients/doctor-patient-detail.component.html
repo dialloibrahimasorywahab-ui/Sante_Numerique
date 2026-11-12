@@ -48,6 +48,16 @@
 
       <div class="hero-right">
         <a
+          [routerLink]="['/medecin/admissions/nouveau']"
+          [queryParams]="{ patient_id: patient()?.id_patient || patient()?.idPatient }"
+          class="btn-new-admission"
+        >
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v11m0-4h18m0 4V7m0 4H7a2 2 0 00-2 2v1m16-3a2 2 0 00-2-2h-3a2 2 0 00-2 2v1M7 9a2 2 0 110-4 2 2 0 010 4z"/>
+          </svg>
+          <span>Nouvelle Admission</span>
+        </a>
+        <a
           [routerLink]="['/medecin/consultations/nouveau']"
           [queryParams]="{ patient_id: patient()?.id_patient || patient()?.idPatient }"
           class="btn-new-consult"

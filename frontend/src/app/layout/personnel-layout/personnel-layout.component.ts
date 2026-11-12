@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { NotificationBellComponent } from '../../shared/components/notification-bell/notification-bell.component';
 
 interface NavItem {
   label: string;

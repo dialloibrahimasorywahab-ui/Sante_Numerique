@@ -44,7 +44,7 @@
           <div class="card-top">
             <div class="ref-wrap">
               <span class="pill-reference">{{ p.reference || ('ORD-' + p.id) }}</span>
-              <span class="date-text">Délivrée le {{ formatDate(p.date_ordonnance) }}</span>
+              <span class="date-text">Délivrée le {{ formatDate(p.dateOrdonnance || p.date_ordonnance) }}</span>
             </div>
 
             <span class="active-badge" [class.archived]="!p.actif">

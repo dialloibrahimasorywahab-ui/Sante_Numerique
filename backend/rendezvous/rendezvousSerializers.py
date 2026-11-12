@@ -25,6 +25,38 @@ class RendezVousSerializer(serializers.ModelSerializer):
     medecin_detail = MedecinSerializer(source='medecin', read_only=True)
     medecin_details = MedecinSerializer(source='medecin', read_only=True)
     statutDisplay = serializers.CharField(source="get_statut_display", read_only=True)
+    patient_nom = serializers.SerializerMethodField()
+    patient_prenom = serializers.SerializerMethodField()
+    medecin_nom = serializers.SerializerMethodField()
+    medecin_prenom = serializers.SerializerMethodField()
+    medecin_specialite = serializers.SerializerMethodField()
+
+    def get_patient_nom(self, obj):
+        if obj.patient and obj.patient.id_utilisateur:
+            p = obj.patient.id_utilisateur
+            return f"{p.prenom} {p.nom}".strip()
+        return ""
+
+    def get_patient_prenom(self, obj):
+        if obj.patient and obj.patient.id_utilisateur:
+            return obj.patient.id_utilisateur.prenom or ""
+        return ""
+
+    def get_medecin_nom(self, obj):
+        if obj.medecin and obj.medecin.id_utilisateur:
+            m = obj.medecin.id_utilisateur
+            return f"Dr. {m.prenom} {m.nom}".strip()
+        return "Non assigné"
+
+    def get_medecin_prenom(self, obj):
+        if obj.medecin and obj.medecin.id_utilisateur:
+            return obj.medecin.id_utilisateur.prenom or ""
+        return ""
+
+    def get_medecin_specialite(self, obj):
+        if obj.medecin:
+            return obj.medecin.get_specialite_display() if hasattr(obj.medecin, 'get_specialite_display') else str(obj.medecin.specialite)
+        return ""
 
     class Meta:
         model = RendezVous
@@ -44,6 +76,11 @@ class RendezVousSerializer(serializers.ModelSerializer):
             'motif',
             'statut',
             'statutDisplay',
+            'patient_nom',
+            'patient_prenom',
+            'medecin_nom',
+            'medecin_prenom',
+            'medecin_specialite',
         ]
 
     def to_internal_value(self, data):

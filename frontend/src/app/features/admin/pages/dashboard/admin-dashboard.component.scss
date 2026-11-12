@@ -1318,3 +1318,27 @@
   }
 }
 
+
+/* UI/UX PRO MAX - RESPONSIVE ENHANCEMENTS FOR CLINICAL DASHBOARD */
+.patient-cell-wrapper, .doctor-cell-wrapper, .bed-cell-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 140px;
+}
+
+.table-time-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 90px;
+}
+
+.data-table {
+  tbody tr {
+    transition: background-color 0.15s ease-in-out;
+    &:hover {
+      background-color: #f0fdf4 !important;
+    }
+  }
+}

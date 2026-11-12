@@ -102,3 +102,24 @@ def validate_nouveau_ne_metrics(poids=None, taille=None):
                 raise ValidationError("La taille du nouveau-né doit être comprise entre 20.0 cm et 70.0 cm.")
         except (ValueError, TypeError):
             raise ValidationError("Taille du nouveau-né invalide.")
+
+
+def generate_secure_password(length: int = 24) -> str:
+    """
+    Génère un mot de passe cryptographiquement aléatoire et robuste,
+    conforme aux exigences des validateurs Django (longueur, minuscules, majuscules, chiffres, symboles).
+    """
+    import secrets
+    import string
+    if length < 16:
+        length = 16
+    alphabet = string.ascii_letters + string.digits + "!@#$%^&*()-_=+"
+    while True:
+        password = "".join(secrets.choice(alphabet) for _ in range(length))
+        if (
+            any(c.islower() for c in password)
+            and any(c.isupper() for c in password)
+            and any(c.isdigit() for c in password)
+            and any(c in "!@#$%^&*()-_=+" for c in password)
+        ):
+            return password

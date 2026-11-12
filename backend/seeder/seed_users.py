@@ -88,21 +88,23 @@ def generate_users(count=50):
         telephone = f"+2246{random.randint(10000000, 99999999)}"
         role = ROLES[(i - 1) % len(ROLES)]  # Distribution équilibrée des 4 rôles
 
-        # Création de l'utilisateur avec hachage automatique du mot de passe
-        user = user_service.createUser(
-            nom=nom,
-            prenom=prenom,
-            email=email,
-            telephone=telephone,
-            login=login,
-            motDePasseHash=f"PassWord_{i}!",
-            role=role,
-            actif=True,
-        )
-        created_count += 1
+        # Vérification / Création de l'utilisateur
+        user = User.objects.filter(login=login).first()
+        if not user:
+            user = user_service.createUser(
+                nom=nom,
+                prenom=prenom,
+                email=email,
+                telephone=telephone,
+                login=login,
+                motDePasseHash=f"PassWord_{i}!",
+                role=role,
+                actif=True,
+            )
+            created_count += 1
 
         # Si le rôle est PATIENT, on lui génère également un profil Patient
-        if role == User.Role.PATIENT:
+        if role == User.Role.PATIENT and not Patient.objects.filter(id_utilisateur=user).exists():
             patient_service.createPatient(
                 idUtilisateur=user,
                 dateNaissance=f"{random.randint(1965, 2005)}-{random.randint(1, 12):02d}-{random.randint(1, 28):02d}",
@@ -113,7 +115,7 @@ def generate_users(count=50):
                 personneAContacter=f"{random.choice(PRENOMS)} {nom}",
                 dateInscription="2026-01-01",
             )
-        elif role == User.Role.MEDECIN:
+        elif role == User.Role.MEDECIN and not Medecin.objects.filter(id_utilisateur=user).exists():
             medecin_service.createMedecin(
                 idUtilisateur=user,
                 specialite=random.choice(SPECIALITES),

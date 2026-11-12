@@ -72,6 +72,9 @@ class MedecinSerializer(serializers.ModelSerializer):
     def to_internal_value(self, data):
         if isinstance(data, dict):
             data = data.copy()
+            spec = data.get("specialite")
+            if spec in ("MEDECINE_GENERALE", "Médecine Générale", "medecine_generale", "GENERAL"):
+                data["specialite"] = "GENERALISTE" 
             if 'mot_de_passe' in data and 'motDePasse' not in data:
                 data['motDePasse'] = data['mot_de_passe']
             elif 'motDePasse' in data and 'mot_de_passe' not in data:
