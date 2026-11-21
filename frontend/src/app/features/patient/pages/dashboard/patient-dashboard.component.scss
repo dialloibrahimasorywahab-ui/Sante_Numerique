@@ -80,9 +80,9 @@
       }
 
       &:hover {
-        background: #ccfbf1;
+        background: #E6F7F4;
         border-color: #5eead4;
-        color: #0f766e;
+        color: #006B5F;
         transform: translateY(-1px);
       }
     }
@@ -410,7 +410,7 @@
 
       &.icon-stethoscope {
         background: #f0f9ff;
-        color: #0284c7;
+        color: #006B5F;
       }
 
       &.icon-prescription {
@@ -527,8 +527,8 @@
         }
 
         &.badge-status-planned {
-          background: #e0f2fe;
-          color: #0369a1;
+          background: #E6F7F4;
+          color: #00554B;
         }
       }
 
@@ -582,7 +582,7 @@
       .doctor-spec {
         font-size: 0.875rem;
         font-weight: 600;
-        color: #0284c7;
+        color: #006B5F;
       }
 
       .rdv-motif {
@@ -759,7 +759,7 @@
 
       .cons-spec {
         font-size: 0.8rem;
-        color: #0284c7;
+        color: #006B5F;
         font-weight: 600;
       }
 

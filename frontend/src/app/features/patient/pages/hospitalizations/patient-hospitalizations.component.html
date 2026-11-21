@@ -18,7 +18,7 @@
       </div>
     </div>
 
-    <!-- Petit indicateur du nombre de séjours -->
+    <!-- Indicateurs synthétiques -->
     <div class="header-stat-pill">
       @if (activeHospitalization()) {
         <span class="active-stay-pill">
@@ -50,23 +50,36 @@
   }
 
   <!-- =========================================================================
-       B. HOSPITALISATION ACTUELLE (CARTE COMPACTE, BLANCHE AVEC ACCENT VERT)
+       B. HOSPITALISATION ACTUELLE (DONNÉES CLINIQUES COMPLÈTES ET LISIBLES)
        ========================================================================= -->
   @if (activeHospitalization(); as activeHosp) {
     <section class="current-hospitalization-section" aria-label="Hospitalisation en cours">
       <div class="active-stay-card">
-        <!-- Bandeau supérieur de la carte active -->
+        <!-- Bandeau supérieur avec statut et badges de priorité/durée -->
         <div class="active-card-topbar">
-          <div class="status-badge-live">
-            <span class="live-dot"></span>
-            <span class="live-label">HOSPITALISATION EN COURS</span>
+          <div class="topbar-left-badges">
+            <div class="status-badge-live">
+              <span class="live-dot"></span>
+              <span class="live-label">HOSPITALISATION EN COURS</span>
+            </div>
+            <span class="priority-pill" [ngClass]="getPriorityBadgeClass(getPriority(activeHosp))">
+              {{ getPriorityLabel(getPriority(activeHosp)) }}
+            </span>
           </div>
 
-          <div class="entry-date-tag">
-            <svg class="w-4 h-4 text-emerald-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            <span>Admis le <strong>{{ formatAdmissionDate(activeHosp.date_entree || activeHosp.dateEntree) }}</strong></span>
+          <div class="topbar-right-meta">
+            <span class="stay-duration-tag">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Jour <strong>{{ getStayDurationDays(activeHosp.date_entree || activeHosp.dateEntree) }}</strong> d'hospitalisation</span>
+            </span>
+            <div class="entry-date-tag">
+              <svg class="w-4 h-4 text-emerald-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span>Admis le <strong>{{ formatAdmissionDate(activeHosp.date_entree || activeHosp.dateEntree) }}</strong></span>
+            </div>
           </div>
         </div>
 
@@ -77,9 +90,9 @@
             <h2 class="active-motif-title">{{ activeHosp.motif || 'Séjour médicalisé' }}</h2>
           </div>
 
-          <!-- Grille d'informations pratiques et lisibles -->
+          <!-- Grille d'informations pratiques 100% lisibles et exploitables -->
           <div class="active-info-grid">
-            <!-- Médecin responsable -->
+            <!-- Médecin responsable (nom complet du praticien + spécialité) -->
             <div class="info-cell">
               <div class="cell-icon-wrap icon-doctor">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -89,13 +102,11 @@
               <div class="cell-text">
                 <span class="cell-label">Médecin responsable</span>
                 <strong class="cell-val">{{ getDoctorName(activeHosp) }}</strong>
-                @if (activeHosp.medecin_details?.specialite) {
-                  <span class="cell-sub">{{ activeHosp.medecin_details?.specialite }}</span>
-                }
+                <span class="cell-sub">{{ getDoctorSpecialty(activeHosp) }}</span>
               </div>
             </div>
 
-            <!-- Service hospitalier -->
+            <!-- Service hospitalier & Bâtiment -->
             <div class="info-cell">
               <div class="cell-icon-wrap icon-service">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -105,27 +116,25 @@
               <div class="cell-text">
                 <span class="cell-label">Service hospitalier</span>
                 <strong class="cell-val">{{ getServiceName(activeHosp) }}</strong>
-                <span class="cell-sub">Centre Hospitalier</span>
+                <span class="cell-sub">{{ getHospitalFacility(activeHosp) }}</span>
               </div>
             </div>
 
-            <!-- Chambre & Lit (uniquement si disponibles) -->
-            @if (hasRoomOrBed(activeHosp)) {
-              <div class="info-cell">
-                <div class="cell-icon-wrap icon-bed">
-                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v11m0-4h18m0 4V7m0 4H7a2 2 0 00-2 2v1m16-3a2 2 0 00-2-2h-3a2 2 0 00-2 2v1M7 9a2 2 0 110-4 2 2 0 010 4z" />
-                  </svg>
-                </div>
-                <div class="cell-text">
-                  <span class="cell-label">Affectation actuelle</span>
-                  <strong class="cell-val">{{ getRoomBedLabel(activeHosp) }}</strong>
-                  <span class="cell-sub">Localisation chambre</span>
-                </div>
+            <!-- Chambre & Lit (libellé complet sans troncature) -->
+            <div class="info-cell">
+              <div class="cell-icon-wrap icon-bed">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v11m0-4h18m0 4V7m0 4H7a2 2 0 00-2 2v1m16-3a2 2 0 00-2-2h-3a2 2 0 00-2 2v1M7 9a2 2 0 110-4 2 2 0 010 4z" />
+                </svg>
               </div>
-            }
+              <div class="cell-text">
+                <span class="cell-label">Affectation actuelle</span>
+                <strong class="cell-val">{{ getRoomBedLabel(activeHosp) }}</strong>
+                <span class="cell-sub">Localisation chambre & lit</span>
+              </div>
+            </div>
 
-            <!-- Référence séjour -->
+            <!-- Référence séjour informatisée -->
             <div class="info-cell">
               <div class="cell-icon-wrap icon-ref">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -134,13 +143,54 @@
               </div>
               <div class="cell-text">
                 <span class="cell-label">Dossier de séjour</span>
-                <strong class="cell-val font-mono">#ADM-{{ activeHosp.id_admission || activeHosp.id }}</strong>
+                <strong class="cell-val font-mono">#ADM-{{ activeHosp.id_admission || activeHosp.idAdmission || activeHosp.idHospitalisation || activeHosp.id }}</strong>
                 <span class="cell-sub">Suivi informatisé</span>
               </div>
             </div>
           </div>
 
-          <!-- Instructions médicales si elles existent (Contraste élevé et net) -->
+          <!-- Alerte médicale : Allergies connues du patient (sécurité du patient) -->
+          @if (getAllergies(activeHosp); as allergies) {
+            <div class="clinical-alert-box alert-allergies">
+              <div class="alert-icon">
+                <svg class="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div class="alert-content">
+                <strong class="alert-title">Alerte médicale — Allergies déclarées :</strong>
+                <span class="alert-desc">{{ allergies }}</span>
+              </div>
+            </div>
+          }
+
+          <!-- Synthèse clinique d'admission (Diagnostic, Symptômes, Traitements) -->
+          @if (getDiagnostic(activeHosp) || getSymptoms(activeHosp) || getTreatments(activeHosp)) {
+            <div class="clinical-details-panel">
+              <div class="clinical-grid">
+                @if (getDiagnostic(activeHosp); as diag) {
+                  <div class="clinical-card">
+                    <span class="clinical-tag">Diagnostic d'admission</span>
+                    <p class="clinical-val">{{ diag }}</p>
+                  </div>
+                }
+                @if (getSymptoms(activeHosp); as symp) {
+                  <div class="clinical-card">
+                    <span class="clinical-tag">Symptômes constatés</span>
+                    <p class="clinical-val">{{ symp }}</p>
+                  </div>
+                }
+                @if (getTreatments(activeHosp); as trt) {
+                  <div class="clinical-card">
+                    <span class="clinical-tag">Traitements en cours</span>
+                    <p class="clinical-val">{{ trt }}</p>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Instructions médicales de l'équipe soignante -->
           @if (getCleanInstructions(activeHosp.observation); as instructions) {
             <div class="active-instructions-box">
               <div class="inst-icon-badge">
@@ -171,7 +221,7 @@
       </div>
     </div>
 
-    <!-- État de chargement (Skeleton cards élégants) -->
+    <!-- État de chargement (Skeleton cards) -->
     @if (isLoading()) {
       <div class="skeleton-container" aria-busy="true">
         <div class="skeleton-card"></div>
@@ -205,16 +255,21 @@
             <!-- En-tête de la carte de séjour -->
             <div class="history-card-header">
               <div class="header-tags">
-                <span class="dossier-pill font-mono">Dossier #{{ h.id_admission || h.id }}</span>
+                <span class="dossier-pill font-mono">Dossier #{{ h.id_admission || h.idAdmission || h.idHospitalisation || h.id }}</span>
                 <span class="status-badge" [ngClass]="getStatusBadgeClass(h.statut)">
                   @if (h.statut === 'EN_COURS') {
                     <span class="mini-status-dot"></span>
                   }
                   {{ getStatusLabel(h.statut) }}
                 </span>
+                @if (getPriority(h) !== 'NORMAL') {
+                  <span class="priority-pill" [ngClass]="getPriorityBadgeClass(getPriority(h))">
+                    {{ getPriorityLabel(getPriority(h)) }}
+                  </span>
+                }
               </div>
 
-              <!-- Période du séjour : règle stricte pas de 'En cours' comme date de sortie -->
+              <!-- Période du séjour -->
               <div class="period-pill">
                 <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -240,13 +295,13 @@
                     <span class="doc-icon-circle">Dr</span>
                     <div class="doc-meta">
                       <strong class="doc-fullname">{{ getDoctorName(h) }}</strong>
-                      <span class="doc-spec">{{ h.medecin_details?.specialite || 'Médecine hospitalière' }}</span>
+                      <span class="doc-spec">{{ getDoctorSpecialty(h) }}</span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <!-- Badges de détail : Service, Chambre et Lit si disponibles -->
+              <!-- Badges de détail : Service, Chambre et Lit -->
               <div class="chips-row">
                 <div class="stay-chip">
                   <span class="chip-k">Service :</span>
@@ -260,6 +315,14 @@
                   </div>
                 }
               </div>
+
+              <!-- Diagnostic ou alertes s'ils sont renseignés -->
+              @if (getDiagnostic(h); as diag) {
+                <div class="history-diag-line">
+                  <span class="diag-label">Diagnostic :</span>
+                  <span class="diag-text">{{ diag }}</span>
+                </div>
+              }
 
               <!-- Notes de prise en charge si présentes -->
               @if (getCleanInstructions(h.observation); as cleanObs) {

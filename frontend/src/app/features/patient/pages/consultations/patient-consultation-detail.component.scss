@@ -22,7 +22,7 @@
     gap: 0.5rem;
     font-size: 0.9rem;
     font-weight: 600;
-    color: #0d9488;
+    color: #006B5F;
     text-decoration: none;
     transition: color 0.2s;
 
@@ -32,7 +32,7 @@
     }
 
     &:hover {
-      color: #0f766e;
+      color: #006B5F;
     }
   }
 
@@ -50,18 +50,18 @@
     font-size: 0.875rem;
     font-weight: 700;
     color: #ffffff;
-    background: linear-gradient(135deg, #0284c7, #0369a1);
+    background: linear-gradient(135deg, #006B5F, #00554B);
     border: none;
     padding: 0.55rem 1.15rem;
     border-radius: 0.65rem;
     cursor: pointer;
-    box-shadow: 0 3px 10px rgba(2, 132, 199, 0.25);
+    box-shadow: 0 3px 10px rgba(0, 107, 95, 0.25);
     transition: all 0.2s ease;
 
     &:hover:not(:disabled) {
-      background: linear-gradient(135deg, #0369a1, #075985);
+      background: linear-gradient(135deg, #00554B, #00453B);
       transform: translateY(-1px);
-      box-shadow: 0 5px 14px rgba(2, 132, 199, 0.35);
+      box-shadow: 0 5px 14px rgba(0, 107, 95, 0.35);
     }
 
     &:disabled {
@@ -165,7 +165,7 @@
     justify-content: space-between;
     align-items: flex-start;
     padding-bottom: 1.5rem;
-    border-bottom: 2px solid #0d9488;
+    border-bottom: 2px solid #006B5F;
     margin-bottom: 1.75rem;
     flex-wrap: wrap;
     gap: 1rem;
@@ -179,7 +179,7 @@
         width: 3rem;
         height: 3rem;
         background-color: #f0fdfa;
-        color: #0d9488;
+        color: #006B5F;
         border-radius: 0.75rem;
         display: flex;
         align-items: center;
@@ -213,7 +213,7 @@
       .report-number {
         font-size: 0.85rem;
         font-weight: 700;
-        background-color: #0d9488;
+        background-color: #006B5F;
         color: #ffffff;
         padding: 0.25rem 0.65rem;
         border-radius: 0.4rem;
@@ -250,7 +250,7 @@
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.05em;
-        color: #0d9488;
+        color: #006B5F;
         display: block;
         margin-bottom: 0.35rem;
       }
@@ -294,7 +294,7 @@
         gap: 0.5rem;
 
         &.diagnostic-badge {
-          color: #0f766e;
+          color: #006B5F;
         }
       }
 
@@ -367,9 +367,9 @@
       gap: 0.5rem;
       font-size: 0.875rem;
       font-weight: 600;
-      color: #0d9488;
+      color: #006B5F;
       background-color: #f0fdfa;
-      border: 1px solid #ccfbf1;
+      border: 1px solid #E6F7F4;
       padding: 0.6rem 1rem;
       border-radius: 0.65rem;
       text-decoration: none;
@@ -381,8 +381,8 @@
       }
 
       &:hover {
-        background-color: #ccfbf1;
-        color: #0f766e;
+        background-color: #E6F7F4;
+        color: #006B5F;
       }
     }
   }

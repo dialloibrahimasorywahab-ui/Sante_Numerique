@@ -3,6 +3,12 @@ export type UserRole = 'ADMINISTRATEUR' | 'MEDECIN' | 'INFIRMIER' | 'PATIENT';
 export interface User {
   id_user: number;
   idUser?: number;
+  id_patient?: number;
+  idPatient?: number;
+  patient_id?: number;
+  patientId?: number;
+  id_medecin?: number;
+  idMedecin?: number;
   nom: string;
   prenom: string;
   email: string;

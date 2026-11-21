@@ -277,7 +277,7 @@ export class ServicesService {
       displayNom: meta?.nomClair || item.nom_service_display || item.nom_service,
       displayDesc: item.description && item.description.length > 20
         ? item.description
-        : (meta?.desc || `Prise en charge spécialisée et soins de qualité au sein du service de ${item.nom_service_display || item.nom_service}.`),
+        : (meta?.desc || `Prise en charge spécialisée et soins de qualité au sein de ce service.`),
       badgeCountMedecins: this.countDoctorsForService(code)
     };
   }

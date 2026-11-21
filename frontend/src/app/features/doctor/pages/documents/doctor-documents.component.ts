@@ -126,13 +126,18 @@ export class DoctorDocumentsComponent implements OnInit {
       next: () => {
         this.isSubmitting.set(false);
         this.uploadSuccessMessage.set('Examen chiffré (AES-256) et enregistré au dossier patient avec succès.');
+        this.loadDocuments();
         setTimeout(() => {
           this.closeUploadModal();
         }, 1200);
       },
       error: (err) => {
         this.isSubmitting.set(false);
-        this.uploadErrorMessage.set(err?.error?.error || 'Erreur lors du versement du document.');
+        const errMsg = err?.error?.error
+          || err?.error?.detail
+          || (typeof err?.error === 'object' ? Object.values(err.error).flat().join(' ') : null)
+          || 'Erreur lors du versement du document.';
+        this.uploadErrorMessage.set(errMsg);
       }
     });
   }

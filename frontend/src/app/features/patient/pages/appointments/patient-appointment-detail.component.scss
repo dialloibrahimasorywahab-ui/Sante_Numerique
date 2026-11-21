@@ -17,7 +17,7 @@
     gap: 0.5rem;
     font-size: 0.9rem;
     font-weight: 600;
-    color: #0d9488;
+    color: #006B5F;
     text-decoration: none;
     transition: color 0.2s;
 
@@ -27,7 +27,7 @@
     }
 
     &:hover {
-      color: #0f766e;
+      color: #006B5F;
     }
   }
 }
@@ -129,7 +129,7 @@
       .ref-badge {
         font-size: 0.8rem;
         font-weight: 700;
-        background-color: #0d9488;
+        background-color: #006B5F;
         color: #ffffff;
         padding: 0.25rem 0.6rem;
         border-radius: 0.5rem;
@@ -156,8 +156,8 @@
         color: #065f46;
       }
       &.status-planned {
-        background-color: #e0f2fe;
-        color: #0369a1;
+        background-color: #E6F7F4;
+        color: #00554B;
       }
       &.status-completed {
         background-color: #f1f5f9;
@@ -178,7 +178,7 @@
     display: flex;
     flex-direction: column;
     background-color: #f0fdfa;
-    border-bottom: 1px solid #ccfbf1;
+    border-bottom: 1px solid #E6F7F4;
     padding: 1.25rem 1.75rem;
     gap: 1rem;
 
@@ -198,7 +198,7 @@
         width: 2.75rem;
         height: 2.75rem;
         background-color: #ffffff;
-        color: #0d9488;
+        color: #006B5F;
         border-radius: 9999px;
         display: flex;
         align-items: center;
@@ -216,7 +216,7 @@
         font-size: 0.75rem;
         font-weight: 600;
         text-transform: uppercase;
-        color: #0f766e;
+        color: #006B5F;
         letter-spacing: 0.05em;
       }
 
@@ -269,7 +269,7 @@
         svg {
           width: 1.2rem;
           height: 1.2rem;
-          color: #0d9488;
+          color: #006B5F;
         }
       }
 
@@ -286,7 +286,7 @@
           width: 3.5rem;
           height: 3.5rem;
           border-radius: 9999px;
-          background: linear-gradient(135deg, #0d9488 0%, #065f46 100%);
+          background: linear-gradient(135deg, #006B5F 0%, #065f46 100%);
           color: #ffffff;
           font-size: 1.15rem;
           font-weight: 700;
@@ -313,8 +313,8 @@
           .service-pill {
             display: inline-block;
             font-size: 0.75rem;
-            background-color: #ccfbf1;
-            color: #0f766e;
+            background-color: #E6F7F4;
+            color: #006B5F;
             font-weight: 600;
             padding: 0.2rem 0.55rem;
             border-radius: 9999px;
@@ -337,7 +337,7 @@
           svg {
             width: 1.1rem;
             height: 1.1rem;
-            color: #0d9488;
+            color: #006B5F;
           }
         }
       }

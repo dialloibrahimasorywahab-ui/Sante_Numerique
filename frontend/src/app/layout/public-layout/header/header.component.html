@@ -1,151 +1,168 @@
 <header class="site-header no-print">
-  <div class="container header-inner">
+  <div class="header-container">
     
-    <!-- Logo & Nom de l'hôpital + Nom du compte -->
-    <a routerLink="/" class="brand-logo" role="button">
-      <div class="logo-icon-wrap">
+    <!-- GAUCHE : Logo + Nom Hôpital + Nom Utilisateur Connecté -->
+    <a routerLink="/" class="brand-link" (click)="closeAllMenus()">
+      <div class="brand-logo-icon">
         <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" class="logo-svg">
-          <rect x="15" y="4" width="10" height="32" rx="3" fill="#055A52" />
-          <rect x="4" y="15" width="32" height="10" rx="3" fill="#055A52" />
-          <path d="M20 25.5C20 25.5 14 20.8 14 17.5C14 15.5 15.5 14 17.5 14C18.7 14 19.6 14.6 20 15.3C20.4 14.6 21.3 14 22.5 14C24.5 14 26 15.5 26 17.5C26 20.8 20 25.5 20 25.5Z" fill="#38BDF8" />
+          <!-- Croix médicale verte -->
+          <rect x="15" y="4" width="10" height="32" rx="3" fill="#00796B" />
+          <rect x="4" y="15" width="32" height="10" rx="3" fill="#00796B" />
+          <!-- Tracé cardiogramme blanc central -->
+          <path d="M7 20H13L16 11L21 28L25 15L27 20H33" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </div>
-      <div class="brand-texts">
-        <div class="brand-name-row">
-          <span class="brand-name-main">SANTÉ</span>
-          <span class="brand-name-sub">NUMÉRIQUE</span>
-        </div>
-        
-        <!-- Nom du compte connecté en bas du nom de l'hôpital -->
+
+      <div class="brand-details">
+        <div class="brand-title">SANTÉ NUMÉRIQUE</div>
         @if (authService.isAuthenticated() && authService.currentUser()) {
-          <span class="brand-account-name">
-            <span class="user-status-dot"></span>
-            {{ authService.currentUser()?.prenom }} {{ authService.currentUser()?.nom }}
-          </span>
-        } @else {
-          <span class="brand-tagline">Votre santé, notre priorité</span>
+          <div class="brand-user-pill">
+            <span class="user-live-dot"></span>
+            <span class="user-full-name">{{ authService.currentUser()?.prenom }} {{ authService.currentUser()?.nom }}</span>
+          </div>
         }
       </div>
     </a>
 
-    <!-- Center Navigation Links -->
-    <nav class="nav-links" [class.open]="isMobileMenuOpen">
-      <!-- Section utilisateur dans le menu mobile -->
-      <div class="mobile-drawer-auth">
-        @if (!authService.isAuthenticated()) {
-          <div class="mobile-auth-guest">
-            <a routerLink="/login" class="btn-drawer-auth btn-drawer-login" (click)="isMobileMenuOpen = false">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-                <polyline points="10 17 15 12 10 7" />
-                <line x1="15" y1="12" x2="3" y2="12" />
-              </svg>
-              <span>Se connecter</span>
-            </a>
-            <a routerLink="/register" class="btn-drawer-auth btn-drawer-register" (click)="isMobileMenuOpen = false">
-              Créer un compte
-            </a>
-          </div>
-        } @else {
-          <div class="mobile-user-badge">
-            <div class="drawer-user-avatar">
-              {{ authService.currentUser()?.prenom?.charAt(0) || 'U' }}
-            </div>
-            <div class="drawer-user-details">
-              <span class="drawer-user-name">{{ authService.currentUser()?.prenom }} {{ authService.currentUser()?.nom }}</span>
-              <span class="drawer-user-role">{{ authService.currentUser()?.role }}</span>
-            </div>
-          </div>
-          <div class="mobile-user-actions">
-            <a [routerLink]="authService.getDashboardRouteForRole(authService.currentUser()?.role)" class="btn-drawer-auth btn-drawer-space" (click)="isMobileMenuOpen = false">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                <polyline points="9 22 9 12 15 12 15 22" />
-              </svg>
-              <span>Mon espace</span>
-            </a>
-            <button type="button" class="btn-drawer-auth btn-drawer-logout" (click)="onLogout()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                <polyline points="16 17 21 12 16 7" />
-                <line x1="21" y1="12" x2="9" y2="12" />
-              </svg>
-              <span>Déconnexion</span>
-            </button>
+    <!-- CENTRE : Navigation principale (Desktop) -->
+    <nav class="nav-menu" [class.mobile-open]="isMobileMenuOpen">
+      <!-- Accueil (Pilule active) -->
+      <a routerLink="/" 
+         routerLinkActive="pill-active" 
+         [routerLinkActiveOptions]="{ exact: true }"
+         class="nav-link" 
+         (click)="closeAllMenus()">
+        Accueil
+      </a>
+
+      <!-- Services avec menu déroulant -->
+      <div class="nav-dropdown-wrapper">
+        <button type="button" 
+                class="nav-link nav-dropdown-btn" 
+                [class.dropdown-open]="isServicesDropdownOpen()"
+                (click)="toggleServicesDropdown($event)">
+          <span>Services</span>
+          <svg class="chevron-icon" [class.rotate]="isServicesDropdownOpen()" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+          </svg>
+        </button>
+
+        @if (isServicesDropdownOpen()) {
+          <div class="dropdown-panel shadow-lg">
+            @for (srv of servicesList; track srv.nom) {
+              <a [routerLink]="srv.route"
+                 [queryParams]="srv.search ? { search: srv.search } : {}"
+                 class="dropdown-item"
+                 (click)="closeAllMenus()">
+                {{ srv.nom }}
+              </a>
+            }
           </div>
         }
       </div>
 
-      <!-- Liens de navigation du site -->
-      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-item" (click)="isMobileMenuOpen = false">Accueil</a>
-      <a routerLink="/services" routerLinkActive="active" class="nav-item" (click)="isMobileMenuOpen = false">Services</a>
-      <a routerLink="/medecins" routerLinkActive="active" class="nav-item" (click)="isMobileMenuOpen = false">Médecins</a>
-      <button class="nav-item" (click)="onNavigate('a-propos')">À propos</button>
-      <a routerLink="/actualites" routerLinkActive="active" class="nav-item" (click)="isMobileMenuOpen = false">Actualités</a>
-      <button class="nav-item" (click)="onNavigate('contact')">Contact</button>
-    </nav>
-
-    <!-- Right Header Actions (Desktop & Mobile) -->
-    <div class="header-right">
-      <!-- Phone link (desktop only) -->
-      <a href="tel:+224627684702" class="header-phone" title="Contactez-nous">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="phone-icon">
-          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-        </svg>
-        <span class="phone-text">+224 627 68 47 02</span>
+      <!-- Médecins -->
+      <a routerLink="/medecins" 
+         routerLinkActive="nav-link-active" 
+         class="nav-link" 
+         (click)="closeAllMenus()">
+        Médecins
       </a>
 
-      <!-- Desktop Auth Actions (masqués sur mobile/tablette car intégrés dans le menu burger) -->
-      @if (!authService.isAuthenticated()) {
-        <a routerLink="/login" class="btn btn-login-header desktop-only-auth">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="auth-btn-icon">
-            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-            <polyline points="10 17 15 12 10 7" />
-            <line x1="15" y1="12" x2="3" y2="12" />
+      <!-- À propos -->
+      <button type="button" 
+              class="nav-link nav-btn-link" 
+              (click)="onNavigate('hero')">
+        À propos
+      </button>
+
+      <!-- Actualités -->
+      <a routerLink="/actualites" 
+         routerLinkActive="nav-link-active" 
+         class="nav-link" 
+         (click)="closeAllMenus()">
+        Actualités
+      </a>
+
+      <!-- Contact -->
+      <button type="button" 
+              class="nav-link nav-btn-link" 
+              (click)="onNavigate('footer')">
+        Contact
+      </button>
+    </nav>
+
+    <!-- DROITE : Téléphone + Espace / Déconnexion + Prendre rendez-vous -->
+    <div class="header-actions">
+      <!-- Icône téléphone -->
+      <a href="tel:+224627684702" 
+         class="header-phone-btn" 
+         title="Urgence & Contact : +224 627 68 47 02">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="phone-svg">
+          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+        </svg>
+      </a>
+
+      <!-- Si connecté -->
+      @if (authService.isAuthenticated()) {
+        <!-- Mon espace -->
+        <a [routerLink]="authService.getDashboardRouteForRole(authService.currentUser()?.role)" 
+           class="btn-header-outline" 
+           title="Accéder à mon espace">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <polyline points="9 22 9 12 15 12 15 22" />
           </svg>
-          <span>Se connecter</span>
+          <span class="btn-label">Mon espace</span>
         </a>
+
+        <!-- Déconnexion -->
+        <button type="button" 
+                (click)="onLogout()" 
+                class="btn-header-outline btn-logout" 
+                title="Se déconnecter">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+          <span class="btn-label">Déconnexion</span>
+        </button>
       } @else {
-        <div class="user-auth-menu desktop-only-auth">
-          <a [routerLink]="authService.getDashboardRouteForRole(authService.currentUser()?.role)" class="btn btn-user-space" title="Accéder à mon espace personnel">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="space-icon">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-              <polyline points="9 22 9 12 15 12 15 22" />
-            </svg>
-            <span>Mon espace</span>
-          </a>
-          <button type="button" (click)="onLogout()" class="btn btn-logout-header" title="Se déconnecter">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="logout-icon">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-              <polyline points="16 17 21 12 16 7" />
-              <line x1="21" y1="12" x2="9" y2="12" />
-            </svg>
-            <span class="logout-label">Déconnexion</span>
-          </button>
-        </div>
+        <!-- Se connecter -->
+        <a routerLink="/login" 
+           class="btn-header-outline" 
+           title="Se connecter">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
+          <span class="btn-label">Connexion</span>
+        </a>
       }
 
-      <!-- Bouton Prendre RDV (toujours visible et adapté) -->
-      <a routerLink="/rendez-vous" class="btn btn-teal btn-header-rdv" title="Prendre rendez-vous" aria-label="Prendre rendez-vous">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="rdv-icon">
-          <rect x="3" y="4" width="18" height="17" rx="2" />
+      <!-- Bouton principal Prendre rendez-vous -->
+      <a routerLink="/rendez-vous" 
+         class="btn-header-primary" 
+         title="Prendre rendez-vous">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
           <line x1="16" y1="2" x2="16" y2="6" />
           <line x1="8" y1="2" x2="8" y2="6" />
           <line x1="3" y1="10" x2="21" y2="10" />
-          <line x1="8" y1="14" x2="8" y2="14" />
-          <line x1="12" y1="14" x2="12" y2="14" />
-          <line x1="16" y1="14" x2="16" y2="14" />
         </svg>
-        <span class="rdv-label-full">Prendre rendez-vous</span>
-        <span class="rdv-label-short">Prendre RDV</span>
+        <span class="btn-primary-text">Prendre rendez-vous</span>
       </a>
 
-      <!-- Mobile Menu Toggle -->
-      <button class="mobile-toggle" (click)="toggleMobileMenu()" aria-label="Menu de navigation" [class.is-active]="isMobileMenuOpen">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <!-- Hamburger toggle mobile -->
+      <button type="button" 
+              class="mobile-burger-btn" 
+              (click)="toggleMobileMenu()" 
+              aria-label="Menu principal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="burger-icon">
           @if (!isMobileMenuOpen) {
-            <line x1="3" y1="12" x2="21" y2="12"></line>
             <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
             <line x1="3" y1="18" x2="21" y2="18"></line>
           } @else {
             <line x1="18" y1="6" x2="6" y2="18"></line>

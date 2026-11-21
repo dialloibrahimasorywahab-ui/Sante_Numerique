@@ -18,7 +18,7 @@ export class ServiceDetailComponent implements OnInit {
   private servicesService = inject(ServicesService);
   hospitalService = inject(HospitalService);
 
-  serviceId = signal<number | null>(null);
+  serviceId = signal<number | string | null>(null);
   service = signal<ServiceDetailExtended | null>(null);
   isLoading = signal<boolean>(true);
   errorMessage = signal<string | null>(null);
@@ -51,7 +51,7 @@ export class ServiceDetailComponent implements OnInit {
     this.route.paramMap.subscribe(params => {
       const idParam = params.get('id');
       if (idParam) {
-        const id = parseInt(idParam, 10);
+        const id = isNaN(Number(idParam)) ? idParam : parseInt(idParam, 10);
         this.serviceId.set(id);
         this.loadServiceDetail(id);
       } else {
@@ -61,7 +61,7 @@ export class ServiceDetailComponent implements OnInit {
     });
   }
 
-  loadServiceDetail(id: number): void {
+  loadServiceDetail(id: number | string): void {
     this.isLoading.set(true);
     this.errorMessage.set(null);
 

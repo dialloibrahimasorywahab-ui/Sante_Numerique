@@ -105,6 +105,7 @@ export interface HospitalisationDto {
   id: number;
   idHospitalisation?: number;
   id_admission?: number;
+  idAdmission?: number;
   patient: number;
   patient_details?: PatientRecord;
   medecin: number;
@@ -132,10 +133,18 @@ export interface HospitalisationDto {
   batimentNom?: string;
   service_nom?: string;
   serviceNom?: string;
+  service_details?: any;
+  serviceDetails?: any;
   priorite?: string;
   statut_display?: string;
+  statutDisplay?: string;
   symptomes?: string;
   diagnostic_provisoire?: string;
+  diagnosticProvisoire?: string;
+  allergies?: string;
+  antecedents?: string;
+  traitements_en_cours?: string;
+  traitementsEnCours?: string;
   dateEntree?: string;
   dateSortie?: string | null;
   motif: string;

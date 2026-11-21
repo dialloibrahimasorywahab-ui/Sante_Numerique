@@ -8,16 +8,24 @@ export const patientRoutes: Routes = [
     children: [
       {
         path: '',
-        redirectTo: 'dashboard',
+        redirectTo: 'espace-services',
         pathMatch: 'full'
       },
       {
         path: 'dashboard',
         loadComponent: () =>
-          import('./pages/dashboard/patient-dashboard.component').then(
-            m => m.PatientDashboardComponent
+          import('./pages/espace-services/patient-espace-services.component').then(
+            m => m.PatientEspaceServicesComponent
           ),
-        title: 'Tableau de bord — Espace Patient'
+        title: 'Espace Services — Santé Numérique'
+      },
+      {
+        path: 'espace-services',
+        loadComponent: () =>
+          import('./pages/espace-services/patient-espace-services.component').then(
+            m => m.PatientEspaceServicesComponent
+          ),
+        title: 'Espace Services — Santé Numérique'
       },
       {
         path: 'rendez-vous',

@@ -358,13 +358,14 @@ export class DoctorHospitalisationsComponent implements OnInit {
     return parts.length > 0 ? parts.join(' — ') : 'Lit non assigné';
   }
 
-  getDoctorName(hosp: DoctorHospitalisationDto): string {
-    if (hosp.medecin_nom) return hosp.medecin_nom;
-    if (hosp.medecinNom) return hosp.medecinNom;
-    if (hosp.medecin_details?.prenom || hosp.medecin_details?.nom) {
-      return `Dr. ${hosp.medecin_details.prenom || ''} ${hosp.medecin_details.nom || ''}`.trim();
+  getDoctorName(hosp: DoctorHospitalisationDto | any): string {
+    if (hosp.medecinNom && !hosp.medecinNom.includes('#')) return hosp.medecinNom;
+    if (hosp.medecin_nom && !hosp.medecin_nom.includes('#')) return hosp.medecin_nom;
+    const m = hosp.medecinDetails || hosp.medecin_details;
+    if (m?.prenom || m?.nom) {
+      return `Dr. ${m.prenom || ''} ${m.nom || ''}`.trim();
     }
-    return 'Médecin assigné';
+    return 'Dr. Praticien assigné';
   }
 
   getStatusBadgeClass(statut: string): string {

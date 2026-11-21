@@ -158,15 +158,28 @@ class HospitalisationReadSerializer(serializers.ModelSerializer):
     statut_display = serializers.CharField(source='get_statut_display', read_only=True)
 
     def get_patient_nom(self, obj):
-        if obj.patient and obj.patient.id_utilisateur:
-            p = obj.patient.id_utilisateur
-            return f"{p.prenom} {p.nom}".strip()
-        return ""
+        if obj.patient:
+            if obj.patient.id_utilisateur:
+                p = obj.patient.id_utilisateur
+                full = f"{p.prenom} {p.nom}".strip()
+                if full:
+                    return full
+            if getattr(obj.patient, 'nom', None) or getattr(obj.patient, 'prenom', None):
+                full = f"{getattr(obj.patient, 'prenom', '')} {getattr(obj.patient, 'nom', '')}".strip()
+                if full:
+                    return full
+        return "Patient"
 
     def get_medecin_nom(self, obj):
-        if obj.medecin and obj.medecin.id_utilisateur:
-            m = obj.medecin.id_utilisateur
-            return f"Dr. {m.prenom} {m.nom}".strip()
+        if obj.medecin:
+            if obj.medecin.id_utilisateur:
+                m = obj.medecin.id_utilisateur
+                full = f"{m.prenom} {m.nom}".strip()
+                if full:
+                    return f"Dr. {full}"
+                if getattr(m, 'username', None):
+                    return f"Dr. {m.username}"
+            return "Dr. Praticien Hospitalier"
         return "Non assigné"
 
     def get_chambre_numero(self, obj):
@@ -203,6 +216,16 @@ class HospitalisationReadSerializer(serializers.ModelSerializer):
         ret['antecedents'] = antecedents_match.group(1).strip() if antecedents_match else ''
         ret['allergies'] = allergies_match.group(1).strip() if allergies_match else ''
         ret['traitements_en_cours'] = traitements_match.group(1).strip() if traitements_match else ''
+
+        # Alias explicites pour compatibilité totale camelCase et snake_case
+        ret['medecinNom'] = ret.get('medecin_nom')
+        ret['patientNom'] = ret.get('patient_nom')
+        ret['chambreNumero'] = ret.get('chambre_numero')
+        ret['litNumero'] = ret.get('lit_numero')
+        ret['batimentNom'] = ret.get('batiment_nom')
+        ret['serviceNom'] = ret.get('service_nom')
+        ret['diagnosticProvisoire'] = ret.get('diagnostic_provisoire')
+        ret['traitementsEnCours'] = ret.get('traitements_en_cours')
         return ret
 
     class Meta:

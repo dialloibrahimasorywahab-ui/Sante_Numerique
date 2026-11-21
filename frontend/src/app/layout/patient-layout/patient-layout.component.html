@@ -6,189 +6,244 @@
   }
 
   <!-- =========================================================================
-       SIDEBAR (DESKTOP & MOBILE DRAWER)
+       SIDEBAR FIXE (VERT FONCÉ MÉDICAL — NE DÉFILE PAS)
        ========================================================================= -->
   <aside class="patient-sidebar" [class.mobile-open]="isMobileSidebarOpen()">
 
-    <!-- Sidebar Header / Brand -->
+    <!-- Sidebar Header / Brand (Fixe en haut) -->
     <div class="sidebar-header">
-      <a routerLink="/" class="brand-link" (click)="closeMobileSidebar()">
+      <a routerLink="/patient/dashboard" class="brand-link" (click)="closeMobileSidebar()">
         <div class="logo-icon-box">
-          <svg viewBox="0 0 40 40" fill="none" class="brand-svg">
-            <rect x="15" y="4" width="10" height="32" rx="3" fill="#055A52" />
-            <rect x="4" y="15" width="32" height="10" rx="3" fill="#055A52" />
-            <path d="M20 25.5C20 25.5 14 20.8 14 17.5C14 15.5 15.5 14 17.5 14C18.7 14 19.6 14.6 20 15.3C20.4 14.6 21.3 14 22.5 14C24.5 14 26 15.5 26 17.5C26 20.8 20 25.5 20 25.5Z" fill="#38BDF8" />
+          <svg viewBox="0 0 44 44" fill="none" class="brand-svg">
+            <rect x="17" y="4" width="10" height="36" rx="5" fill="#FFFFFF" />
+            <rect x="4" y="17" width="36" height="10" rx="5" fill="#FFFFFF" />
+            <path d="M22 28C22 28 16 23.5 16 20C16 18 17.5 16.5 19.5 16.5C20.7 16.5 21.6 17.1 22 17.8C22.4 17.1 23.3 16.5 24.5 16.5C26.5 16.5 28 18 28 20C28 23.5 22 28 22 28Z" fill="#006B5F" />
           </svg>
         </div>
         <div class="brand-text-col">
-          <span class="brand-title">SANTÉ</span>
-          <span class="brand-sub">NUMÉRIQUE</span>
+          <span class="brand-title">SANTÉ NUMÉRIQUE</span>
+          <span class="brand-sub">Santé pour tous</span>
         </div>
       </a>
 
-      <!-- Close button on mobile -->
+      <!-- Bouton fermer sur mobile -->
       <button type="button" class="btn-close-mobile" (click)="closeMobileSidebar()" aria-label="Fermer le menu">
         ✕
       </button>
     </div>
 
-    <!-- Patient Short Card in Sidebar -->
-    <div class="patient-sidebar-badge">
-      <div class="badge-avatar">
-        {{ authService.currentUser()?.prenom?.charAt(0) || 'P' }}
-      </div>
-      <div class="badge-info">
-        <strong class="patient-name">{{ authService.currentUser()?.prenom }} {{ authService.currentUser()?.nom }}</strong>
-        <span class="patient-role-tag">
-          <span class="status-dot"></span>
-          Espace Patient
-        </span>
-      </div>
-    </div>
-
-    <!-- Main Navigation List -->
+    <!-- Navigation List (Fixe, ajustée à la hauteur, sans scrollbar) -->
     <nav class="sidebar-nav" aria-label="Navigation principale patient">
       <ul class="nav-list">
-        @for (item of navItems; track item.route) {
+        @for (item of navItems; track item.label) {
           <li class="nav-item">
-            <a
-              [routerLink]="item.route"
-              routerLinkActive="active"
-              [routerLinkActiveOptions]="{ exact: item.route === '/patient/dashboard' }"
-              (click)="closeMobileSidebar()"
-              class="nav-link"
-            >
-              <span class="nav-icon-wrap">
-                @switch (item.icon) {
-                  @case ('dashboard') {
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-svg">
-                      <rect x="3" y="3" width="7" height="9" rx="1" />
-                      <rect x="14" y="3" width="7" height="5" rx="1" />
-                      <rect x="14" y="12" width="7" height="9" rx="1" />
-                      <rect x="3" y="16" width="7" height="5" rx="1" />
-                    </svg>
+            @if (!item.isAction && item.route) {
+              <!-- Lien de navigation avec routerLink -->
+              <a
+                [routerLink]="item.route"
+                routerLinkActive="active"
+                [routerLinkActiveOptions]="{ exact: true }"
+                (click)="closeMobileSidebar()"
+                class="nav-link"
+              >
+                <span class="nav-icon-wrap">
+                  @switch (item.icon) {
+                    @case ('home') {
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-svg">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                        <polyline points="9 22 9 12 15 12 15 22" />
+                      </svg>
+                    }
+                    @case ('grid') {
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-svg">
+                        <rect x="3" y="3" width="7" height="7" rx="1.5" />
+                        <rect x="14" y="3" width="7" height="7" rx="1.5" />
+                        <rect x="14" y="14" width="7" height="7" rx="1.5" />
+                        <rect x="3" y="14" width="7" height="7" rx="1.5" />
+                      </svg>
+                    }
+                    @case ('calendar') {
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-svg">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                        <line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" />
+                        <line x1="3" y1="10" x2="21" y2="10" />
+                      </svg>
+                    }
+                    @case ('stethoscope') {
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-svg">
+                        <path d="M4.5 3v5a4.5 4.5 0 0 0 9 0V3" />
+                        <path d="M9 12.5v3a4 4 0 0 0 4 4h1a4 4 0 0 0 4-4v-1" />
+                        <circle cx="18" cy="10" r="2" />
+                      </svg>
+                    }
+                    @case ('folder') {
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-svg">
+                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                      </svg>
+                    }
                   }
-                  @case ('calendar') {
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-svg">
-                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                      <line x1="16" y1="2" x2="16" y2="6" />
-                      <line x1="8" y1="2" x2="8" y2="6" />
-                      <line x1="3" y1="10" x2="21" y2="10" />
-                    </svg>
+                </span>
+                <span class="nav-text">{{ item.label }}</span>
+              </a>
+            } @else {
+              <!-- Action cliquable (Notifications, Contact, Aide & FAQ) sans routerLinkActive parasite -->
+              <button
+                type="button"
+                class="nav-link btn-nav-action"
+                (click)="onActionClick(item)"
+              >
+                <span class="nav-icon-wrap">
+                  @switch (item.icon) {
+                    @case ('bell') {
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-svg">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                      </svg>
+                    }
+                    @case ('headset') {
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-svg">
+                        <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
+                        <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+                      </svg>
+                    }
+                    @case ('help') {
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-svg">
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                        <line x1="12" y1="17" x2="12.01" y2="17" />
+                      </svg>
+                    }
                   }
-                  @case ('stethoscope') {
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-svg">
-                      <path d="M4.5 3v5a4.5 4.5 0 0 0 9 0V3" />
-                      <path d="M9 12.5v3a4 4 0 0 0 4 4h1a4 4 0 0 0 4-4v-1" />
-                      <circle cx="18" cy="10" r="2" />
-                    </svg>
-                  }
-                  @case ('prescription') {
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-svg">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                      <polyline points="14 2 14 8 20 8" />
-                      <line x1="9" y1="15" x2="15" y2="15" />
-                      <line x1="12" y1="12" x2="12" y2="18" />
-                    </svg>
-                  }
-                  @case ('document') {
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-svg">
-                      <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
-                      <polyline points="13 2 13 9 20 9" />
-                    </svg>
-                  }
-                  @case ('hospital') {
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-svg">
-                      <path d="M3 21h18" />
-                      <path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16" />
-                      <path d="M9 10h6" />
-                      <path d="M12 7v6" />
-                    </svg>
-                  }
-                  @case ('user') {
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-svg">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                      <circle cx="12" cy="7" r="4" />
-                    </svg>
-                  }
+                </span>
+                <span class="nav-text">{{ item.label }}</span>
+
+                @if (item.icon === 'bell') {
+                  <span class="sidebar-notif-pill">{{ unreadCount() > 0 ? (unreadCount() > 9 ? '9+' : unreadCount()) : '3' }}</span>
                 }
-              </span>
-              <span class="nav-text">{{ item.label }}</span>
-            </a>
+              </button>
+            }
           </li>
         }
       </ul>
     </nav>
 
-    <!-- Sidebar Footer / Logout -->
-    <div class="sidebar-footer">
-      <button type="button" class="btn-sidebar-logout" (click)="onLogout()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="logout-icon">
-          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-          <polyline points="16 17 21 12 16 7" />
-          <line x1="21" y1="12" x2="9" y2="12" />
-        </svg>
-        <span>Déconnexion</span>
-      </button>
-
-      <a routerLink="/" class="back-public-link" (click)="closeMobileSidebar()">
-        ← Retour au site public
-      </a>
+    <!-- Sidebar Bottom Emblem (Fixe en bas) -->
+    <div class="sidebar-bottom-emblem">
+      <div class="emblem-card">
+        <div class="emblem-icon-box">
+          <svg viewBox="0 0 32 32" fill="none" class="emblem-svg">
+            <rect x="13" y="4" width="6" height="24" rx="3" fill="#A7F3D0" />
+            <rect x="4" y="13" width="24" height="6" rx="3" fill="#A7F3D0" />
+            <path d="M16 21C16 21 12 17.5 12 15C12 13.5 13 12.5 14.5 12.5C15.3 12.5 15.8 13 16 13.5C16.2 13 16.7 12.5 17.5 12.5C19 12.5 20 13.5 20 15C20 17.5 16 21 16 21Z" fill="#006B5F" />
+          </svg>
+        </div>
+        <span class="emblem-text">Ensemble pour une meilleure santé</span>
+      </div>
     </div>
 
   </aside>
 
   <!-- =========================================================================
-       MAIN CONTENT WRAPPER
+       MAIN CONTENT CONTAINER (SEUL CETTE ZONE PEUT DÉFILER)
        ========================================================================= -->
   <div class="patient-main-container">
 
-    <!-- Top Header Bar -->
+    <!-- Topbar (Fixe en haut de la zone de contenu) -->
     <header class="patient-topbar">
-      <div class="topbar-left">
-        <!-- Mobile hamburger toggle -->
-        <button
-          type="button"
-          class="btn-burger-toggle"
-          (click)="toggleMobileSidebar()"
-          aria-label="Ouvrir le menu de navigation"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="burger-icon">
-            <line x1="3" y1="12" x2="21" y2="12" />
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <line x1="3" y1="18" x2="21" y2="18" />
-          </svg>
-        </button>
+      <!-- Mobile hamburger toggle -->
+      <button
+        type="button"
+        class="btn-burger-toggle"
+        (click)="toggleMobileSidebar()"
+        aria-label="Ouvrir le menu de navigation"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="burger-icon">
+          <line x1="3" y1="12" x2="21" y2="12" />
+          <line x1="3" y1="6" x2="21" y2="6" />
+          <line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
 
-        <div class="portal-badge">
-          <span class="portal-tag">Portail Sécurisé</span>
-          <span class="portal-hospital">Centre Hospitalier Universitaire</span>
-        </div>
+      <!-- Champ de recherche de services -->
+      <div class="topbar-search-box">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Rechercher un service..."
+          [ngModel]="searchQuery()"
+          (input)="onSearchInput($event)"
+          (keyup.enter)="onSearchSubmit()"
+          aria-label="Rechercher un service"
+        />
       </div>
 
+      <!-- Actions à droite : Cloche & Profil -->
       <div class="topbar-right">
-        <!-- CTA Prendre Rendez-vous rapide -->
-        <a routerLink="/rendez-vous" class="btn-topbar-rdv">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
+        <!-- Cloche de notifications avec compteur -->
+        <button type="button" class="btn-topbar-bell" (click)="onActionClick({ label: 'Notifications', icon: 'bell' })" aria-label="Notifications">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="bell-svg">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
           </svg>
-          <span>Nouveau RDV</span>
-        </a>
+          <span class="bell-badge">{{ unreadCount() > 0 ? (unreadCount() > 9 ? '9+' : unreadCount()) : '3' }}</span>
+        </button>
 
-        <!-- Real-Time SSE Notification Bell -->
-        <app-notification-bell></app-notification-bell>
+        <!-- Profil utilisateur avec Dropdown -->
+        <div class="user-profile-wrapper">
+          <button type="button" class="user-profile-pill" (click)="toggleUserMenu()" [attr.aria-expanded]="isUserMenuOpen()">
+            <div class="user-avatar-wrap">
+              <img
+                src="/assets/user_avatar_patient.jpg"
+                alt="Avatar"
+                class="user-avatar-img"
+                (error)="$any($event.target).style.display='none'; fallbackAvatar.style.display='flex'"
+              />
+              <div #fallbackAvatar class="user-avatar-initials" style="display:none;">
+                {{ getUserInitials() }}
+              </div>
+            </div>
+            <div class="user-meta">
+              <span class="user-name">{{ getUserDisplayName() }}</span>
+              <span class="user-role">Patient</span>
+            </div>
+            <svg viewBox="0 0 20 20" fill="currentColor" class="user-chevron" [class.rotate]="isUserMenuOpen()">
+              <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+          </button>
 
-        <!-- User profile shortcut -->
-        <a routerLink="/patient/profil" class="topbar-user-pill" title="Accéder à mon profil">
-          <div class="user-avatar-circle">
-            {{ authService.currentUser()?.prenom?.charAt(0) || 'P' }}
-          </div>
-          <div class="user-meta-text">
-            <span class="user-full-name">{{ authService.currentUser()?.prenom }} {{ authService.currentUser()?.nom }}</span>
-            <span class="user-role-label">Dossier #{{ authService.currentUser()?.id_user }}</span>
-          </div>
-        </a>
+          <!-- Dropdown Menu -->
+          @if (isUserMenuOpen()) {
+            <div class="user-dropdown-menu" (click)="closeUserMenu()">
+              <a routerLink="/patient/profil" class="dropdown-link">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="drop-icon">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+                <span>Mon Profil</span>
+              </a>
+              <a routerLink="/patient/rendez-vous" class="dropdown-link">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="drop-icon">
+                  <rect x="3" y="4" width="18" height="18" rx="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" />
+                </svg>
+                <span>Mes Rendez-vous</span>
+              </a>
+              <div class="dropdown-divider"></div>
+              <button type="button" class="dropdown-link text-danger" (click)="onLogout()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="drop-icon">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+                <span>Déconnexion</span>
+              </button>
+            </div>
+          }
+        </div>
       </div>
     </header>
 

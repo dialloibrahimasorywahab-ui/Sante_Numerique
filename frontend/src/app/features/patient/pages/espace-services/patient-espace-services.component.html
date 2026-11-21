@@ -1,0 +1,324 @@
+<div class="espace-services-container">
+
+  <!-- =========================================================================
+       1. BANNIÈRE PRINCIPALE (IMAGE EN ARRIÈRE-PLAN FONDUE À DROITE)
+       ========================================================================= -->
+  <section class="hero-banner-section">
+    <div class="banner-card">
+
+      <!-- Arrière-plan de l'Hôpital moderne fondu à droite -->
+      <div class="banner-hospital-backdrop" aria-hidden="true">
+        <img
+          src="/assets/hospital_building.jpg"
+          alt="Santé Numérique — Centre Hospitalier Moderne"
+          class="hospital-bg-img"
+        />
+      </div>
+
+      <!-- Vague organique décorative verte en bas -->
+      <div class="organic-wave-decor" aria-hidden="true">
+        <svg viewBox="0 0 500 80" preserveAspectRatio="none" class="wave-svg">
+          <path d="M0,45 C160,85 340,10 500,45 L500,80 L0,80 Z" fill="#008F79" opacity="0.25" />
+          <path d="M0,55 C180,90 320,20 500,60 L500,80 L0,80 Z" fill="#006B5F" opacity="0.45" />
+        </svg>
+      </div>
+
+      <!-- Contenu textuel à gauche (au premier plan) -->
+      <div class="banner-content-col">
+        <!-- Badge pilule : Votre santé, notre priorité -->
+        <div class="priority-pill">
+          <svg viewBox="0 0 24 24" fill="none" class="priority-icon">
+            <circle cx="12" cy="12" r="10" fill="#008F79" />
+            <path d="M7 12h2.5l1.5-3 2 6 1.5-3H17" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <span>Votre santé, notre priorité</span>
+        </div>
+
+        <!-- Titre avec mise en valeur de "espace services" -->
+        <h1 class="banner-title">
+          Bienvenue dans votre<br>
+          <span class="highlight-text">espace services</span>
+        </h1>
+
+        <!-- Description -->
+        <p class="banner-description">
+          Accédez facilement à tous nos services en ligne<br class="hidden-mobile">
+          pour une prise en charge rapide et efficace.
+        </p>
+
+        <!-- Bouton CTA principal -->
+        <a routerLink="/services" class="btn-discover-services">
+          <span>Découvrir nos services</span>
+          <svg viewBox="0 0 20 20" fill="currentColor" class="btn-arrow-icon">
+            <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+          </svg>
+        </a>
+      </div>
+
+      <!-- Encart de certification visuelle superposé en bas à droite -->
+      <div class="certification-badge">
+        <div class="certif-icon-circle">
+          <svg viewBox="0 0 24 24" fill="none" class="certif-svg">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" fill="#006B5F" />
+            <path d="M9 12l2 2 4-4" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </div>
+        <div class="certif-texts">
+          <strong class="certif-title">Centre Hospitalier Numérique</strong>
+          <span class="certif-subtitle">Des soins de qualité, plus proches de vous</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       2. SECTION NOS SERVICES (6 CARTES HORIZONTALES)
+       ========================================================================= -->
+  <section class="services-overview-section">
+    <!-- En-tête de la section -->
+    <div class="section-top-header">
+      <div class="header-left">
+        <!-- Icône vert 3 couches / pile de services -->
+        <div class="section-layers-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#008F79" stroke-width="2.4" class="layers-svg">
+            <path d="M12 2L2 7l10 5 10-5-10-5z" />
+            <path d="M2 17l10 5 10-5" />
+            <path d="M2 12l10 5 10-5" />
+          </svg>
+        </div>
+        <h2 class="section-title">Nos Services</h2>
+      </div>
+
+      <!-- Lien vers tous les services -->
+      <a routerLink="/services" class="view-all-services-link">
+        <span>Voir tous les services</span>
+        <svg viewBox="0 0 20 20" fill="currentColor" class="link-arrow-icon">
+          <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+        </svg>
+      </a>
+    </div>
+
+    <!-- Grille des 6 cartes de services -->
+    <div class="services-six-grid">
+      @for (card of filteredServiceCards(); track card.id) {
+        <div
+          class="service-feature-card"
+          (click)="navigateToCard(card)"
+          role="button"
+          tabindex="0"
+          (keyup.enter)="navigateToCard(card)"
+        >
+          <!-- Carré icône thématique -->
+          <div class="service-icon-box" [style.background-color]="card.bgColor">
+            @switch (card.icon) {
+              @case ('calendar') {
+                <svg viewBox="0 0 24 24" fill="none" [attr.stroke]="card.color" stroke-width="2.2" class="srv-svg">
+                  <rect x="3" y="4" width="18" height="18" rx="3" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                  <circle cx="8" cy="14" r="1.2" fill="currentColor" />
+                  <circle cx="12" cy="14" r="1.2" fill="currentColor" />
+                  <circle cx="16" cy="14" r="1.2" fill="currentColor" />
+                </svg>
+              }
+              @case ('results') {
+                <svg viewBox="0 0 24 24" fill="none" [attr.stroke]="card.color" stroke-width="2.2" class="srv-svg">
+                  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                  <rect x="8" y="2" width="8" height="4" rx="1" />
+                  <line x1="12" y1="11" x2="12" y2="17" />
+                  <line x1="9" y1="14" x2="15" y2="14" />
+                </svg>
+              }
+              @case ('dossier') {
+                <svg viewBox="0 0 24 24" fill="none" [attr.stroke]="card.color" stroke-width="2.2" class="srv-svg">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                  <line x1="12" y1="11" x2="12" y2="17" />
+                  <line x1="9" y1="14" x2="15" y2="14" />
+                </svg>
+              }
+              @case ('hospital') {
+                <svg viewBox="0 0 24 24" fill="none" [attr.stroke]="card.color" stroke-width="2.2" class="srv-svg">
+                  <path d="M2 4v16" />
+                  <path d="M2 8h18a2 2 0 0 1 2 2v10" />
+                  <path d="M2 17h20" />
+                  <circle cx="6" cy="11" r="2" />
+                </svg>
+              }
+              @case ('prescription') {
+                <svg viewBox="0 0 24 24" fill="none" [attr.stroke]="card.color" stroke-width="2.2" class="srv-svg">
+                  <path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z" />
+                  <line x1="8.5" y1="8.5" x2="15.5" y2="15.5" />
+                </svg>
+              }
+              @case ('contact') {
+                <svg viewBox="0 0 24 24" fill="none" [attr.stroke]="card.color" stroke-width="2.2" class="srv-svg">
+                  <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
+                  <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+                </svg>
+              }
+            }
+          </div>
+
+          <!-- Titre & Description -->
+          <div class="service-texts">
+            <h3 class="service-title">{{ card.title }}</h3>
+            <p class="service-desc">{{ card.description }}</p>
+          </div>
+
+          <!-- Bouton circulaire avec flèche en bas à droite -->
+          <div class="service-bottom-row">
+            <span class="circle-arrow-btn" aria-hidden="true">
+              <svg viewBox="0 0 20 20" fill="currentColor" class="arrow-svg">
+                <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+            </span>
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       3. SECTION BASSE : 3 PANNEAUX (RDV + NOTIFICATIONS + ASSISTANCE)
+       ========================================================================= -->
+  <section class="bottom-panels-section">
+
+    <!-- ── PANNEAU 1 : MES PROCHAINS RENDEZ-VOUS ── -->
+    <div class="panel-card panel-appointments">
+      <div class="panel-header">
+        <div class="panel-header-left">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="panel-hdr-icon">
+            <rect x="3" y="4" width="18" height="18" rx="2" />
+            <line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
+          <span class="panel-hdr-title">Mes prochains rendez-vous</span>
+        </div>
+        <a routerLink="/patient/rendez-vous" class="panel-hdr-link">
+          <span>Voir tout</span>
+          <svg viewBox="0 0 20 20" fill="currentColor" class="p-arrow">
+            <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+          </svg>
+        </a>
+      </div>
+
+      <div class="panel-body">
+        @let rdv = primaryAppointment();
+        <div class="appointment-item-card">
+          <!-- Bloc Date stylisé -->
+          <div class="date-badge-box">
+            <span class="date-day-name">{{ rdv.dayName }}</span>
+            <span class="date-day-number">{{ rdv.dayNum }}</span>
+            <span class="date-month-year">{{ rdv.monthYear }}</span>
+          </div>
+
+          <!-- Détails de la consultation -->
+          <div class="rdv-details-col">
+            <strong class="rdv-specialty">{{ rdv.title }}</strong>
+            <span class="rdv-doctor-name">{{ rdv.doctor }}</span>
+            <div class="rdv-time-place">
+              <svg viewBox="0 0 20 20" fill="currentColor" class="clock-icon">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+              </svg>
+              <span>{{ rdv.timeLocation }}</span>
+            </div>
+          </div>
+
+          <!-- Statut -->
+          <div class="rdv-status-col">
+            <span class="status-pill" [ngClass]="rdv.statusClass">
+              {{ rdv.status }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PANNEAU 2 : DERNIÈRES NOTIFICATIONS ── -->
+    <div class="panel-card panel-notifications">
+      <div class="panel-header">
+        <div class="panel-header-left">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="panel-hdr-icon">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+          </svg>
+          <span class="panel-hdr-title">Dernières notifications</span>
+        </div>
+        <a routerLink="/patient/dashboard" [fragment]="'notifications'" class="panel-hdr-link">
+          <span>Voir tout</span>
+          <svg viewBox="0 0 20 20" fill="currentColor" class="p-arrow">
+            <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+          </svg>
+        </a>
+      </div>
+
+      <div class="panel-body notifications-body">
+        @for (notif of notificationsList(); track notif.id) {
+          <div class="notif-row-item">
+            <div class="notif-icon-dot" [ngClass]="notif.type">
+              @switch (notif.type) {
+                @case ('NOUVEAU_RDV') {
+                  <svg viewBox="0 0 20 20" fill="currentColor" class="dot-svg">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                  </svg>
+                }
+                @case ('INFO') {
+                  <svg viewBox="0 0 20 20" fill="currentColor" class="dot-svg">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                  </svg>
+                }
+                @default {
+                  <svg viewBox="0 0 20 20" fill="currentColor" class="dot-svg">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                  </svg>
+                }
+              }
+            </div>
+
+            <div class="notif-text-col">
+              <p class="notif-msg">{{ notif.message }}</p>
+            </div>
+
+            <span class="notif-time-ago">{{ notif.timeAgo }}</span>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- ── PANNEAU 3 : BESOIN D'AIDE ? ── -->
+    <div class="panel-card panel-assistance-cta">
+      <div class="assistance-wrapper">
+        <div class="assistance-content-left">
+          <h3 class="assistance-title">Besoin d'aide ?</h3>
+          <p class="assistance-desc">Notre équipe est là pour vous accompagner.</p>
+
+          <a href="tel:+224627684702" class="btn-assistance-contact">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="phone-svg">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.42 2 2 0 0 1 3.6 1.26h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.4a16 16 0 0 0 5.9 5.9l1.27-.9a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
+            </svg>
+            <span>Nous contacter</span>
+          </a>
+        </div>
+
+        <div class="assistance-doctor-illustration">
+          <img
+            src="/assets/assistance_doctor.png"
+            alt="Médecin Santé Numérique"
+            class="doctor-img"
+          />
+        </div>
+      </div>
+
+      <!-- Tracé ECG décoratif en fond -->
+      <div class="assistance-ecg-bg" aria-hidden="true">
+        <svg viewBox="0 0 200 40" class="ecg-trace-svg">
+          <path d="M0,20 L40,20 L48,8 L56,32 L64,14 L72,26 L80,20 L200,20" stroke="rgba(255,255,255,0.22)" stroke-width="2" fill="none" />
+        </svg>
+      </div>
+    </div>
+
+  </section>
+
+</div>

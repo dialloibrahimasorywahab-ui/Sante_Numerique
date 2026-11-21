@@ -5,7 +5,8 @@ from django.http import StreamingHttpResponse
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.renderers import BaseRenderer
+from rest_framework.decorators import api_view, permission_classes, renderer_classes, throttle_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 
@@ -20,6 +21,19 @@ from .services import NotificationService
 notification_service = NotificationService()
 
 
+class ServerSentEventRenderer(BaseRenderer):
+    """
+    Renderer REST Framework personnalisé pour les flux Server-Sent Events (SSE).
+    Permet à DRF de satisfaire l'en-tête client 'Accept: text/event-stream' sans lever d'erreur HTTP 406.
+    """
+    media_type = "text/event-stream"
+    format = "sse"
+    charset = "utf-8"
+
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        return data
+
+
 @extend_schema(
     tags=["Notifications & Temps Réel (SSE)"],
     summary="Flux d'événements et alertes temps réel (SSE)",
@@ -28,6 +42,8 @@ notification_service = NotificationService()
 )
 @api_view(["GET"])
 @permission_classes([AllowAny])
+@renderer_classes([ServerSentEventRenderer])
+@throttle_classes([])
 def stream_notifications(request):
     """
     Endpoint SSE (Server-Sent Events) pour les alertes instantanées.

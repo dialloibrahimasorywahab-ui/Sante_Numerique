@@ -266,15 +266,63 @@ export class ServicesService {
   }
 
   /**
-   * Fetch a single service by ID with detailed information
+   * Fetch a single service by ID or Code (e.g. 1, 2, 'CARDIOLOGIE') with detailed information
    */
-  getServiceById(id: number): Observable<ServiceDetailExtended> {
-    return this.http.get<ServiceHospitalier>(`${this.API_BASE_URL}/services/${id}/`).pipe(
+  getServiceById(idOrCode: number | string): Observable<ServiceDetailExtended> {
+    if (typeof idOrCode === 'string' && isNaN(Number(idOrCode))) {
+      const targetCode = idOrCode.trim().toUpperCase();
+      const existing = this.servicesList().find(s =>
+        (s.nom_service && s.nom_service.toUpperCase() === targetCode) ||
+        (s.nomService && s.nomService.toUpperCase() === targetCode) ||
+        (s.displayNom && s.displayNom.toUpperCase() === targetCode)
+      );
+      if (existing) {
+        return of(this.buildDetailExtended(existing));
+      }
+
+      return this.http.get<PaginatedResponse<ServiceHospitalier> | ServiceHospitalier[]>(
+        `${this.API_BASE_URL}/services/`,
+        { params: new HttpParams().set('search', idOrCode.trim()) }
+      ).pipe(
+        map(res => {
+          let list: ServiceHospitalier[] = [];
+          if (res && 'results' in res && Array.isArray(res.results)) {
+            list = res.results;
+          } else if (Array.isArray(res)) {
+            list = res;
+          }
+          const matched = list.find(s =>
+            (s.nom_service && s.nom_service.toUpperCase() === targetCode) ||
+            (s.nomService && s.nomService.toUpperCase() === targetCode) ||
+            (s.nom_service_display && s.nom_service_display?.toUpperCase().includes(targetCode))
+          ) || list[0];
+
+          if (matched) {
+            return this.buildDetailExtended(matched);
+          }
+          const fallback = this.getFallbackServices().find(s =>
+            s.nom_service.toUpperCase() === targetCode ||
+            s.nom_service_display?.toUpperCase().includes(targetCode)
+          ) || this.getFallbackServices()[0];
+          return this.buildDetailExtended(fallback);
+        }),
+        catchError(() => {
+          const fallback = this.getFallbackServices().find(s =>
+            s.nom_service.toUpperCase() === targetCode ||
+            s.nom_service_display?.toUpperCase().includes(targetCode)
+          ) || this.getFallbackServices()[0];
+          return of(this.buildDetailExtended(fallback));
+        })
+      );
+    }
+
+    const numId = Number(idOrCode);
+    return this.http.get<ServiceHospitalier>(`${this.API_BASE_URL}/services/${numId}/`).pipe(
       map(rawService => this.buildDetailExtended(rawService)),
       catchError(err => {
-        console.warn(`Repli sur les données de secours pour le service #${id}:`, err);
+        console.warn(`Repli sur les données de secours pour le service #${numId}:`, err);
         const fallbackList = this.getFallbackServices();
-        const found = fallbackList.find(s => s.id_service === id) || fallbackList[(id - 1) % fallbackList.length] || fallbackList[0];
+        const found = fallbackList.find(s => s.id_service === numId) || fallbackList[(numId - 1) % fallbackList.length] || fallbackList[0];
         if (found) {
           return of(this.buildDetailExtended(found));
         }
@@ -316,16 +364,17 @@ export class ServicesService {
    * Enrich a ServiceHospitalier item with clean human-readable name, description, and SVG icon key
    */
   private enrichServiceItem(item: ServiceHospitalier): ServiceHospitalier {
-    const code = item.nom_service;
+    const code = item.nom_service || item.nomService || '';
     const meta = this.SERVICE_META_MAP[code];
+    const nomAffiche = meta?.nomClair || item.nom_service_display || item.nomServiceDisplay || item.nom_service || item.nomService || 'Soins Hospitaliers';
 
     return {
       ...item,
       icon: meta?.icon || 'stethoscope',
-      displayNom: meta?.nomClair || item.nom_service_display || item.nom_service,
-      displayDesc: meta?.desc || (item.description && item.description.length > 25
-        ? item.description
-        : `Prise en charge spécialisée et soins de qualité au sein du service de ${item.nom_service_display || item.nom_service}.`),
+      displayNom: nomAffiche,
+      displayDesc: meta?.desc || (item.description && item.description.trim().length > 15
+        ? item.description.trim()
+        : `Prise en charge spécialisée et soins d'excellence au sein du service de ${nomAffiche}.`),
       badgeCountMedecins: this.countDoctorsForService(code)
     };
   }

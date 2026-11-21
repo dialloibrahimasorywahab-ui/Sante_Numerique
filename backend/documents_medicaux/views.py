@@ -80,15 +80,36 @@ def list_create_documents(request):
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    patient = serializer.validated_data["patient"]
+    patient = serializer.validated_data.get("patient")
 
-    # Si c'est un patient connecté, il ne peut téléverser que dans son propre dossier
+    # Si c'est un patient connecté, associer automatiquement son profil
     if role == "PATIENT":
         patient_profile = getattr(user, 'patient', None)
-        if not patient_profile or patient_profile.id_patient != patient.id_patient:
+        if not patient_profile:
+            patient_profile, _ = Patient.objects.get_or_create(
+                id_utilisateur=user,
+                defaults={"sexe": "M", "groupe_sanguin": "O+"}
+            )
+        patient = patient_profile
+    elif not patient:
+        # Tenter de récupérer l'identifiant patient depuis la requête
+        pat_id = (
+            request.data.get("patient")
+            or request.data.get("patient_id")
+            or request.data.get("id_patient")
+            or request.data.get("idPatient")
+            or request.data.get("patientId")
+        )
+        if pat_id:
+            try:
+                pid_int = int(pat_id)
+                patient = Patient.objects.filter(id_patient=pid_int).first() or Patient.objects.filter(id_utilisateur_id=pid_int).first()
+            except (ValueError, TypeError):
+                pass
+        if not patient:
             return Response(
-                {"error": "Vous n'êtes pas autorisé à téléverser un document pour un autre patient."},
-                status=status.HTTP_403_FORBIDDEN
+                {"patient": ["Veuillez spécifier le patient associé à ce document."]},
+                status=status.HTTP_400_BAD_REQUEST
             )
 
     # Si c'est un médecin connecté, associer automatiquement son profil médecin

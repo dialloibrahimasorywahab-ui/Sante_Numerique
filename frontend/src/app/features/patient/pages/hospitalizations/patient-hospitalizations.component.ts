@@ -99,78 +99,204 @@ export class PatientHospitalizationsComponent implements OnInit {
   }
 
   /**
-   * Formate la date de sortie : si en cours ou non définie, affiche "Non encore terminée"
-   * Règle absolue : ne JAMAIS afficher "En cours" comme une date !
+   * Formate la date de sortie : si en cours ou non définie, affiche "En cours d'hospitalisation"
    */
   formatExitDate(dateStr?: string | null, statut?: string): string {
     if (statut === 'EN_COURS' || !dateStr) {
-      return 'Non encore terminée';
+      return 'En cours d’hospitalisation';
     }
     return this.formatShortDate(dateStr);
   }
 
   /**
-   * Résout le nom du praticien de manière professionnelle avec civilité "Dr."
+   * Durée du séjour en cours (en jours)
    */
-  getDoctorName(h: HospitalisationDto): string {
-    if (h.medecin_nom && h.medecin_nom !== 'Non assigné') {
-      return h.medecin_nom.startsWith('Dr.') ? h.medecin_nom : `Dr. ${h.medecin_nom}`;
+  getStayDurationDays(dateEntree?: string | null): number {
+    if (!dateEntree) return 1;
+    try {
+      const d = new Date(dateEntree);
+      if (isNaN(d.getTime())) return 1;
+      const now = new Date();
+      const diffMs = Math.max(0, now.getTime() - d.getTime());
+      return Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+    } catch {
+      return 1;
     }
-    if (h.medecin_details) {
-      const prenom = h.medecin_details.prenom || '';
-      const nom = h.medecin_details.nom || '';
+  }
+
+  /**
+   * Résout le nom du praticien de manière professionnelle et lisible.
+   * Ne JAMAIS afficher un identifiant brut type "Dr. Médecin #12".
+   */
+  getDoctorName(h: HospitalisationDto | any): string {
+    if (!h) return 'Praticien hospitalier référent';
+
+    // 1. Nom direct (camelCase ou snake_case)
+    const directNom = h.medecinNom || h.medecin_nom;
+    if (directNom && directNom !== 'Non assigné' && !directNom.includes('#')) {
+      return directNom.startsWith('Dr.') ? directNom : `Dr. ${directNom}`;
+    }
+
+    // 2. Détails du médecin (supporte camelCase medecinDetails et snake_case medecin_details)
+    const m = h.medecinDetails || h.medecin_details || h.medecinDetail || h.medecin_detail || (typeof h.medecin === 'object' ? h.medecin : null);
+    if (m) {
+      const u = m.idUtilisateur || m.id_utilisateur || m.user;
+      const prenom = m.prenom || u?.prenom || '';
+      const nom = m.nom || u?.nom || '';
       if (prenom || nom) {
         return `Dr. ${prenom} ${nom}`.trim();
       }
-      if (h.medecin_details.idMedecin) {
-        return `Dr. Médecin #${h.medecin_details.idMedecin}`;
-      }
     }
-    if (h.medecin) {
-      return `Dr. Médecin #${h.medecin}`;
-    }
-    return 'Praticien hospitalier référent';
+
+    // 3. Fallback élégant et professionnel
+    return 'Dr. Praticien hospitalier';
+  }
+
+  /**
+   * Spécialité médicale du praticien
+   */
+  getDoctorSpecialty(h: HospitalisationDto | any): string {
+    if (!h) return 'Médecine hospitalière';
+    const m = h.medecinDetails || h.medecin_details || h.medecinDetail || h.medecin_detail || (typeof h.medecin === 'object' ? h.medecin : null);
+    return m?.specialiteDisplay || m?.specialite_display || m?.specialiteLabel || m?.specialite || 'Médecine hospitalière';
   }
 
   /**
    * Service hospitalier rattaché au séjour
    */
-  getServiceName(h: HospitalisationDto): string {
-    if (h.service_nom) return h.service_nom;
-    if (h.serviceNom) return h.serviceNom;
-    if (h.lit_details?.chambre_detail?.service?.nom) return h.lit_details.chambre_detail.service.nom;
-    if (h.lit_details?.chambre_detail?.bureau_localisation) return h.lit_details.chambre_detail.bureau_localisation;
-    return 'Médecine hospitalière';
+  getServiceName(h: HospitalisationDto | any): string {
+    if (!h) return 'Service de Médecine';
+    const sNom = h.serviceNom || h.service_nom;
+    if (sNom && sNom.trim()) return sNom.trim();
+
+    const litDetails = h.litDetails || h.lit_details;
+    const chambre = litDetails?.chambreDetail || litDetails?.chambre_detail || h.chambreDetails || h.chambre_details;
+    if (chambre?.service?.nom) return chambre.service.nom;
+    if (chambre?.service?.nom_service) return chambre.service.nom_service;
+    if (chambre?.bureau_localisation) return chambre.bureau_localisation;
+
+    return 'Médecine Hospitalière';
+  }
+
+  /**
+   * Établissement ou Pôle de localisation
+   */
+  getHospitalFacility(h: HospitalisationDto | any): string {
+    const bat = h?.batimentNom || h?.batiment_nom;
+    if (bat) return bat;
+    return 'Centre Hospitalier';
   }
 
   /**
    * Vérifie si des informations de chambre ou de lit sont disponibles
    */
-  hasRoomOrBed(h: HospitalisationDto): boolean {
-    const ch = h.chambre_numero || h.chambreNumero || h.lit_details?.chambre_detail?.numero_chambre;
-    const lit = h.lit_numero || h.litNumero || h.lit_details?.numero_lit;
+  hasRoomOrBed(h: HospitalisationDto | any): boolean {
+    if (!h) return false;
+    const litDetails = h.litDetails || h.lit_details;
+    const chambre = litDetails?.chambreDetail || litDetails?.chambre_detail;
+    const ch = h.chambreNumero || h.chambre_numero || chambre?.numeroChambre || chambre?.numero_chambre;
+    const lit = h.litNumero || h.lit_numero || litDetails?.numeroLit || litDetails?.numero_lit;
     return !!((ch && ch !== 'N/D') || (lit && lit !== 'Non assigné'));
   }
 
   /**
-   * Libellé formaté Chambre & Lit
+   * Libellé complet et non tronqué Chambre & Lit & Bâtiment
    */
-  getRoomBedLabel(h: HospitalisationDto): string {
+  getRoomBedLabel(h: HospitalisationDto | any): string {
+    if (!h) return 'Affectation en cours';
     const parts: string[] = [];
-    const ch = h.chambre_numero || h.chambreNumero || h.lit_details?.chambre_detail?.numero_chambre;
-    const lit = h.lit_numero || h.litNumero || h.lit_details?.numero_lit;
-    const bat = h.batiment_nom || h.batimentNom;
+    const litDetails = h.litDetails || h.lit_details;
+    const chambre = litDetails?.chambreDetail || litDetails?.chambre_detail;
+
+    const ch = h.chambreNumero || h.chambre_numero || chambre?.numeroChambre || chambre?.numero_chambre;
+    const lit = h.litNumero || h.lit_numero || litDetails?.numeroLit || litDetails?.numero_lit;
+    const bat = h.batimentNom || h.batiment_nom || chambre?.batiment?.nom || chambre?.batimentNom;
 
     if (ch && ch !== 'N/D') {
-      parts.push(ch.startsWith('Chambre') ? ch : `Chambre ${ch}`);
+      const chStr = String(ch);
+      parts.push(chStr.toLowerCase().startsWith('chambre') ? chStr : `Chambre ${chStr}`);
     }
     if (lit && lit !== 'Non assigné') {
-      parts.push(lit.startsWith('Lit') ? lit : `Lit ${lit}`);
+      const litStr = String(lit);
+      parts.push(litStr.toLowerCase().startsWith('lit') ? litStr : `Lit ${litStr}`);
     }
     if (bat) {
-      parts.push(bat);
+      parts.push(String(bat));
     }
     return parts.length > 0 ? parts.join(' • ') : 'Affectation en cours';
+  }
+
+  /**
+   * Niveau de priorité clinique
+   */
+  getPriority(h: HospitalisationDto | any): string {
+    if (!h) return 'NORMAL';
+    if (h.priorite) return h.priorite;
+    const obs = h.observation || '';
+    const m = obs.match(/\[Priorité\]:\s*([^\n]+)/i);
+    return m ? m[1].trim() : 'NORMAL';
+  }
+
+  getPriorityLabel(priorite: string): string {
+    switch (priorite?.toUpperCase()) {
+      case 'TRES_URGENT': return 'Urgence Vitale / Prioritaire';
+      case 'URGENT': return 'Prise en charge Urgente';
+      case 'NORMAL': return 'Prise en charge Standard';
+      default: return priorite || 'Standard';
+    }
+  }
+
+  getPriorityBadgeClass(priorite: string): string {
+    switch (priorite?.toUpperCase()) {
+      case 'TRES_URGENT': return 'badge-priority-critical';
+      case 'URGENT': return 'badge-priority-urgent';
+      default: return 'badge-priority-normal';
+    }
+  }
+
+  /**
+   * Données médicales complémentaires exploitables
+   */
+  getSymptoms(h: HospitalisationDto | any): string | null {
+    if (!h) return null;
+    if (h.symptomes && h.symptomes.trim()) return h.symptomes.trim();
+    const obs = h.observation || '';
+    const m = obs.match(/\[Symptômes\]:\s*([^\n]+)/i);
+    return m ? m[1].trim() : null;
+  }
+
+  getDiagnostic(h: HospitalisationDto | any): string | null {
+    if (!h) return null;
+    if (h.diagnosticProvisoire && h.diagnosticProvisoire.trim()) return h.diagnosticProvisoire.trim();
+    if (h.diagnostic_provisoire && h.diagnostic_provisoire.trim()) return h.diagnostic_provisoire.trim();
+    const obs = h.observation || '';
+    const m = obs.match(/\[Diagnostic provisoire\]:\s*([^\n]+)/i);
+    return m ? m[1].trim() : null;
+  }
+
+  getAllergies(h: HospitalisationDto | any): string | null {
+    if (!h) return null;
+    if (h.allergies && h.allergies.trim()) return h.allergies.trim();
+    const obs = h.observation || '';
+    const m = obs.match(/\[Allergies\]:\s*([^\n]+)/i);
+    return m ? m[1].trim() : null;
+  }
+
+  getAntecedents(h: HospitalisationDto | any): string | null {
+    if (!h) return null;
+    if (h.antecedents && h.antecedents.trim()) return h.antecedents.trim();
+    const obs = h.observation || '';
+    const m = obs.match(/\[Antécédents\]:\s*([^\n]+)/i);
+    return m ? m[1].trim() : null;
+  }
+
+  getTreatments(h: HospitalisationDto | any): string | null {
+    if (!h) return null;
+    if (h.traitementsEnCours && h.traitementsEnCours.trim()) return h.traitementsEnCours.trim();
+    if (h.traitements_en_cours && h.traitements_en_cours.trim()) return h.traitements_en_cours.trim();
+    const obs = h.observation || '';
+    const m = obs.match(/\[Traitements en cours\]:\s*([^\n]+)/i);
+    return m ? m[1].trim() : null;
   }
 
   /**
@@ -203,7 +329,7 @@ export class PatientHospitalizationsComponent implements OnInit {
   getStatusLabel(statut?: string): string {
     switch (statut) {
       case 'EN_COURS': return 'En cours';
-      case 'TERMINEE': return 'Terminé';
+      case 'TERMINEE': return 'Séjour terminé';
       case 'ANNULEE': return 'Annulé';
       case 'PROGRAMMEE': return 'Programmé';
       default: return statut || 'Hospitalisation';

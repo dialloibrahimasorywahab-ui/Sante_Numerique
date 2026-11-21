@@ -314,3 +314,64 @@ button, a.btn, input, select {
     display: none !important;
   }
 }
+
+/* ==========================================================================
+   GLOBAL COMPACT & ERGONOMIC MODALS SYSTEM
+   Optimisation des dimensions pour un affichage raffiné et moderne
+   ========================================================================== */
+.modal-overlay,
+.modal-backdrop {
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  background: rgba(15, 37, 55, 0.45) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 1rem !important;
+}
+
+.modal-card,
+.modal-dialog-box,
+.modal-content {
+  max-width: min(580px, 94vw) !important;
+  max-height: 88vh !important;
+  overflow-y: auto !important;
+  border-radius: 12px !important;
+  box-shadow: 0 16px 40px rgba(15, 37, 55, 0.16) !important;
+  border: 1px solid #e2ecf2 !important;
+
+  &.modal-large,
+  &.wide-box,
+  &.large-modal {
+    max-width: min(780px, 96vw) !important;
+  }
+
+  &.modal-small,
+  &.small-box,
+  &.delete-box {
+    max-width: min(440px, 92vw) !important;
+  }
+}
+
+.modal-header,
+.modal-top {
+  padding: 0.85rem 1.25rem !important;
+  border-bottom: 1px solid #eef2f6 !important;
+
+  .modal-title,
+  .modal-heading {
+    font-size: 1.15rem !important;
+    font-weight: 700 !important;
+  }
+}
+
+.modal-body,
+.modal-form-body {
+  padding: 1.15rem !important;
+}
+
+.modal-footer,
+.modal-footer-actions {
+  padding: 0.75rem 1.25rem !important;
+  border-top: 1px solid #eef2f6 !important;
+}

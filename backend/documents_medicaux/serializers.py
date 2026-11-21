@@ -71,11 +71,15 @@ class DocumentMedicalSerializer(serializers.ModelSerializer):
 
 
 class DocumentUploadSerializer(serializers.Serializer):
-    patient = serializers.PrimaryKeyRelatedField(queryset=Patient.objects.all())
+    patient = serializers.PrimaryKeyRelatedField(
+        queryset=Patient.objects.all(),
+        required=False,
+        allow_null=True
+    )
     titre = serializers.CharField(max_length=200)
     fichier = serializers.FileField()
-    categorie = serializers.ChoiceField(
-        choices=DocumentMedical.Categorie.choices,
+    categorie = serializers.CharField(
+        max_length=50,
         default=DocumentMedical.Categorie.AUTRE,
         required=False
     )
@@ -91,3 +95,54 @@ class DocumentUploadSerializer(serializers.Serializer):
     )
     date_document = serializers.DateField(required=False, allow_null=True)
     observation = serializers.CharField(required=False, allow_blank=True, default="")
+
+    def to_internal_value(self, data):
+        if hasattr(data, 'dict'):
+            data = data.dict()
+        elif hasattr(data, 'copy'):
+            data = data.copy()
+        elif isinstance(data, dict):
+            data = dict(data)
+
+        # 1. Alias de fichier (fichier, file, document)
+        if 'fichier' not in data:
+            if 'file' in data:
+                data['fichier'] = data['file']
+            elif 'document' in data:
+                data['fichier'] = data['document']
+
+        # 2. Alias de patient (patient, idPatient, patientId, id_patient, patient_id)
+        if 'patient' not in data or data.get('patient') in [None, '', 'undefined', 'null']:
+            for k in ['idPatient', 'patientId', 'id_patient', 'patient_id', 'id_user', 'idUser']:
+                if k in data and data[k] not in [None, '', 'undefined', 'null']:
+                    data['patient'] = data[k]
+                    break
+
+        # 3. Résolution patient si passé sous forme d'id_utilisateur au lieu d'id_patient
+        pat_val = data.get('patient')
+        if pat_val not in [None, '', 'undefined', 'null']:
+            try:
+                p_id = int(pat_val)
+                if not Patient.objects.filter(id_patient=p_id).exists():
+                    p_from_user = Patient.objects.filter(id_utilisateur_id=p_id).first()
+                    if p_from_user:
+                        data['patient'] = p_from_user.id_patient
+            except (ValueError, TypeError):
+                pass
+
+        # 4. Alias date_document (dateDocument, date)
+        if 'date_document' not in data or data.get('date_document') in [None, '', 'undefined', 'null']:
+            if 'dateDocument' in data and data['dateDocument']:
+                data['date_document'] = data['dateDocument']
+            elif 'date' in data and data['date']:
+                data['date_document'] = data['date']
+
+        return super().to_internal_value(data)
+
+    def validate_categorie(self, value):
+        if not value:
+            return DocumentMedical.Categorie.AUTRE
+        val_upper = str(value).upper().strip()
+        if val_upper in DocumentMedical.Categorie.values:
+            return val_upper
+        return DocumentMedical.Categorie.AUTRE

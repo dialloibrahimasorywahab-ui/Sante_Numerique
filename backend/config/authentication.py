@@ -9,7 +9,7 @@ class CookieJWTAuthentication(JWTAuthentication):
     Classe d'authentification JWT personnalisée qui extrait le token d'accès
     en priorité depuis le cookie HttpOnly 'access_token'.
     Si le cookie est absent, elle se replie sur le header standard 'Authorization: Bearer <token>'
-    (utile pour Swagger UI, Postman et les tests).
+    ou sur le paramètre de requête 'token' (idéal pour EventSource / SSE).
     """
 
     def authenticate(self, request):
@@ -23,7 +23,21 @@ class CookieJWTAuthentication(JWTAuthentication):
             except (InvalidToken, AuthenticationFailed):
                 return None
 
-        # 2. Repli sur le header Authorization: Bearer <token>
+        # 2. Repli sur le paramètre query 'token' (utile pour EventSource SSE)
+        query_token = None
+        if hasattr(request, "query_params"):
+            query_token = request.query_params.get("token")
+        if not query_token and hasattr(request, "GET"):
+            query_token = request.GET.get("token")
+
+        if query_token:
+            try:
+                validated_token = self.get_validated_token(query_token)
+                return self.get_user(validated_token), validated_token
+            except (InvalidToken, AuthenticationFailed):
+                return None
+
+        # 3. Repli sur le header standard Authorization: Bearer <token>
         header = self.get_header(request)
         if header is None:
             return None
@@ -45,5 +59,5 @@ class CookieJWTScheme(OpenApiAuthenticationExtension):
             'type': 'apiKey',
             'in': 'cookie',
             'name': 'access_token',
-            'description': "Authentification par cookie HttpOnly 'access_token' ou header 'Authorization: Bearer <token>'."
+            'description': "Authentification par cookie HttpOnly 'access_token', header 'Authorization: Bearer <token>' ou query 'token'."
         }

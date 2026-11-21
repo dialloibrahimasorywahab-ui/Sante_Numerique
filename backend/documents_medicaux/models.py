@@ -20,6 +20,8 @@ class DocumentMedical(models.Model):
         IRM = "IRM", "IRM (Imagerie par Résonance Magnétique)"
         ECHOGRAPHIE = "ECHOGRAPHIE", "Échographie"
         ANALYSE_SANG = "ANALYSE_SANG", "Bilan Sanguin / Biologie médicale"
+        ANALYSE_URINE = "ANALYSE_URINE", "Analyse Urinaire"
+        ANAPATH = "ANAPATH", "Anatomopathologie / Biopsie"
         ORDONNANCE = "ORDONNANCE", "Ordonnance numérisée"
         CERTIFICAT = "CERTIFICAT", "Certificat médical"
         COMPTE_RENDU = "COMPTE_RENDU", "Compte-rendu opératoire / hospitalier"

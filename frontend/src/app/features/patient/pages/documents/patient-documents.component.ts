@@ -86,17 +86,20 @@ export class PatientDocumentsComponent implements OnInit {
     }
 
     const currentPatient = this.authService.currentUser();
-    const patientId = (currentPatient as any)?.id_patient || (currentPatient as any)?.patient_id || currentPatient?.id_user || currentPatient?.idUser;
-    if (!patientId) {
-      this.uploadErrorMessage.set('Profil patient non trouvé.');
-      return;
-    }
+    const patientId = (currentPatient as any)?.idPatient
+      || (currentPatient as any)?.patientId
+      || (currentPatient as any)?.id_patient
+      || (currentPatient as any)?.patient_id
+      || currentPatient?.id_user
+      || currentPatient?.idUser;
 
     this.isSubmitting.set(true);
     this.uploadErrorMessage.set(null);
 
     const formData = new FormData();
-    formData.append('patient', patientId.toString());
+    if (patientId) {
+      formData.append('patient', patientId.toString());
+    }
     formData.append('titre', this.newDocTitle.trim());
     formData.append('categorie', this.newDocCategorie);
     formData.append('date_document', this.newDocDate);
@@ -107,13 +110,18 @@ export class PatientDocumentsComponent implements OnInit {
       next: () => {
         this.isSubmitting.set(false);
         this.uploadSuccessMessage.set('Document chiffré et téléversé avec succès dans votre dossier médical.');
+        this.loadDocuments();
         setTimeout(() => {
           this.closeUploadModal();
         }, 1200);
       },
       error: (err) => {
         this.isSubmitting.set(false);
-        this.uploadErrorMessage.set(err?.error?.error || 'Échec du téléversement du document.');
+        const errMsg = err?.error?.error
+          || err?.error?.detail
+          || (typeof err?.error === 'object' ? Object.values(err.error).flat().join(' ') : null)
+          || 'Échec du téléversement du document.';
+        this.uploadErrorMessage.set(errMsg);
       }
     });
   }
